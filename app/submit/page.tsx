@@ -4,7 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import { Montserrat, IBM_Plex_Mono } from "next/font/google";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import confetti from "canvas-confetti";
 import Navbar from "../components/navbar";
+import { supabaseBrowser } from "@/lib/supabase-browser";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -30,8 +32,10 @@ const FM = "var(--font-ibm-plex-mono), ui-monospace, monospace";
 const SHADOW = "6px 6px 0 0 #1d1c17";
 const SHADOW_SM = "4px 4px 0 0 #1d1c17";
 
-// Deadline: May 23, 2026 00:00 SGT = May 22 16:00 UTC
-const DEADLINE = new Date("2026-05-22T16:00:00Z");
+// Set these in .env.local to control the submission window.
+// Leave unset to keep submissions always open (dev/testing mode).
+const OPEN_AT   = process.env.NEXT_PUBLIC_SUBMISSION_OPEN_AT   ? new Date(process.env.NEXT_PUBLIC_SUBMISSION_OPEN_AT)   : null;
+const DEADLINE  = process.env.NEXT_PUBLIC_SUBMISSION_DEADLINE  ? new Date(process.env.NEXT_PUBLIC_SUBMISSION_DEADLINE)  : null;
 
 const STEP_NAMES = ["IDENTITY", "ASSETS", "MANIFEST", "REVIEW"];
 
@@ -54,7 +58,9 @@ interface FormState {
   liveUrl: string;
   pitchDeckUrl: string;
   pitchDeckFile: File | null;
+  pitchDeckFileUrl: string | null; // URL from Storage (populated from DB)
   thumbnailFile: File | null;
+  thumbnailUrl: string | null;     // URL from Storage (populated from DB)
   members: Member[];
   notes: string;
 }
@@ -63,10 +69,43 @@ interface Tick { d: number; h: number; m: number; s: number }
 
 interface LastSaved { step: number; stepName: string; time: Date }
 
+type SerializableForm = Omit<FormState, 'pitchDeckFile' | 'thumbnailFile'>;
+
+interface StoredDraft {
+  form: SerializableForm;
+  step: number;
+  maxReached: number;
+  lastUpdated: string;
+}
+
+interface StoredSubmission {
+  editToken: string;
+  submittedAt: string;
+  form: SerializableForm;
+}
+
+const MAX_DECK_BYTES = 25 * 1024 * 1024;
+const MAX_THUMB_BYTES = 5 * 1024 * 1024;
+
+function serializeForm(form: FormState): SerializableForm {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { pitchDeckFile: _pdf, thumbnailFile: _tf, ...rest } = form;
+  return rest;
+}
+
+function deserializeForm(stored: SerializableForm): FormState {
+  return { ...stored, pitchDeckFile: null, thumbnailFile: null };
+}
+
+function isValidUrl(url: string): boolean {
+  if (!url.trim()) return false;
+  try { new URL(url); return true; } catch { return false; }
+}
+
 function validateStep(step: number, form: FormState): boolean {
   switch (step) {
     case 0: return !!(form.projectName.trim() && form.teamId.trim() && form.track && form.description.trim() && form.pitch.trim());
-    case 1: return !!(form.githubUrl.trim() && form.pitchDeckUrl.trim());
+    case 1: return isValidUrl(form.githubUrl) && isValidUrl(form.pitchDeckUrl) && (form.liveUrl === "" || isValidUrl(form.liveUrl));
     case 2: return form.members.length > 0 && form.members.every(m => m.name.trim() && m.studentId.trim() && m.role.trim() && m.email.trim());
     default: return true;
   }
@@ -78,15 +117,25 @@ function timeAgo(date: Date): string {
   return `${Math.floor(secs / 60)}m ago`;
 }
 
-function ThumbnailPreview({ file, height = 200 }: { file: File; height?: number }) {
-  const [url, setUrl] = useState("");
+function ThumbnailPreview({ file, url: urlProp }: { file?: File | null; url?: string | null }) {
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+
   useEffect(() => {
-    const objectUrl = URL.createObjectURL(file);
-    setUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
+    if (!file) { setObjectUrl(null); return; }
+    const u = URL.createObjectURL(file);
+    setObjectUrl(u);
+    return () => URL.revokeObjectURL(u);
   }, [file]);
-  if (!url) return null;
-  return <img src={url} alt="Thumbnail preview" style={{ width: "100%", height, objectFit: "cover", display: "block" }} />;
+
+  const src = objectUrl ?? urlProp ?? null;
+  if (!src) return null;
+  return (
+    <img
+      src={src}
+      alt="Thumbnail preview"
+      style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", display: "block" }}
+    />
+  );
 }
 
 // ─── Atoms ────────────────────────────────────────────────────
@@ -230,8 +279,8 @@ function Card({ children, padding = 22, style, dark }: {
 
 // ─── Confirm Modal ────────────────────────────────────────────
 
-function ConfirmModal({ form, onCancel, onConfirm }: {
-  form: FormState; onCancel: () => void; onConfirm: () => void;
+function ConfirmModal({ form, onCancel, onConfirm, isEditing }: {
+  form: FormState; onCancel: () => void; onConfirm: () => void; isEditing: boolean;
 }) {
   return (
     <motion.div
@@ -268,7 +317,10 @@ function ConfirmModal({ form, onCancel, onConfirm }: {
         </div>
         <div style={{ background: "rgba(192,0,0,0.05)", border: `1px dashed ${RED}`, padding: "12px 14px", marginBottom: 24 }}>
           <div style={{ fontFamily: FM, fontSize: 11.5, color: DARK_BG, lineHeight: 1.65 }}>
-            Your submission will be marked <span style={{ fontWeight: 800, color: RED }}>PENDING</span> until reviewed by the organiser. You may resubmit any time before the deadline.
+            {isEditing
+              ? <>Your updated submission will <span style={{ fontWeight: 800, color: RED }}>replace</span> your previous one. You may resubmit again any time before the deadline.</>
+              : <>Your submission will be marked <span style={{ fontWeight: 800, color: RED }}>PENDING</span> until reviewed by the organiser. You may resubmit any time before the deadline.</>
+            }
           </div>
         </div>
         <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
@@ -298,21 +350,23 @@ function PageHero({ tick }: { tick: Tick }) {
         <div style={{ height: 14 }} />
         <Mono color={MUTED} size={11} style={{ whiteSpace: "normal" }}>// 24-HOUR HACKXPERIENCE 2026 · ONE RECORD PER TEAM · RESUBMIT UNTIL DEADLINE</Mono>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
-        <span style={{ display: "inline-flex", alignItems: "center", height: 26, padding: "0 12px", background: DARK_BG, color: "#fff", fontFamily: FM, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em" }}>
-          // DEADLINE_IN
-        </span>
-        <div style={{ display: "flex", gap: 8 }}>
-          {([["DAYS", tick.d], ["HOURS", tick.h], ["MINS", tick.m], ["SECS", tick.s]] as [string, number][]).map(([u, n]) => (
-            <div key={u} style={{ minWidth: 76, padding: "10px 0", background: "#fff", border: `1.5px solid ${DARK_BG}`, textAlign: "center", boxShadow: SHADOW_SM }}>
-              <div style={{ fontFamily: FM, fontSize: 30, fontWeight: 700, color: RED, lineHeight: 1 }}>{pad(n)}</div>
-              <div style={{ height: 4 }} />
-              <Mono color={MUTED} size={9}>{u}</Mono>
-            </div>
-          ))}
+      {DEADLINE && (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", height: 26, padding: "0 12px", background: DARK_BG, color: "#fff", fontFamily: FM, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em" }}>
+            // DEADLINE_IN
+          </span>
+          <div style={{ display: "flex", gap: 8 }}>
+            {([["DAYS", tick.d], ["HOURS", tick.h], ["MINS", tick.m], ["SECS", tick.s]] as [string, number][]).map(([u, n]) => (
+              <div key={u} style={{ minWidth: 76, padding: "10px 0", background: "#fff", border: `1.5px solid ${DARK_BG}`, textAlign: "center", boxShadow: SHADOW_SM }}>
+                <div style={{ fontFamily: FM, fontSize: 30, fontWeight: 700, color: RED, lineHeight: 1 }}>{pad(n)}</div>
+                <div style={{ height: 4 }} />
+                <Mono color={MUTED} size={9}>{u}</Mono>
+              </div>
+            ))}
+          </div>
+          <Mono color={MUTED} size={10}>// 23 MAY 2026 · 00:00 SGT</Mono>
         </div>
-        <Mono color={MUTED} size={10}>// 23 MAY 2026 · 00:00 SGT</Mono>
-      </div>
+      )}
     </div>
   );
 }
@@ -522,17 +576,25 @@ function Step01({ form, setForm, onNext }: { form: FormState; setForm: (f: FormS
         <div>
           <FieldLabel hint="16:9 RECOMMENDED">Thumbnail</FieldLabel>
           <input ref={thumbRef} type="file" accept="image/*" style={{ display: "none" }}
-            onChange={(e) => setForm({ ...form, thumbnailFile: e.target.files?.[0] ?? null })} />
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file && file.size > MAX_THUMB_BYTES) {
+                alert("Thumbnail must be under 5 MB.");
+                e.target.value = "";
+                return;
+              }
+              setForm({ ...form, thumbnailFile: file ?? null });
+            }} />
           <div
             onClick={() => thumbRef.current?.click()}
             style={{
-              height: 200, border: `1.5px dashed ${DARK_BG}`, background: OFF_WHITE,
+              aspectRatio: "16 / 9", border: `1.5px dashed ${DARK_BG}`, background: OFF_WHITE,
               display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
               gap: 6, boxShadow: SHADOW_SM, cursor: "pointer", overflow: "hidden", position: "relative",
             }}
           >
-            {form.thumbnailFile ? (
-              <ThumbnailPreview file={form.thumbnailFile} height={200} />
+            {form.thumbnailFile || form.thumbnailUrl ? (
+              <ThumbnailPreview file={form.thumbnailFile} url={form.thumbnailUrl} />
             ) : (
               <>
                 <Mono color={MUTED} size={11}>[ Drag &amp; Drop or Click ]</Mono>
@@ -567,19 +629,36 @@ function Step02({ form, setForm, onNext, onBack }: { form: FormState; setForm: (
         <div>
           <FieldLabel required hint="MUST BE PUBLIC">GitHub Repo URL</FieldLabel>
           <SInput value={form.githubUrl} onChange={set("githubUrl")} placeholder="https://github.com/your-org/your-repo" />
+          {form.githubUrl && !isValidUrl(form.githubUrl) && (
+            <Mono color={RED} size={10} style={{ display: "block", marginTop: 5 }}>// Invalid URL — must start with https://</Mono>
+          )}
         </div>
         <div>
           <FieldLabel>Live URL</FieldLabel>
           <SInput value={form.liveUrl} onChange={set("liveUrl")} placeholder="https://your-project.vercel.app" />
+          {form.liveUrl && !isValidUrl(form.liveUrl) && (
+            <Mono color={RED} size={10} style={{ display: "block", marginTop: 5 }}>// Invalid URL — must start with https://</Mono>
+          )}
         </div>
         <div>
           <FieldLabel required>Pitch Deck URL</FieldLabel>
           <SInput value={form.pitchDeckUrl} onChange={set("pitchDeckUrl")} placeholder="https://drive.google.com/… or Canva / Slides link" />
+          {form.pitchDeckUrl && !isValidUrl(form.pitchDeckUrl) && (
+            <Mono color={RED} size={10} style={{ display: "block", marginTop: 5 }}>// Invalid URL — must start with https://</Mono>
+          )}
         </div>
         <div>
           <FieldLabel hint="PDF / PPTX · OPTIONAL">Upload Pitch Deck</FieldLabel>
           <input ref={deckRef} type="file" accept=".pdf,.ppt,.pptx" style={{ display: "none" }}
-            onChange={(e) => setForm({ ...form, pitchDeckFile: e.target.files?.[0] ?? null })} />
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file && file.size > MAX_DECK_BYTES) {
+                alert("Pitch deck must be under 25 MB.");
+                e.target.value = "";
+                return;
+              }
+              setForm({ ...form, pitchDeckFile: file ?? null });
+            }} />
           <div
             onClick={() => deckRef.current?.click()}
             style={{
@@ -678,7 +757,11 @@ function Step03({ form, setForm, onNext, onBack }: { form: FormState; setForm: (
 
 // ─── Step 04: Review & Submit ─────────────────────────────────
 
-function Step04({ form, onBack, onSubmit }: { form: FormState; onBack: () => void; onSubmit: () => void }) {
+function Step04({ form, onBack, onSubmit, isEditing, isPastDeadline, isSubmitting, submitError }: {
+  form: FormState; onBack: () => void; onSubmit: () => void;
+  isEditing: boolean; isPastDeadline: boolean;
+  isSubmitting: boolean; submitError: string | null;
+}) {
   const [consent, setConsent] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
@@ -704,17 +787,6 @@ function Step04({ form, onBack, onSubmit }: { form: FormState; onBack: () => voi
     <>
       <StepHeader n="04" title="REVIEW & SUBMIT" status="Check your details, give consent, and submit" />
       <div style={{ maxHeight: 480, overflow: "auto", paddingRight: 4 }}>
-        {/* Thumbnail — top priority */}
-        <RBlock n="00" title="THUMBNAIL">
-          {form.thumbnailFile ? (
-            <ThumbnailPreview file={form.thumbnailFile} height={180} />
-          ) : (
-            <div style={{ height: 90, background: OFF_WHITE, border: `1.5px dashed ${LINE}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Mono color={MUTED} size={11}>// No thumbnail uploaded</Mono>
-            </div>
-          )}
-        </RBlock>
-
         <RBlock n="01" title="PROJECT_IDENTITY">
           <RRow label="Project" value={form.projectName} />
           <RRow label="Team ID" value={form.teamId} mono />
@@ -753,15 +825,29 @@ function Step04({ form, onBack, onSubmit }: { form: FormState; onBack: () => voi
         </div>
       </div>
 
-      <div style={{ marginTop: 10, marginBottom: 14 }}>
+      <div style={{ marginTop: 10, marginBottom: isPastDeadline ? 8 : 14 }}>
         <span style={{ fontFamily: FM, fontSize: 10, fontWeight: 600, letterSpacing: "0.04em", color: MUTED, textTransform: "uppercase" }}>
           // Your submission will be marked pending until reviewed by the organiser.
         </span>
       </div>
 
+      {isPastDeadline && (
+        <div style={{ background: "rgba(192,0,0,0.06)", border: `1px dashed ${RED}`, padding: "10px 14px", marginBottom: 12 }}>
+          <Mono color={RED} size={11} weight={700}>// Submissions closed — deadline has passed.</Mono>
+        </div>
+      )}
+
+      {submitError && (
+        <div style={{ background: "rgba(192,0,0,0.06)", border: `1px dashed ${RED}`, padding: "10px 14px", marginBottom: 12 }}>
+          <Mono color={RED} size={11} weight={700}>// Error: {submitError}</Mono>
+        </div>
+      )}
+
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: `1.5px dashed ${LINE}`, paddingTop: 18 }}>
-        <RedBtn ghost onClick={onBack}>&lt; Back</RedBtn>
-        <RedBtn onClick={() => setShowModal(true)} disabled={!consent}>Submit</RedBtn>
+        <RedBtn ghost onClick={onBack} disabled={isSubmitting}>&lt; Back</RedBtn>
+        <RedBtn onClick={() => setShowModal(true)} disabled={!consent || isPastDeadline || isSubmitting}>
+          {isSubmitting ? "Submitting…" : isEditing ? "Update Submission" : "Submit"}
+        </RedBtn>
       </div>
 
       <AnimatePresence>
@@ -770,6 +856,7 @@ function Step04({ form, onBack, onSubmit }: { form: FormState; onBack: () => voi
             form={form}
             onCancel={() => setShowModal(false)}
             onConfirm={() => { setShowModal(false); onSubmit(); }}
+            isEditing={isEditing}
           />
         )}
       </AnimatePresence>
@@ -779,27 +866,36 @@ function Step04({ form, onBack, onSubmit }: { form: FormState; onBack: () => voi
 
 // ─── Success State ────────────────────────────────────────────
 
-function SuccessState({ form }: { form: FormState }) {
+function SuccessState({ form, editToken, isNew }: { form: FormState; editToken: string | null; isNew: boolean }) {
   const now = new Date().toLocaleString("en-SG", { timeZone: "Asia/Singapore", dateStyle: "medium", timeStyle: "short" });
+
+  useEffect(() => {
+    if (!isNew) return;
+    const fire = (opts: confetti.Options) => confetti({ zIndex: 9999, ...opts });
+    fire({ particleCount: 80, angle: 60, spread: 70, origin: { x: 0, y: 0.65 } });
+    fire({ particleCount: 80, angle: 120, spread: 70, origin: { x: 1, y: 0.65 } });
+    setTimeout(() => fire({ particleCount: 50, spread: 100, origin: { y: 0.55 } }), 250);
+  }, [isNew]);
+
   return (
     <div>
-      {/* Thumbnail — highest hierarchy */}
-      <div style={{ marginBottom: 28, border: `1.5px solid ${DARK_BG}`, boxShadow: SHADOW_SM, overflow: "hidden" }}>
-        {form.thumbnailFile ? (
-          <ThumbnailPreview file={form.thumbnailFile} height={280} />
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
+        <div style={{ width: 56, height: 56, background: GREEN, color: "#fff", fontFamily: FM, fontWeight: 800, fontSize: 28, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>✓</div>
+        <div>
+          <Mono color={GREEN} size={11} weight={800} style={{ letterSpacing: "0.1em" }}>// Submission Received</Mono>
+          <div style={{ fontFamily: FS, fontSize: 30, fontWeight: 800, letterSpacing: "-0.01em" }}>You&apos;re in! Good luck!</div>
+        </div>
+      </div>
+
+      {/* Thumbnail — below title */}
+      <div style={{ marginBottom: 24, maxWidth: 420, border: `1.5px solid ${DARK_BG}`, boxShadow: SHADOW_SM, overflow: "hidden" }}>
+        {form.thumbnailFile || form.thumbnailUrl ? (
+          <ThumbnailPreview file={form.thumbnailFile} url={form.thumbnailUrl} />
         ) : (
-          <div style={{ height: 120, background: OFF_WHITE, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ aspectRatio: "16 / 9", background: OFF_WHITE, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Mono color={MUTED} size={11}>// No thumbnail uploaded</Mono>
           </div>
         )}
-      </div>
-
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
-        <div style={{ width: 56, height: 56, background: RED, color: "#fff", fontFamily: FM, fontWeight: 800, fontSize: 28, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>✓</div>
-        <div>
-          <Mono color={RED} size={11} weight={800} style={{ letterSpacing: "0.1em" }}>// Submission Received</Mono>
-          <div style={{ fontFamily: FS, fontSize: 30, fontWeight: 800, letterSpacing: "-0.01em" }}>You&apos;re in. Good luck.</div>
-        </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 18 }}>
@@ -837,6 +933,24 @@ function SuccessState({ form }: { form: FormState }) {
         ))}
       </Card>
 
+      {editToken && (
+        <Card padding={18} style={{ marginBottom: 18, background: "rgba(29,28,23,0.03)" }}>
+          <Mono color={DARK_BG} size={11} weight={800}>&gt; Edit Your Submission</Mono>
+          <div style={{ height: 10 }} />
+          <div style={{ fontFamily: FM, fontSize: 11, color: MUTED, lineHeight: 1.6, marginBottom: 12 }}>
+            // Save this link — paste it to reopen your submission before the deadline. Files must be re-uploaded.
+          </div>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 0, background: "#fff", border: `1.5px solid ${DARK_BG}`, padding: "10px 14px", fontFamily: FM, fontSize: 11, color: DARK_BG, wordBreak: "break-all" }}>
+              {`${typeof window !== "undefined" ? window.location.origin : ""}/submit?token=${editToken}`}
+            </div>
+            <RedBtn onClick={() => navigator.clipboard.writeText(`${window.location.origin}/submit?token=${editToken}`)}>
+              Copy
+            </RedBtn>
+          </div>
+        </Card>
+      )}
+
       <Link href="/" style={{ textDecoration: "none" }}>
         <RedBtn>&gt; Back to HackXperience →</RedBtn>
       </Link>
@@ -846,7 +960,10 @@ function SuccessState({ form }: { form: FormState }) {
 
 // ─── Submission Landing ───────────────────────────────────────
 
-function SubmissionLanding({ tick, onStart }: { tick: Tick; onStart: () => void }) {
+function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isBeforeOpen, openTick }: {
+  tick: Tick; onStart: () => void; hasDraft: boolean;
+  isPastDeadline: boolean; isBeforeOpen: boolean; openTick: Tick;
+}) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
     <div style={{ minHeight: "calc(100vh - 44px)", display: "flex", flexDirection: "column", justifyContent: "center", padding: "48px 48px 64px", maxWidth: 1200, margin: "0 auto", width: "100%" }}>
@@ -856,12 +973,47 @@ function SubmissionLanding({ tick, onStart }: { tick: Tick; onStart: () => void 
         transition={{ duration: 0.4, ease: "easeOut" }}
         style={{ marginBottom: 32 }}
       >
-        <span style={{ display: "inline-flex", alignItems: "center", height: 26, padding: "0 12px", background: GREEN, color: "#fff", fontFamily: FM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em" }}>
-          // Submissions Open
+        <span style={{
+          display: "inline-flex", alignItems: "center", height: 26, padding: "0 12px",
+          background: isBeforeOpen ? MUTED : GREEN,
+          color: "#fff", fontFamily: FM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em",
+        }}>
+          {isBeforeOpen ? "// Submissions Not Yet Open" : "// Submissions Open"}
         </span>
       </motion.div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "stretch" }}>
+      {/* ── Before-open gate ── */}
+      {isBeforeOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: "easeOut" }}
+          style={{ background: DARK_BG, border: `2px solid ${DARK_BG}`, boxShadow: `12px 12px 0 0 ${RED}`, padding: "48px 40px", maxWidth: 600 }}
+        >
+          <Mono color={MUTED} size={11} weight={700} style={{ letterSpacing: "0.14em" }}>// SUBMISSION_GATE</Mono>
+          <div style={{ height: 20 }} />
+          <div style={{ fontFamily: FS, fontWeight: 800, fontSize: "clamp(28px, 3.5vw, 48px)", lineHeight: 0.96, letterSpacing: "-0.02em", textTransform: "uppercase", color: "#fff" }}>
+            SUBMISSIONS<br />OPEN IN
+          </div>
+          <div style={{ height: 28 }} />
+          <div style={{ display: "flex", gap: 8 }}>
+            {([["DAYS", openTick.d], ["HRS", openTick.h], ["MIN", openTick.m], ["SEC", openTick.s]] as [string, number][]).map(([u, n]) => (
+              <div key={u} style={{ flex: 1, padding: "10px 0", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", textAlign: "center" }}>
+                <div style={{ fontFamily: FM, fontSize: 26, fontWeight: 700, color: RED, lineHeight: 1 }}>{pad(n)}</div>
+                <div style={{ height: 4 }} />
+                <span style={{ fontFamily: FM, fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em", textTransform: "uppercase" }}>{u}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ height: 20 }} />
+          <div style={{ fontFamily: FM, fontSize: 11.5, color: "rgba(255,255,255,0.45)", lineHeight: 1.65 }}>
+            // Submissions open when the hackathon begins.<br />
+            // Come back then to submit your project.
+          </div>
+        </motion.div>
+      )}
+
+      {!isBeforeOpen && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "stretch" }}>
         {/* Left: dark terminal card */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -883,21 +1035,23 @@ function SubmissionLanding({ tick, onStart }: { tick: Tick; onStart: () => void 
             </div>
           </div>
 
-          <div style={{ marginTop: 40 }}>
-            <Mono color="rgba(255,255,255,0.4)" size={10} weight={600}>// Time Remaining</Mono>
-            <div style={{ height: 12 }} />
-            <div style={{ display: "flex", gap: 8 }}>
-              {([["DAYS", tick.d], ["HRS", tick.h], ["MIN", tick.m], ["SEC", tick.s]] as [string, number][]).map(([u, n]) => (
-                <div key={u} style={{ flex: 1, padding: "10px 0", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", textAlign: "center" }}>
-                  <div style={{ fontFamily: FM, fontSize: 26, fontWeight: 700, color: RED, lineHeight: 1 }}>{pad(n)}</div>
-                  <div style={{ height: 4 }} />
-                  <span style={{ fontFamily: FM, fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em", textTransform: "uppercase" }}>{u}</span>
-                </div>
-              ))}
+          {DEADLINE && (
+            <div style={{ marginTop: 40 }}>
+              <Mono color="rgba(255,255,255,0.4)" size={10} weight={600}>// Time Remaining</Mono>
+              <div style={{ height: 12 }} />
+              <div style={{ display: "flex", gap: 8 }}>
+                {([["DAYS", tick.d], ["HRS", tick.h], ["MIN", tick.m], ["SEC", tick.s]] as [string, number][]).map(([u, n]) => (
+                  <div key={u} style={{ flex: 1, padding: "10px 0", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", textAlign: "center" }}>
+                    <div style={{ fontFamily: FM, fontSize: 26, fontWeight: 700, color: RED, lineHeight: 1 }}>{pad(n)}</div>
+                    <div style={{ height: 4 }} />
+                    <span style={{ fontFamily: FM, fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em", textTransform: "uppercase" }}>{u}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ height: 8 }} />
+              <Mono color="rgba(255,255,255,0.3)" size={10}>// Deadline: 23 May 2026 · 00:00 SGT</Mono>
             </div>
-            <div style={{ height: 8 }} />
-            <Mono color="rgba(255,255,255,0.3)" size={10}>// Deadline: 23 May 2026 · 00:00 SGT</Mono>
-          </div>
+          )}
         </motion.div>
 
         {/* Right: steps + CTA */}
@@ -927,24 +1081,38 @@ function SubmissionLanding({ tick, onStart }: { tick: Tick; onStart: () => void 
             ))}
           </div>
 
+          {/* Draft banner */}
+          {hasDraft && !isPastDeadline && (
+            <div style={{ background: "rgba(22,163,74,0.08)", border: `1px dashed ${GREEN}`, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+              <Mono color={GREEN} size={11} weight={700}>// Draft detected — resume where you left off</Mono>
+              <RedBtn onClick={onStart}>Continue Draft</RedBtn>
+            </div>
+          )}
+
           {/* CTA */}
-          <motion.button
-            onClick={onStart}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
-            style={{
-              width: "100%", height: 72, background: RED, color: "#fff",
-              border: `1.5px solid ${DARK_BG}`, boxShadow: SHADOW,
-              fontFamily: FM, fontSize: 16, fontWeight: 800, letterSpacing: "0.16em",
-              textTransform: "uppercase", cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 16,
-            }}
-          >
-            &gt; Submit ▶
-          </motion.button>
+          {isPastDeadline ? (
+            <div style={{ width: "100%", height: 72, background: DARK_BG, border: `1.5px solid ${DARK_BG}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Mono color={MUTED} size={13} weight={700}>// Submissions Closed · 23 May 2026</Mono>
+            </div>
+          ) : (
+            <motion.button
+              onClick={onStart}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ type: "spring", stiffness: 400, damping: 20 }}
+              style={{
+                width: "100%", height: 72, background: RED, color: "#fff",
+                border: `1.5px solid ${DARK_BG}`, boxShadow: SHADOW,
+                fontFamily: FM, fontSize: 16, fontWeight: 800, letterSpacing: "0.16em",
+                textTransform: "uppercase", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 16,
+              }}
+            >
+              &gt; Submit ▶
+            </motion.button>
+          )}
         </motion.div>
-      </div>
+      </div>}
     </div>
   );
 }
@@ -954,7 +1122,8 @@ function SubmissionLanding({ tick, onStart }: { tick: Tick; onStart: () => void 
 const INITIAL_FORM: FormState = {
   projectName: "", teamId: "", track: "", description: "", pitch: "",
   techStack: [], githubUrl: "", liveUrl: "", pitchDeckUrl: "",
-  pitchDeckFile: null, thumbnailFile: null,
+  pitchDeckFile: null, pitchDeckFileUrl: null,
+  thumbnailFile: null, thumbnailUrl: null,
   members: [{ id: "initial", name: "", studentId: "", role: "", email: "" }],
   notes: "",
 };
@@ -968,9 +1137,64 @@ export default function SubmitPage() {
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [tick, setTick] = useState<Tick>({ d: 0, h: 0, m: 0, s: 0 });
+  const [openTick, setOpenTick] = useState<Tick>({ d: 0, h: 0, m: 0, s: 0 });
   const [lastSaved, setLastSaved] = useState<LastSaved | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editToken, setEditToken] = useState<string | null>(null);
+  const [hasDraft, setHasDraft] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isNewSubmission, setIsNewSubmission] = useState(false);
+  const [isMountLoading, setIsMountLoading] = useState(true);
+
+  const isPastDeadline = DEADLINE !== null && Date.now() > DEADLINE.getTime();
+  const isBeforeOpen   = OPEN_AT  !== null && Date.now() < OPEN_AT.getTime();
+
+  // Load from DB (via token) or localStorage draft on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get("token");
+    const storedToken = urlToken ?? localStorage.getItem("hx26_edit_token");
+
+    if (storedToken) {
+      fetch(`/api/submissions/${storedToken}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (!data) {
+            // Token not found in DB — clear stale localStorage token
+            localStorage.removeItem("hx26_edit_token");
+          } else {
+            setForm(deserializeForm(data));
+            setEditToken(storedToken);
+            if (urlToken) {
+              setView("form");
+              setIsEditing(true);
+            } else {
+              setSubmitted(true);
+            }
+          }
+        })
+        .catch(() => { /* network error — fall through to landing */ })
+        .finally(() => setIsMountLoading(false));
+      return;
+    }
+
+    // No token — check for a saved draft
+    const rawDraft = localStorage.getItem("hx26_draft");
+    if (rawDraft) {
+      try {
+        const draft: StoredDraft = JSON.parse(rawDraft);
+        setForm(deserializeForm(draft.form));
+        setStep(draft.step);
+        setMaxReached(draft.maxReached);
+        setHasDraft(true);
+      } catch { /* corrupt draft — ignore */ }
+    }
+    setIsMountLoading(false);
+  }, []);
 
   useEffect(() => {
+    if (!DEADLINE) return;
     const update = () => {
       const diff = DEADLINE.getTime() - Date.now();
       if (diff <= 0) { setTick({ d: 0, h: 0, m: 0, s: 0 }); return; }
@@ -981,13 +1205,111 @@ export default function SubmitPage() {
     return () => clearInterval(id);
   }, []);
 
-  // Autosave: debounce 1.5s after any form change
+  useEffect(() => {
+    if (!OPEN_AT) return;
+    const update = () => {
+      const diff = OPEN_AT.getTime() - Date.now();
+      if (diff <= 0) { setOpenTick({ d: 0, h: 0, m: 0, s: 0 }); return; }
+      setOpenTick({ d: Math.floor(diff / 86400000), h: Math.floor((diff % 86400000) / 3600000), m: Math.floor((diff % 3600000) / 60000), s: Math.floor((diff % 60000) / 1000) });
+    };
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Autosave: debounce 1.5s after any form change, persist to localStorage
   useEffect(() => {
     const id = setTimeout(() => {
-      setLastSaved({ step, stepName: STEP_NAMES[step], time: new Date() });
+      const now = new Date();
+      setLastSaved({ step, stepName: STEP_NAMES[step], time: now });
+      if (!submitted) {
+        localStorage.setItem("hx26_draft", JSON.stringify({
+          form: serializeForm(form),
+          step,
+          maxReached,
+          lastUpdated: now.toISOString(),
+        } satisfies StoredDraft));
+      }
     }, 1500);
     return () => clearTimeout(id);
-  }, [form, step]);
+  }, [form, step, maxReached, submitted]);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      // 1. Upload files to Supabase Storage (if selected)
+      // Preserve existing URLs when no new file is chosen
+      let thumbnailUrl: string | null = form.thumbnailUrl ?? null;
+      let pitchDeckFileUrl: string | null = form.pitchDeckFileUrl ?? null;
+
+      if (form.thumbnailFile) {
+        const ext = form.thumbnailFile.name.split(".").pop();
+        const path = `thumbnails/${crypto.randomUUID()}.${ext}`;
+        const { error } = await supabaseBrowser.storage
+          .from("submission-assets")
+          .upload(path, form.thumbnailFile, { upsert: true });
+        if (!error) {
+          const { data } = supabaseBrowser.storage.from("submission-assets").getPublicUrl(path);
+          thumbnailUrl = data.publicUrl;
+        }
+      }
+
+      if (form.pitchDeckFile) {
+        const ext = form.pitchDeckFile.name.split(".").pop();
+        const path = `pitch-decks/${crypto.randomUUID()}.${ext}`;
+        const { error } = await supabaseBrowser.storage
+          .from("submission-assets")
+          .upload(path, form.pitchDeckFile, { upsert: true });
+        if (!error) {
+          const { data } = supabaseBrowser.storage.from("submission-assets").getPublicUrl(path);
+          pitchDeckFileUrl = data.publicUrl;
+        }
+      }
+
+      // 2. Build payload
+      const payload = {
+        ...serializeForm(form),
+        thumbnailUrl,
+        pitchDeckFileUrl,
+      };
+
+      // 3. POST (create) or PUT (update)
+      const url = editToken
+        ? `/api/submissions/${editToken}`
+        : "/api/submissions";
+      const method = editToken ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? "Submission failed. Please try again.");
+      }
+
+      const result = await res.json();
+      const token: string = result.editToken;
+
+      // 4. Store just the token locally (source of truth is now the DB)
+      localStorage.setItem("hx26_edit_token", token);
+      localStorage.removeItem("hx26_draft");
+
+      setEditToken(token);
+      setSubmitted(true);
+      setIsNewSubmission(true);
+      setIsEditing(false);
+      setHasDraft(false);
+    } catch (err: unknown) {
+      setSubmitError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const goNext = () => {
     const next = step + 1;
@@ -998,8 +1320,8 @@ export default function SubmitPage() {
   const pageStyle: React.CSSProperties = {
     minHeight: "100vh",
     background: CREAM_BG,
-    backgroundImage: `linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px)`,
-    backgroundSize: "48px 48px",
+    backgroundImage: `linear-gradient(rgba(29,28,23,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(29,28,23,0.03) 1px, transparent 1px)`,
+    backgroundSize: "20px 20px",
     backgroundPosition: "-1px -1px",
     fontFamily: FS,
     color: DARK_BG,
@@ -1015,8 +1337,14 @@ export default function SubmitPage() {
     >
       <Navbar />
       <div style={{ paddingTop: 44 }}>
+        {isMountLoading && (
+          <div style={{ minHeight: "80vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Mono color={MUTED} size={12} weight={600}>// Loading…</Mono>
+          </div>
+        )}
+        {!isMountLoading && <>
         {view === "landing" && (
-          <SubmissionLanding tick={tick} onStart={() => setView("form")} />
+          <SubmissionLanding tick={tick} onStart={() => setView("form")} hasDraft={hasDraft} isPastDeadline={isPastDeadline} isBeforeOpen={isBeforeOpen} openTick={openTick} />
         )}
         {view === "form" && !submitted && (
           <>
@@ -1040,7 +1368,7 @@ export default function SubmitPage() {
                     {step === 0 && <Step01 form={form} setForm={setForm} onNext={goNext} />}
                     {step === 1 && <Step02 form={form} setForm={setForm} onNext={goNext} onBack={() => setStep(0)} />}
                     {step === 2 && <Step03 form={form} setForm={setForm} onNext={goNext} onBack={() => setStep(1)} />}
-                    {step === 3 && <Step04 form={form} onBack={() => setStep(2)} onSubmit={() => setSubmitted(true)} />}
+                    {step === 3 && <Step04 form={form} onBack={() => setStep(2)} onSubmit={handleSubmit} isEditing={isEditing} isPastDeadline={isPastDeadline} isSubmitting={isSubmitting} submitError={submitError} />}
                   </motion.div>
                 </AnimatePresence>
               </Card>
@@ -1051,10 +1379,11 @@ export default function SubmitPage() {
         {submitted && (
           <div style={{ padding: "48px" }}>
             <Card padding={28}>
-              <SuccessState form={form} />
+              <SuccessState form={form} editToken={editToken} isNew={isNewSubmission} />
             </Card>
           </div>
         )}
+        </>}
       </div>
     </motion.div>
   );
