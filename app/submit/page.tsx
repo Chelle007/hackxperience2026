@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-comment-textnodes */
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -36,6 +37,10 @@ const SHADOW_SM = "4px 4px 0 0 #1d1c17";
 // Leave unset to keep submissions always open (dev/testing mode).
 const OPEN_AT   = process.env.NEXT_PUBLIC_SUBMISSION_OPEN_AT   ? new Date(process.env.NEXT_PUBLIC_SUBMISSION_OPEN_AT)   : null;
 const DEADLINE  = process.env.NEXT_PUBLIC_SUBMISSION_DEADLINE  ? new Date(process.env.NEXT_PUBLIC_SUBMISSION_DEADLINE)  : null;
+
+function fmtDeadline(d: Date) {
+  return d.toLocaleString("en-SG", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Singapore", timeZoneName: "short" });
+}
 
 const STEP_NAMES = ["IDENTITY", "ASSETS", "MANIFEST", "REVIEW"];
 
@@ -368,7 +373,7 @@ function PageHero({ tick }: { tick: Tick }) {
               </div>
             ))}
           </div>
-          <Mono color={MUTED} size={10}>// 23 MAY 2026 · 00:00 SGT</Mono>
+          {DEADLINE && <Mono color={MUTED} size={10}>// Deadline: {fmtDeadline(DEADLINE)}</Mono>}
         </div>
       )}
     </div>
@@ -1172,7 +1177,7 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isBeforeOp
                 ))}
               </div>
               <div style={{ height: 8 }} />
-              <Mono color="rgba(255,255,255,0.3)" size={10}>// Deadline: 23 May 2026 · 00:00 SGT</Mono>
+              {DEADLINE && <Mono color="rgba(255,255,255,0.3)" size={10}>// Deadline: {fmtDeadline(DEADLINE)}</Mono>}
             </div>
           )}
         </motion.div>
@@ -1215,7 +1220,7 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isBeforeOp
           {/* CTA */}
           {isPastDeadline ? (
             <div style={{ width: "100%", height: 72, background: DARK_BG, border: `1.5px solid ${DARK_BG}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Mono color={MUTED} size={13} weight={700}>// Submissions Closed · 23 May 2026</Mono>
+              <Mono color={MUTED} size={13} weight={700}>// Submissions Closed{DEADLINE ? ` · ${fmtDeadline(DEADLINE)}` : ""}</Mono>
             </div>
           ) : (
             <motion.button
