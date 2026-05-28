@@ -984,33 +984,87 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isBeforeOp
 
       {/* ── Before-open gate ── */}
       {isBeforeOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: "easeOut" }}
-          style={{ background: DARK_BG, border: `2px solid ${DARK_BG}`, boxShadow: `12px 12px 0 0 ${RED}`, padding: "48px 40px", maxWidth: 600 }}
-        >
-          <Mono color={MUTED} size={11} weight={700} style={{ letterSpacing: "0.14em" }}>// SUBMISSION_GATE</Mono>
-          <div style={{ height: 20 }} />
-          <div style={{ fontFamily: FS, fontWeight: 800, fontSize: "clamp(28px, 3.5vw, 48px)", lineHeight: 0.96, letterSpacing: "-0.02em", textTransform: "uppercase", color: "#fff" }}>
-            SUBMISSIONS<br />OPEN IN
-          </div>
-          <div style={{ height: 28 }} />
-          <div style={{ display: "flex", gap: 8 }}>
-            {([["DAYS", openTick.d], ["HRS", openTick.h], ["MIN", openTick.m], ["SEC", openTick.s]] as [string, number][]).map(([u, n]) => (
-              <div key={u} style={{ flex: 1, padding: "10px 0", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", textAlign: "center" }}>
-                <div style={{ fontFamily: FM, fontSize: 26, fontWeight: 700, color: RED, lineHeight: 1 }}>{pad(n)}</div>
-                <div style={{ height: 4 }} />
-                <span style={{ fontFamily: FM, fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em", textTransform: "uppercase" }}>{u}</span>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "stretch" }}>
+          {/* Left: countdown card */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: "easeOut", delay: 0.05 }}
+            style={{ background: DARK_BG, border: `2px solid ${DARK_BG}`, boxShadow: `12px 12px 0 0 ${RED}`, padding: "48px 40px", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 440, position: "relative" }}
+          >
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: RED }} />
+            <div>
+              <Mono color={MUTED} size={11} weight={700} style={{ letterSpacing: "0.14em" }}>// Submission_Gate · Locked</Mono>
+              <div style={{ height: 24 }} />
+              <div style={{ fontFamily: FS, fontWeight: 800, fontSize: "clamp(36px, 4vw, 56px)", lineHeight: 0.93, letterSpacing: "-0.02em", textTransform: "uppercase", color: "#fff" }}>
+                SUBMISSIONS<br />OPEN IN
               </div>
-            ))}
-          </div>
-          <div style={{ height: 20 }} />
-          <div style={{ fontFamily: FM, fontSize: 11.5, color: "rgba(255,255,255,0.45)", lineHeight: 1.65 }}>
-            // Submissions open when the hackathon begins.<br />
-            // Come back then to submit your project.
-          </div>
-        </motion.div>
+              <div style={{ height: 32 }} />
+              <div style={{ display: "flex", gap: 8 }}>
+                {([["DAYS", openTick.d], ["HRS", openTick.h], ["MIN", openTick.m], ["SEC", openTick.s]] as [string, number][]).map(([u, n]) => (
+                  <div key={u} style={{ flex: 1, padding: "14px 0", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", textAlign: "center" }}>
+                    <div style={{ fontFamily: FM, fontSize: 36, fontWeight: 700, color: RED, lineHeight: 1 }}>{pad(n)}</div>
+                    <div style={{ height: 6 }} />
+                    <span style={{ fontFamily: FM, fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase" }}>{u}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              {OPEN_AT && (
+                <div style={{ borderTop: "1px dashed rgba(255,255,255,0.12)", paddingTop: 20, marginTop: 28 }}>
+                  <Mono color="rgba(255,255,255,0.35)" size={10} weight={600}>// Opens At</Mono>
+                  <div style={{ height: 8 }} />
+                  <div style={{ fontFamily: FM, fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.75)", letterSpacing: "0.04em" }}>
+                    {OPEN_AT.toLocaleDateString("en-SG", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Singapore" })}
+                    {" · "}
+                    {OPEN_AT.toLocaleTimeString("en-SG", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Singapore", timeZoneName: "short" })}
+                  </div>
+                </div>
+              )}
+              <div style={{ height: 16 }} />
+              <div style={{ fontFamily: FM, fontSize: 11, color: "rgba(255,255,255,0.3)", lineHeight: 1.7 }}>
+                // This page unlocks automatically.<br />
+                // Return when the hackathon begins.
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Right: prepare card */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: "easeOut", delay: 0.12 }}
+            style={{ display: "flex", flexDirection: "column", gap: 20 }}
+          >
+            <div style={{ background: "#fff", border: `1.5px solid ${DARK_BG}`, boxShadow: SHADOW_SM, padding: "24px 22px", position: "relative", flex: 1 }}>
+              <div style={{ position: "absolute", top: -1.5, left: -1.5, right: -1.5, height: 3, background: RED }} />
+              <Mono size={11} weight={800} style={{ display: "block", marginBottom: 6 }}>&gt; Prepare in Advance</Mono>
+              <div style={{ fontFamily: FS, fontSize: 12, color: MUTED, lineHeight: 1.5, marginBottom: 20 }}>
+                Get these ready so you can submit the moment the portal opens.
+              </div>
+              {([
+                ["01", "Project Identity", "Your project name, team ID, chosen track, and a short pitch (~100 words)."],
+                ["02", "GitHub Repo", "A public repository link — must be accessible to judges by the deadline."],
+                ["03", "Pitch Deck", "A PDF deck or a shareable Google Slides / Canva link."],
+                ["04", "Team Details", "Full name, student ID, role, and email for every member (1–5 people)."],
+              ] as [string, string, string][]).map(([n, title, desc], i) => (
+                <div key={n} style={{ display: "flex", gap: 14, padding: "12px 0", borderTop: i ? `1px dashed ${LINE}` : "none" }}>
+                  <Badge n={n} size={26} />
+                  <div>
+                    <div style={{ fontFamily: FM, fontSize: 11, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: DARK_BG, marginBottom: 4 }}>{title}</div>
+                    <div style={{ fontFamily: FS, fontSize: 12, color: MUTED, lineHeight: 1.5 }}>{desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ width: "100%", height: 72, background: DARK_BG, border: `1.5px solid ${DARK_BG}`, display: "flex", alignItems: "center", justifyContent: "center", gap: 14 }}>
+              <div style={{ width: 7, height: 7, background: MUTED, flexShrink: 0 }} />
+              <Mono color={MUTED} size={12} weight={700}>// Portal Locked · Opens at Hackathon Start</Mono>
+            </div>
+          </motion.div>
+        </div>
       )}
 
       {!isBeforeOpen && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "stretch" }}>
