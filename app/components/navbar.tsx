@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { label: "SYSTEM", target: "system" },
   { label: "SCHEDULE", target: "schedule" },
   { label: "INTEL", target: "intel" },
+  { label: "GALLERY", target: "", href: "/gallery" },
   { label: "REGISTRY", target: "registry" },
   { label: "SUBMIT", target: "", href: "/submit" },
 ];
