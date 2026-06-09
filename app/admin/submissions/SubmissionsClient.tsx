@@ -2,16 +2,14 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, ChevronDown, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminShellConfig, type AdminMetric } from "../components/AdminShell";
 import SubmissionViewOverlay, { type EditDraft } from "../components/SubmissionViewOverlay";
 import type { AdminSubmission, SubmissionStatus } from "@/lib/types";
-import { mockSubmissions } from "@/lib/mock";
+import { deleteAdminSubmission, fetchAdminSubmissions, updateAdminSubmission } from "@/lib/client/admin-api";
 import styles from "./Submissions.module.css";
 
 export type SubmissionFilter = "all" | "pending" | "approved" | "rejected";
-
-const trackOptions = Array.from(new Set(mockSubmissions.map((s) => s.track)));
 
 const HEADER_MAP: Record<SubmissionFilter, { title: string; subtitle: string }> = {
   all: { title: "ALL_SUBMISSIONS", subtitle: "// MONITOR ALL HACKATHON SUBMISSIONS" },
@@ -64,20 +62,34 @@ function RowActions({
   submission,
   onDeleteClick,
   onViewClick,
+  onApproveClick,
+  onRejectClick,
 }: {
   submission: AdminSubmission;
   onDeleteClick: (s: AdminSubmission) => void;
   onViewClick: (s: AdminSubmission) => void;
+  onApproveClick: (id: string) => void;
+  onRejectClick: (id: string) => void;
 }) {
   return (
     <div className={styles.actions}>
       {submission.status === "pending" && (
-        <button type="button" className={styles.approveAction} aria-label="Approve submission">
+        <button
+          type="button"
+          className={styles.approveAction}
+          aria-label="Approve submission"
+          onClick={() => onApproveClick(submission.id)}
+        >
           <Check aria-hidden="true" />
         </button>
       )}
       {(submission.status === "pending" || submission.status === "approved") && (
-        <button type="button" className={styles.rejectAction} aria-label="Reject submission">
+        <button
+          type="button"
+          className={styles.rejectAction}
+          aria-label="Reject submission"
+          onClick={() => onRejectClick(submission.id)}
+        >
           <X aria-hidden="true" />
         </button>
       )}
@@ -119,7 +131,7 @@ function DeleteModal({
       >
         <div className={styles.modalAccent} />
         <p className={styles.modalTitle}>DELETE_PROJECT</p>
-        <p className={styles.modalWarning}>// THIS ACTION CANNOT BE UNDONE</p>
+        <p className={styles.modalWarning}>{"// THIS ACTION CANNOT BE UNDONE"}</p>
         <p className={styles.modalBody}>
           Are you sure you want to delete &quot;{submission.projectName}&quot; by {submission.teamName}?
         </p>
@@ -144,7 +156,9 @@ export default function SubmissionsClient({ filter }: { filter: SubmissionFilter
   );
   const [pendingDelete, setPendingDelete] = useState<AdminSubmission | null>(null);
   const [viewingId, setViewingId] = useState<string | null>(null);
-  const [data, setData] = useState<AdminSubmission[]>(mockSubmissions);
+  const [data, setData] = useState<AdminSubmission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const viewingSubmission = useMemo(
     () => data.find((s) => s.id === viewingId) ?? null,
@@ -152,7 +166,25 @@ export default function SubmissionsClient({ filter }: { filter: SubmissionFilter
   );
 
   const shellMetrics = useMemo(() => buildMetrics(data), [data]);
+  const trackOptions = useMemo(() => Array.from(new Set(data.map((submission) => submission.track))), [data]);
   const { title, subtitle } = HEADER_MAP[filter];
+
+  const loadSubmissions = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const payload = await fetchAdminSubmissions();
+      setData(payload.submissions);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load submissions.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadSubmissions();
+  }, [loadSubmissions]);
 
   const visible = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
@@ -168,33 +200,63 @@ export default function SubmissionsClient({ filter }: { filter: SubmissionFilter
     });
   }, [data, filter, statusFilter, trackFilter, searchTerm]);
 
-  function handleDeleteConfirm() {
+  async function handleDeleteConfirm() {
     if (!pendingDelete) return;
-    setData((prev) => prev.filter((s) => s.id !== pendingDelete.id));
-    setPendingDelete(null);
+    try {
+      await deleteAdminSubmission(pendingDelete.id);
+      setData((prev) => prev.filter((s) => s.id !== pendingDelete.id));
+      setPendingDelete(null);
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Unable to delete submission.");
+    }
   }
 
-  function handleApprove(id: string) {
-    setData((prev) => prev.map((s) => (s.id === id ? { ...s, status: "approved" as const } : s)));
+  async function handleApprove(id: string) {
+    try {
+      await updateAdminSubmission(id, { status: "approved" });
+      setData((prev) => prev.map((s) => (s.id === id ? { ...s, status: "approved" as const } : s)));
+    } catch (approveError) {
+      setError(approveError instanceof Error ? approveError.message : "Unable to approve submission.");
+    }
   }
 
-  function handleReject(id: string) {
-    setData((prev) => prev.map((s) => (s.id === id ? { ...s, status: "rejected" as const } : s)));
+  async function handleReject(id: string) {
+    try {
+      await updateAdminSubmission(id, { status: "rejected" });
+      setData((prev) => prev.map((s) => (s.id === id ? { ...s, status: "rejected" as const } : s)));
+    } catch (rejectError) {
+      setError(rejectError instanceof Error ? rejectError.message : "Unable to reject submission.");
+    }
   }
 
-  function handleSave(id: string, draft: EditDraft) {
-    setData((prev) => prev.map((s) => s.id !== id ? s : {
-      ...s,
-      projectName:  draft.projectName,
-      track:        draft.track,
-      status:       draft.status,
-      githubUrl:    draft.githubUrl    || undefined,
-      liveUrl:      draft.liveUrl      || null,
-      pitchDeckUrl: draft.pitchDeckUrl || undefined,
-      videoDemoUrl: draft.videoDemoUrl || null,
-      description:  draft.description  || undefined,
-      shortPitch:   draft.shortPitch   || undefined,
-    }));
+  async function handleSave(id: string, draft: EditDraft) {
+    try {
+      await updateAdminSubmission(id, {
+        projectName: draft.projectName,
+        track: draft.track,
+        status: draft.status,
+        githubUrl: draft.githubUrl,
+        liveUrl: draft.liveUrl,
+        pitchDeckUrl: draft.pitchDeckUrl,
+        videoDemoUrl: draft.videoDemoUrl,
+        description: draft.description,
+        shortPitch: draft.shortPitch,
+      });
+      setData((prev) => prev.map((s) => s.id !== id ? s : {
+        ...s,
+        projectName:  draft.projectName,
+        track:        draft.track,
+        status:       draft.status,
+        githubUrl:    draft.githubUrl    || undefined,
+        liveUrl:      draft.liveUrl      || null,
+        pitchDeckUrl: draft.pitchDeckUrl || undefined,
+        videoDemoUrl: draft.videoDemoUrl || null,
+        description:  draft.description  || undefined,
+        shortPitch:   draft.shortPitch   || undefined,
+      }));
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Unable to save submission.");
+    }
   }
 
   return (
@@ -203,7 +265,7 @@ export default function SubmissionsClient({ filter }: { filter: SubmissionFilter
 
       <header className={styles.sectionHeader}>
         <h2>&gt; {title}</h2>
-        <p>{subtitle}</p>
+        <p>{error ? `// ${error.toUpperCase()}` : (loading ? "// LOADING LIVE SUBMISSIONS" : subtitle)}</p>
       </header>
 
       <section className={styles.controls}>
@@ -289,6 +351,8 @@ export default function SubmissionsClient({ filter }: { filter: SubmissionFilter
                     submission={s}
                     onDeleteClick={setPendingDelete}
                     onViewClick={(sub) => setViewingId(sub.id)}
+                    onApproveClick={handleApprove}
+                    onRejectClick={handleReject}
                   />
                 </div>
               </div>

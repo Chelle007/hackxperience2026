@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Check,
   Circle,
@@ -230,9 +230,48 @@ function MetricCard({ metric }: { metric: AdminMetric }) {
 
 export function AdminShellFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { state } = useAdminShellContext();
   const activeNav = useMemo(() => getActiveNav(pathname), [pathname]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [sessionUser, setSessionUser] = useState("admin");
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // Ignore network errors and still force local redirect.
+    }
+    router.replace("/admin/login");
+  }, [router]);
+
+  useEffect(() => {
+    if (pathname === "/admin/login" || pathname === "/admin") return;
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        const response = await fetch("/api/auth/session", { cache: "no-store" });
+        const payload = await response.json();
+        if (cancelled) return;
+
+        if (payload?.session?.role !== "admin") {
+          router.replace("/admin/login");
+          return;
+        }
+        if (typeof payload?.session?.username === "string") {
+          setSessionUser(payload.session.username);
+        }
+      } catch {
+        if (!cancelled) router.replace("/admin/login");
+      }
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname, router]);
 
   if (pathname === "/admin/login" || pathname === "/admin") {
     return <>{children}</>;
@@ -256,8 +295,8 @@ export function AdminShellFrame({ children }: { children: ReactNode }) {
             <span className={styles.statusText}>
               SUBMISSION: <span className={styles.brandAccent}>STATUS</span>
             </span>
-            <span className={styles.handleText}>&gt; admin@simitc</span>
-            <button type="button" className={`${styles.topbarButton} ${styles.logoutButton}`}>
+            <span className={styles.handleText}>&gt; {sessionUser}</span>
+            <button type="button" className={`${styles.topbarButton} ${styles.logoutButton}`} onClick={handleLogout}>
               <LogOut className={styles.buttonIcon} aria-hidden="true" />
               <span>LOGOUT</span>
             </button>
@@ -385,7 +424,11 @@ export function AdminShellFrame({ children }: { children: ReactNode }) {
 
         {/* Logout at bottom */}
         <div className={styles.mobileDrawerFooter}>
-          <button type="button" className={`${styles.topbarButton} ${styles.logoutButton} ${styles.mobileDrawerLogout}`}>
+          <button
+            type="button"
+            className={`${styles.topbarButton} ${styles.logoutButton} ${styles.mobileDrawerLogout}`}
+            onClick={handleLogout}
+          >
             <LogOut className={styles.buttonIcon} aria-hidden="true" />
             <span>LOGOUT</span>
           </button>

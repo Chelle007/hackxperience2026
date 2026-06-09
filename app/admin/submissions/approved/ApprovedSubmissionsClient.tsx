@@ -2,16 +2,14 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminShellConfig, type AdminMetric } from "../../components/AdminShell";
 import SubmissionViewOverlay, { type EditDraft } from "../../components/SubmissionViewOverlay";
 import type { AdminSubmission } from "@/lib/types";
-import { mockSubmissions } from "@/lib/mock";
+import { deleteAdminSubmission, fetchAdminSubmissions, updateAdminSubmission } from "@/lib/client/admin-api";
 import styles from "./ApprovedSubmissions.module.css";
 
 type TrackFilter = "all" | string;
-
-const trackOptions = Array.from(new Set(mockSubmissions.map((submission) => submission.track)));
 
 function buildMetrics(submissions: AdminSubmission[]): AdminMetric[] {
   const pending = submissions.filter((submission) => submission.status === "pending").length;
@@ -132,7 +130,7 @@ function DeleteModal({
       >
         <div className={styles.modalAccent} />
         <p className={styles.modalTitle}>DELETE_PROJECT</p>
-        <p className={styles.modalWarning}>// THIS ACTION CANNOT BE UNDONE</p>
+        <p className={styles.modalWarning}>{"// THIS ACTION CANNOT BE UNDONE"}</p>
         <p className={styles.modalBody}>
           Are you sure you want to delete &quot;{submission.projectName}&quot; by {submission.teamName}?
         </p>
@@ -152,9 +150,10 @@ function DeleteModal({
 export default function ApprovedSubmissionsClient() {
   const [searchTerm, setSearchTerm] = useState("");
   const [trackFilter, setTrackFilter] = useState<TrackFilter>("all");
-  const [data, setData] = useState<AdminSubmission[]>(
-    mockSubmissions.filter((s) => s.status === "approved"),
-  );
+  const [data, setData] = useState<AdminSubmission[]>([]);
+  const [allSubmissions, setAllSubmissions] = useState<AdminSubmission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [pendingDelete, setPendingDelete] = useState<AdminSubmission | null>(null);
   const [viewingId, setViewingId] = useState<string | null>(null);
 
@@ -163,7 +162,29 @@ export default function ApprovedSubmissionsClient() {
     [data, viewingId],
   );
 
-  const shellMetrics = useMemo(() => buildMetrics(mockSubmissions), []);
+  const shellMetrics = useMemo(() => buildMetrics(allSubmissions), [allSubmissions]);
+  const trackOptions = useMemo(
+    () => Array.from(new Set(allSubmissions.map((submission) => submission.track))),
+    [allSubmissions]
+  );
+
+  const loadSubmissions = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const payload = await fetchAdminSubmissions();
+      setAllSubmissions(payload.submissions);
+      setData(payload.submissions.filter((submission) => submission.status === "approved"));
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load approved submissions.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadSubmissions();
+  }, [loadSubmissions]);
 
   const visibleSubmissions = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -181,30 +202,61 @@ export default function ApprovedSubmissionsClient() {
     });
   }, [data, searchTerm, trackFilter]);
 
-  function handleDeleteConfirm() {
+  async function handleDeleteConfirm() {
     if (!pendingDelete) return;
-    setData((prev) => prev.filter((s) => s.id !== pendingDelete.id));
-    setPendingDelete(null);
+    try {
+      await deleteAdminSubmission(pendingDelete.id);
+      setData((prev) => prev.filter((s) => s.id !== pendingDelete.id));
+      setAllSubmissions((prev) => prev.filter((s) => s.id !== pendingDelete.id));
+      setPendingDelete(null);
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Unable to delete submission.");
+    }
   }
 
-  function handleReject(id: string) {
-    setData((prev) => prev.filter((s) => s.id !== id));
-    setViewingId(null);
+  async function handleReject(id: string) {
+    try {
+      await updateAdminSubmission(id, { status: "rejected" });
+      setData((prev) => prev.filter((s) => s.id !== id));
+      setAllSubmissions((prev) => prev.map((s) => s.id === id ? { ...s, status: "rejected" } : s));
+      setViewingId(null);
+    } catch (rejectError) {
+      setError(rejectError instanceof Error ? rejectError.message : "Unable to reject submission.");
+    }
   }
 
-  function handleSave(id: string, draft: EditDraft) {
-    setData((prev) => prev.map((s) => s.id !== id ? s : {
-      ...s,
-      projectName:  draft.projectName,
-      track:        draft.track,
-      status:       draft.status,
-      githubUrl:    draft.githubUrl    || undefined,
-      liveUrl:      draft.liveUrl      || null,
-      pitchDeckUrl: draft.pitchDeckUrl || undefined,
-      videoDemoUrl: draft.videoDemoUrl || null,
-      description:  draft.description  || undefined,
-      shortPitch:   draft.shortPitch   || undefined,
-    }));
+  async function handleSave(id: string, draft: EditDraft) {
+    try {
+      await updateAdminSubmission(id, {
+        projectName: draft.projectName,
+        track: draft.track,
+        status: draft.status,
+        githubUrl: draft.githubUrl,
+        liveUrl: draft.liveUrl,
+        pitchDeckUrl: draft.pitchDeckUrl,
+        videoDemoUrl: draft.videoDemoUrl,
+        description: draft.description,
+        shortPitch: draft.shortPitch,
+      });
+
+      const next = (submission: AdminSubmission) => ({
+        ...submission,
+        projectName:  draft.projectName,
+        track:        draft.track,
+        status:       draft.status,
+        githubUrl:    draft.githubUrl    || undefined,
+        liveUrl:      draft.liveUrl      || null,
+        pitchDeckUrl: draft.pitchDeckUrl || undefined,
+        videoDemoUrl: draft.videoDemoUrl || null,
+        description:  draft.description  || undefined,
+        shortPitch:   draft.shortPitch   || undefined,
+      });
+
+      setData((prev) => prev.map((submission) => submission.id !== id ? submission : next(submission)));
+      setAllSubmissions((prev) => prev.map((submission) => submission.id !== id ? submission : next(submission)));
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Unable to save submission.");
+    }
   }
 
   return (
@@ -213,7 +265,7 @@ export default function ApprovedSubmissionsClient() {
 
       <SectionHeader
         title="APPROVED_SUBMISSIONS"
-        subtitle="// CLEARED FOR SCORING AND SHOWCASE"
+        subtitle={error ? `// ${error.toUpperCase()}` : (loading ? "// LOADING APPROVED SUBMISSIONS" : "// CLEARED FOR SCORING AND SHOWCASE")}
       />
 
       <section className={styles.controls}>

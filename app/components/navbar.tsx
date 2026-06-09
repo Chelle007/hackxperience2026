@@ -96,8 +96,9 @@ export default function Navbar() {
       {/* Right — Login button + mobile menu toggle */}
       <div className="flex items-center gap-2 sm:gap-3">
         <button
-          onClick={() => pathname === "/" ? scrollTo("registry") : router.push("/#registry")}
-          className="bg-[#c00000] hover:bg-[#a00000] text-white text-[11px] sm:text-[12px] font-bold tracking-[0.10em] px-4 py-1.5 cursor-pointer transition-colors duration-150 whitespace-nowrap"
+          id="login_secure"
+          onClick={() => router.push("/admin/login")}
+          className="login_secure bg-[#c00000] hover:bg-[#a00000] text-white text-[11px] sm:text-[12px] font-bold tracking-[0.10em] px-4 py-1.5 cursor-pointer transition-colors duration-150 whitespace-nowrap"
         >
           LOGIN_SECURE
         </button>

@@ -1,20 +1,29 @@
 "use client";
 
 import { Check, LogOut, Plus, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AdminShellConfig, type AdminMetric } from "../components/AdminShell";
 import { usePortalSettings } from "../components/PortalSettingsContext";
-import { HACKX_TRACKS } from "@/lib/types";
-import { mockSubmissions } from "@/lib/mock";
+import { HACKX_TRACKS, type AdminSubmission } from "@/lib/types";
+import {
+  createAdminJudge,
+  deleteAdminJudge,
+  fetchAdminJudges,
+  fetchAdminSettings,
+  fetchAdminSubmissions,
+  updateAdminJudge,
+  updateAdminSettings,
+  type AdminJudge,
+  type AdminSettingsRow,
+} from "@/lib/client/admin-api";
+import { logoutPortal } from "@/lib/client/auth-api";
 import styles from "./Settings.module.css";
 
-// ── Shell metrics ────────────────────────────────
-
-function buildMetrics(): AdminMetric[] {
-  const all = mockSubmissions;
-  const pending = all.filter((s) => s.status === "pending").length;
-  const approved = all.filter((s) => s.status === "approved").length;
-  const rejected = all.filter((s) => s.status === "rejected").length;
+function buildMetrics(all: AdminSubmission[]): AdminMetric[] {
+  const pending = all.filter((submission) => submission.status === "pending").length;
+  const approved = all.filter((submission) => submission.status === "approved").length;
+  const rejected = all.filter((submission) => submission.status === "rejected").length;
   return [
     { key: "total", label: "TOTAL_SUBMISSIONS", value: String(all.length), helper: "received", tone: "neutral" },
     { key: "pending", label: "PENDING", value: String(pending), helper: "awaiting review", tone: "amber" },
@@ -23,8 +32,6 @@ function buildMetrics(): AdminMetric[] {
     { key: "deadline", label: "DEADLINE_COUNTDOWN", value: "00.00.00", suffix: "s", helper: "until close", tone: "neutral" },
   ];
 }
-
-// ── Toggle ───────────────────────────────────────
 
 function Toggle({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) {
   return (
@@ -41,16 +48,27 @@ function Toggle({ on, onToggle, label }: { on: boolean; onToggle: () => void; la
   );
 }
 
-// ── Panel 1: Submission Config ────────────────────
-
-function SubmissionConfigPanel() {
-  const { submissionsOpen, allowResubmissions, toggleSubmissionsOpen, toggleAllowResubmissions } = usePortalSettings();
-  const [maxTeamSize, setMaxTeamSize] = useState(5);
+function SubmissionConfigPanel({
+  submissionsOpen,
+  allowResubmissions,
+  maxTeamSize,
+  onToggleSubmissionsOpen,
+  onToggleResubmissions,
+  onMaxTeamSizeChange,
+}: {
+  submissionsOpen: boolean;
+  allowResubmissions: boolean;
+  maxTeamSize: number;
+  onToggleSubmissionsOpen: () => void;
+  onToggleResubmissions: () => void;
+  onMaxTeamSizeChange: (next: number) => void;
+}) {
   const [maxFileSizeMb, setMaxFileSizeMb] = useState(50);
 
-  function setNum(setter: (v: number) => void, raw: string, max: number) {
-    const v = parseInt(raw, 10);
-    if (!Number.isNaN(v) && v > 0 && v <= max) setter(v);
+  function parsePositiveInt(raw: string, max: number) {
+    const value = parseInt(raw, 10);
+    if (!Number.isNaN(value) && value > 0 && value <= max) return value;
+    return null;
   }
 
   return (
@@ -66,7 +84,7 @@ function SubmissionConfigPanel() {
               {submissionsOpen ? "// ACCEPTING ENTRIES" : "// CLOSED TO ENTRIES"}
             </span>
           </span>
-          <Toggle on={submissionsOpen} onToggle={toggleSubmissionsOpen} label="Toggle submission window" />
+          <Toggle on={submissionsOpen} onToggle={onToggleSubmissionsOpen} label="Toggle submission window" />
         </div>
 
         <div className={styles.divider} />
@@ -74,9 +92,9 @@ function SubmissionConfigPanel() {
         <div className={styles.configRow}>
           <span className={styles.configLabel}>
             ALLOW RESUBMISSIONS
-            <span className={styles.configSub}>// TEAMS MAY OVERWRITE SUBMISSION</span>
+            <span className={styles.configSub}>{"// TEAMS MAY OVERWRITE SUBMISSION"}</span>
           </span>
-          <Toggle on={allowResubmissions} onToggle={toggleAllowResubmissions} label="Toggle resubmissions" />
+          <Toggle on={allowResubmissions} onToggle={onToggleResubmissions} label="Toggle resubmissions" />
         </div>
 
         <div className={styles.divider} />
@@ -84,7 +102,7 @@ function SubmissionConfigPanel() {
         <div className={styles.configRow}>
           <span className={styles.configLabel}>
             MAX TEAM SIZE
-            <span className={styles.configSub}>// MEMBERS PER SUBMISSION</span>
+            <span className={styles.configSub}>{"// MEMBERS PER SUBMISSION"}</span>
           </span>
           <input
             type="number"
@@ -92,7 +110,10 @@ function SubmissionConfigPanel() {
             value={maxTeamSize}
             min={1}
             max={20}
-            onChange={(e) => setNum(setMaxTeamSize, e.target.value, 20)}
+            onChange={(event) => {
+              const value = parsePositiveInt(event.target.value, 20);
+              if (value != null) onMaxTeamSizeChange(value);
+            }}
             aria-label="Max team size"
           />
         </div>
@@ -102,7 +123,7 @@ function SubmissionConfigPanel() {
         <div className={styles.configRow}>
           <span className={styles.configLabel}>
             MAX FILE SIZE
-            <span className={styles.configSub}>// PER SUBMISSION UPLOAD</span>
+            <span className={styles.configSub}>{"// PER SUBMISSION UPLOAD"}</span>
           </span>
           <div style={{ display: "flex", alignItems: "center" }}>
             <input
@@ -111,7 +132,10 @@ function SubmissionConfigPanel() {
               value={maxFileSizeMb}
               min={1}
               max={500}
-              onChange={(e) => setNum(setMaxFileSizeMb, e.target.value, 500)}
+              onChange={(event) => {
+                const value = parsePositiveInt(event.target.value, 500);
+                if (value != null) setMaxFileSizeMb(value);
+              }}
               aria-label="Max file size in MB"
             />
             <span className={styles.inputUnit}>MB</span>
@@ -122,29 +146,24 @@ function SubmissionConfigPanel() {
   );
 }
 
-// ── Panel 2: Judging Criteria ─────────────────────
+type Criterion = {
+  key:
+    | "technical_execution_value"
+    | "problem_solution_fit_value"
+    | "innovation_creativity_value"
+    | "presentation_quality_value";
+  label: string;
+  maxPts: number;
+};
 
-type Criterion = { key: string; label: string; maxPts: number };
-
-const defaultCriteria: Criterion[] = [
-  { key: "innovation", label: "INNOVATION", maxPts: 20 },
-  { key: "technical", label: "TECHNICAL_COMPLEXITY", maxPts: 25 },
-  { key: "design", label: "DESIGN_AND_UX", maxPts: 20 },
-  { key: "presentation", label: "PRESENTATION", maxPts: 20 },
-  { key: "impact", label: "IMPACT", maxPts: 15 },
-];
-
-function JudgingCriteriaPanel() {
-  const [criteria, setCriteria] = useState<Criterion[]>(defaultCriteria);
-
-  function setPts(key: string, raw: string) {
-    const v = parseInt(raw, 10);
-    if (!Number.isNaN(v) && v >= 0 && v <= 100) {
-      setCriteria((prev) => prev.map((c) => (c.key === key ? { ...c, maxPts: v } : c)));
-    }
-  }
-
-  const total = useMemo(() => criteria.reduce((sum, c) => sum + c.maxPts, 0), [criteria]);
+function JudgingCriteriaPanel({
+  criteria,
+  onChange,
+}: {
+  criteria: Criterion[];
+  onChange: (key: Criterion["key"], nextValue: number) => void;
+}) {
+  const total = useMemo(() => criteria.reduce((sum, item) => sum + item.maxPts, 0), [criteria]);
 
   return (
     <section className={styles.panel}>
@@ -152,18 +171,23 @@ function JudgingCriteriaPanel() {
         <h3>&gt; JUDGING_CRITERIA</h3>
       </div>
       <div className={styles.panelBody}>
-        {criteria.map((c) => (
-          <div key={c.key} className={styles.criteriaRow}>
-            <span className={styles.criteriaLabel}>{c.label}</span>
+        {criteria.map((criterion) => (
+          <div key={criterion.key} className={styles.criteriaRow}>
+            <span className={styles.criteriaLabel}>{criterion.label}</span>
             <div className={styles.criteriaControls}>
               <input
                 type="number"
                 className={styles.numberInput}
-                value={c.maxPts}
+                value={criterion.maxPts}
                 min={0}
                 max={100}
-                onChange={(e) => setPts(c.key, e.target.value)}
-                aria-label={`${c.label} max points`}
+                onChange={(event) => {
+                  const next = parseInt(event.target.value, 10);
+                  if (!Number.isNaN(next) && next >= 0 && next <= 100) {
+                    onChange(criterion.key, next);
+                  }
+                }}
+                aria-label={`${criterion.label} max points`}
               />
               <span className={styles.inputUnit}>pts</span>
             </div>
@@ -177,51 +201,50 @@ function JudgingCriteriaPanel() {
   );
 }
 
-// ── Panel 3: Tracks ───────────────────────────────
-
-type Track = { key: string; id: string; name: string; enabled: boolean };
-
-const defaultTracks: Track[] = HACKX_TRACKS.map((name, i) => ({
-  key: `t${i + 1}`,
-  id: `TRACK_0${i + 1}`,
-  name,
-  enabled: i < 3,
-}));
-
-function TracksPanel() {
-  const [tracks, setTracks] = useState<Track[]>(defaultTracks);
-
-  function toggleTrack(key: string) {
-    setTracks((prev) => prev.map((t) => (t.key === key ? { ...t, enabled: !t.enabled } : t)));
-  }
-
+function TracksPanel({
+  activeTracks,
+  onToggleTrack,
+}: {
+  activeTracks: Set<string>;
+  onToggleTrack: (track: string) => void;
+}) {
   return (
     <section className={styles.panel}>
       <div className={styles.panelHead}>
         <h3>&gt; TRACKS</h3>
       </div>
       <div className={styles.panelBody}>
-        {tracks.map((t) => (
-          <div key={t.key} className={styles.trackRow}>
-            <div className={styles.trackInfo}>
-              <div className={styles.trackId}>{t.id}</div>
-              <div className={styles.trackName}>{t.name}</div>
+        {HACKX_TRACKS.map((track, index) => {
+          const id = `TRACK_0${index + 1}`;
+          const enabled = activeTracks.has(track);
+          return (
+            <div key={track} className={styles.trackRow}>
+              <div className={styles.trackInfo}>
+                <div className={styles.trackId}>{id}</div>
+                <div className={styles.trackName}>{track}</div>
+              </div>
+              <Toggle
+                on={enabled}
+                onToggle={() => onToggleTrack(track)}
+                label={`Toggle ${id}`}
+              />
             </div>
-            <Toggle
-              on={t.enabled}
-              onToggle={() => toggleTrack(t.key)}
-              label={`Toggle ${t.id}`}
-            />
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
 }
 
-// ── Panel 4: Admin Session ────────────────────────
-
-function AdminSessionPanel() {
+function AdminSessionPanel({
+  username,
+  duration,
+  onLogout,
+}: {
+  username: string;
+  duration: string;
+  onLogout: () => void;
+}) {
   return (
     <section className={styles.panel}>
       <div className={styles.panelHead}>
@@ -231,22 +254,22 @@ function AdminSessionPanel() {
         <div className={styles.sessionInfo}>
           <div className={styles.sessionField}>
             <span className={styles.sessionFieldLabel}>ADMIN_ID</span>
-            <span className={`${styles.sessionFieldValue} ${styles.accent}`}>admin@simitc</span>
+            <span className={`${styles.sessionFieldValue} ${styles.accent}`}>{username}</span>
           </div>
           <div className={styles.sessionField}>
             <span className={styles.sessionFieldLabel}>ROLE</span>
-            <span className={styles.sessionFieldValue}>SUPER_ADMIN</span>
+            <span className={styles.sessionFieldValue}>ADMIN</span>
           </div>
           <div className={styles.sessionField}>
             <span className={styles.sessionFieldLabel}>SESSION_START</span>
-            <span className={styles.sessionFieldValue}>25 JUN 2026, 08:00 SGT</span>
+            <span className={styles.sessionFieldValue}>ACTIVE</span>
           </div>
           <div className={styles.sessionField}>
             <span className={styles.sessionFieldLabel}>DURATION</span>
-            <span className={styles.sessionFieldValue}>04:12:08</span>
+            <span className={styles.sessionFieldValue}>{duration}</span>
           </div>
         </div>
-        <button type="button" className={styles.logoutBtn}>
+        <button type="button" className={styles.logoutBtn} onClick={onLogout}>
           <LogOut aria-hidden="true" />
           <span>LOGOUT_SESSION</span>
         </button>
@@ -255,36 +278,26 @@ function AdminSessionPanel() {
   );
 }
 
-// ── Panel 5: Judge Accounts ───────────────────────
+type EditingState = { id: number; username: string } | null;
+type AddingState = { username: string; password: string } | null;
 
-type JudgeAccount = { id: string; name: string; active: boolean };
-
-const defaultJudges: JudgeAccount[] = [
-  { id: "judge1", name: "Judge Alpha", active: true },
-  { id: "judge2", name: "Judge Beta", active: true },
-  { id: "judge3", name: "Judge Gamma", active: false },
-];
-
-type EditingState = { id: string; name: string } | null;
-type AddingState = { id: string; name: string } | null;
-
-function JudgeAccountsPanel() {
-  const [judges, setJudges] = useState<JudgeAccount[]>(defaultJudges);
+function JudgeAccountsPanel({
+  judges,
+  onCreate,
+  onUpdate,
+  onDelete,
+}: {
+  judges: AdminJudge[];
+  onCreate: (payload: { username: string; password: string }) => Promise<void>;
+  onUpdate: (id: number, payload: { username?: string; password?: string }) => Promise<void>;
+  onDelete: (id: number) => Promise<void>;
+}) {
   const [editing, setEditing] = useState<EditingState>(null);
   const [adding, setAdding] = useState<AddingState>(null);
 
-  function startEdit(judge: JudgeAccount) {
-    setAdding(null);
-    setEditing({ id: judge.id, name: judge.name });
-  }
-
-  function confirmEdit() {
-    if (!editing || !editing.id.trim() || !editing.name.trim()) return;
-    setJudges((prev) =>
-      prev.map((j) =>
-        j.id === editing.id ? { ...j, name: editing.name } : j,
-      ),
-    );
+  async function confirmEdit() {
+    if (!editing || !editing.username.trim()) return;
+    await onUpdate(editing.id, { username: editing.username.trim() });
     setEditing(null);
   }
 
@@ -292,20 +305,19 @@ function JudgeAccountsPanel() {
     setEditing(null);
   }
 
-  function deleteJudge(id: string) {
-    setJudges((prev) => prev.filter((j) => j.id !== id));
-    if (editing?.id === id) setEditing(null);
+  function startEdit(judge: AdminJudge) {
+    setAdding(null);
+    setEditing({ id: judge.id, username: judge.username });
   }
 
   function startAdd() {
     setEditing(null);
-    setAdding({ id: "", name: "" });
+    setAdding({ username: "", password: "" });
   }
 
-  function confirmAdd() {
-    if (!adding || !adding.id.trim() || !adding.name.trim()) return;
-    if (judges.some((j) => j.id === adding.id.trim())) return;
-    setJudges((prev) => [...prev, { id: adding.id.trim(), name: adding.name.trim(), active: true }]);
+  async function confirmAdd() {
+    if (!adding || !adding.username.trim() || !adding.password) return;
+    await onCreate({ username: adding.username.trim(), password: adding.password });
     setAdding(null);
   }
 
@@ -332,7 +344,7 @@ function JudgeAccountsPanel() {
                 <input
                   type="text"
                   className={styles.addInput}
-                  value={editing.id}
+                  value={String(judge.id)}
                   readOnly
                   aria-label="Judge ID"
                 />
@@ -341,22 +353,23 @@ function JudgeAccountsPanel() {
                 <input
                   type="text"
                   className={styles.addInput}
-                  value={editing.name}
-                  placeholder="Judge name..."
-                  onChange={(e) => setEditing((prev) => prev && { ...prev, name: e.target.value })}
-                  onKeyDown={(e) => { if (e.key === "Enter") confirmEdit(); if (e.key === "Escape") cancelEdit(); }}
+                  value={editing.username}
+                  placeholder="Judge username..."
+                  onChange={(event) => setEditing((prev) => prev && { ...prev, username: event.target.value })}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") void confirmEdit();
+                    if (event.key === "Escape") cancelEdit();
+                  }}
                   autoFocus
-                  aria-label="Judge name"
+                  aria-label="Judge username"
                 />
               </div>
               <div className={styles.addFormCell} data-label="STATUS">
-                <span className={judge.active ? styles.statusActive : styles.statusInactive}>
-                  {judge.active ? "ACTIVE" : "INACTIVE"}
-                </span>
+                <span className={styles.statusActive}>ACTIVE</span>
               </div>
               <div className={styles.addFormCell} data-label="ACTIONS">
                 <div className={styles.addFormActions}>
-                  <button type="button" className={styles.confirmBtn} onClick={confirmEdit} aria-label="Confirm edit">
+                  <button type="button" className={styles.confirmBtn} onClick={() => void confirmEdit()} aria-label="Confirm edit">
                     <Check aria-hidden="true" />
                   </button>
                   <button type="button" className={styles.cancelBtn} onClick={cancelEdit} aria-label="Cancel edit">
@@ -368,18 +381,16 @@ function JudgeAccountsPanel() {
           ) : (
             <div className={styles.judgeRow} key={judge.id}>
               <div className={styles.judgeCell} data-label="JUDGE_ID">{judge.id}</div>
-              <div className={styles.judgeCell} data-label="NAME">{judge.name}</div>
+              <div className={styles.judgeCell} data-label="NAME">{judge.username}</div>
               <div className={styles.judgeCell} data-label="STATUS">
-                <span className={judge.active ? styles.statusActive : styles.statusInactive}>
-                  {judge.active ? "ACTIVE" : "INACTIVE"}
-                </span>
+                <span className={styles.statusActive}>ACTIVE</span>
               </div>
               <div className={styles.judgeCell} data-label="ACTIONS">
                 <div className={styles.judgeActions}>
                   <button type="button" className={styles.editBtn} onClick={() => startEdit(judge)}>
                     EDIT
                   </button>
-                  <button type="button" className={styles.deleteBtn} onClick={() => deleteJudge(judge.id)}>
+                  <button type="button" className={styles.deleteBtn} onClick={() => void onDelete(judge.id)}>
                     DELETE
                   </button>
                 </div>
@@ -394,22 +405,25 @@ function JudgeAccountsPanel() {
               <input
                 type="text"
                 className={styles.addInput}
-                value={adding.id}
-                placeholder="judge4"
-                onChange={(e) => setAdding((prev) => prev && { ...prev, id: e.target.value })}
-                aria-label="New judge ID"
+                value={adding.username}
+                placeholder="judge_username"
+                onChange={(event) => setAdding((prev) => prev && { ...prev, username: event.target.value })}
+                aria-label="New judge username"
                 autoFocus
               />
             </div>
             <div className={styles.addFormCell} data-label="NAME">
               <input
-                type="text"
+                type="password"
                 className={styles.addInput}
-                value={adding.name}
-                placeholder="Judge name..."
-                onChange={(e) => setAdding((prev) => prev && { ...prev, name: e.target.value })}
-                onKeyDown={(e) => { if (e.key === "Enter") confirmAdd(); if (e.key === "Escape") cancelAdd(); }}
-                aria-label="New judge name"
+                value={adding.password}
+                placeholder="Initial password..."
+                onChange={(event) => setAdding((prev) => prev && { ...prev, password: event.target.value })}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void confirmAdd();
+                  if (event.key === "Escape") cancelAdd();
+                }}
+                aria-label="New judge password"
               />
             </div>
             <div className={styles.addFormCell} data-label="STATUS">
@@ -417,7 +431,7 @@ function JudgeAccountsPanel() {
             </div>
             <div className={styles.addFormCell} data-label="ACTIONS">
               <div className={styles.addFormActions}>
-                <button type="button" className={styles.confirmBtn} onClick={confirmAdd} aria-label="Confirm add">
+                <button type="button" className={styles.confirmBtn} onClick={() => void confirmAdd()} aria-label="Confirm add">
                   <Check aria-hidden="true" />
                 </button>
                 <button type="button" className={styles.cancelBtn} onClick={cancelAdd} aria-label="Cancel add">
@@ -444,26 +458,173 @@ function JudgeAccountsPanel() {
   );
 }
 
-// ── Root export ───────────────────────────────────
-
-const shellMetrics = buildMetrics();
+function formatDuration(ms: number) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const hh = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+  const ss = String(totalSeconds % 60).padStart(2, "0");
+  return `${hh}:${mm}:${ss}`;
+}
 
 export default function SettingsClient() {
+  const router = useRouter();
+  const { submissionsOpen, allowResubmissions, toggleSubmissionsOpen, toggleAllowResubmissions } = usePortalSettings();
+
+  const [submissions, setSubmissions] = useState<AdminSubmission[]>([]);
+  const [settings, setSettings] = useState<AdminSettingsRow | null>(null);
+  const [judges, setJudges] = useState<AdminJudge[]>([]);
+  const [error, setError] = useState("");
+  const [sessionUser, setSessionUser] = useState("admin");
+  const [sessionStart] = useState(() => Date.now());
+  const [durationNow, setDurationNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => setDurationNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const shellMetrics = useMemo(() => buildMetrics(submissions), [submissions]);
+
+  const loadData = useCallback(async () => {
+    setError("");
+
+    const [submissionsResult, settingsResult, judgesResult, sessionResult] = await Promise.allSettled([
+      fetchAdminSubmissions(),
+      fetchAdminSettings(),
+      fetchAdminJudges(),
+      fetch("/api/auth/session", { cache: "no-store" }).then((response) => response.json()),
+    ]);
+
+    if (submissionsResult.status === "fulfilled") {
+      setSubmissions(submissionsResult.value.submissions);
+    } else {
+      setError((prev) => prev || "Unable to load submissions metrics.");
+    }
+
+    if (settingsResult.status === "fulfilled") {
+      setSettings(settingsResult.value.settings);
+    } else {
+      setError((prev) => prev || "Unable to load settings.");
+    }
+
+    if (judgesResult.status === "fulfilled") {
+      setJudges(judgesResult.value.judges);
+    } else {
+      setError((prev) => prev || "Unable to load judges.");
+    }
+
+    if (sessionResult.status === "fulfilled") {
+      const username = sessionResult.value?.session?.username;
+      if (typeof username === "string" && username) setSessionUser(username);
+    }
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadData();
+  }, [loadData]);
+
+  const patchSettings = useCallback(async (updates: Partial<AdminSettingsRow>) => {
+    try {
+      const payload = await updateAdminSettings(updates);
+      setSettings(payload.settings);
+    } catch (patchError) {
+      setError(patchError instanceof Error ? patchError.message : "Unable to save settings.");
+    }
+  }, []);
+
+  const criteria = useMemo<Criterion[]>(() => [
+    { key: "technical_execution_value", label: "TECHNICAL_EXECUTION", maxPts: settings?.technical_execution_value ?? 30 },
+    { key: "problem_solution_fit_value", label: "PROBLEM_SOLUTION_FIT", maxPts: settings?.problem_solution_fit_value ?? 25 },
+    { key: "innovation_creativity_value", label: "INNOVATION_CREATIVITY", maxPts: settings?.innovation_creativity_value ?? 25 },
+    { key: "presentation_quality_value", label: "PRESENTATION_QUALITY", maxPts: settings?.presentation_quality_value ?? 20 },
+  ], [settings]);
+
+  const activeTracks = useMemo(
+    () => new Set(settings?.active_tracks ?? HACKX_TRACKS),
+    [settings?.active_tracks]
+  );
+
+  const handleToggleTrack = useCallback((track: string) => {
+    const next = new Set(activeTracks);
+    if (next.has(track)) {
+      next.delete(track);
+    } else {
+      next.add(track);
+    }
+    void patchSettings({ active_tracks: Array.from(next) });
+  }, [activeTracks, patchSettings]);
+
+  const handleCreateJudge = useCallback(async (payload: { username: string; password: string }) => {
+    try {
+      const response = await createAdminJudge(payload);
+      setJudges((prev) => [...prev, response.judge]);
+    } catch (createError) {
+      setError(createError instanceof Error ? createError.message : "Unable to create judge.");
+    }
+  }, []);
+
+  const handleUpdateJudge = useCallback(async (id: number, payload: { username?: string; password?: string }) => {
+    try {
+      const response = await updateAdminJudge(id, payload);
+      setJudges((prev) => prev.map((judge) => judge.id === id ? response.judge : judge));
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : "Unable to update judge.");
+    }
+  }, []);
+
+  const handleDeleteJudge = useCallback(async (id: number) => {
+    try {
+      await deleteAdminJudge(id);
+      setJudges((prev) => prev.filter((judge) => judge.id !== id));
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Unable to delete judge.");
+    }
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    await logoutPortal();
+    router.replace("/admin/login");
+  }, [router]);
+
   return (
     <>
       <AdminShellConfig value={{ metrics: shellMetrics }} />
 
       <header className={styles.pageHeader}>
         <h2>&gt; SETTINGS</h2>
-        <p>{"// CONFIGURE EVENT PARAMETERS, JUDGING, AND ACCOUNTS"}</p>
+        <p>{error ? `// ${error.toUpperCase()}` : "// CONFIGURE EVENT PARAMETERS, JUDGING, AND ACCOUNTS"}</p>
       </header>
 
       <div className={styles.settingsGrid}>
-        <SubmissionConfigPanel />
-        <JudgingCriteriaPanel />
-        <TracksPanel />
-        <AdminSessionPanel />
-        <JudgeAccountsPanel />
+        <SubmissionConfigPanel
+          submissionsOpen={submissionsOpen}
+          allowResubmissions={allowResubmissions}
+          onToggleSubmissionsOpen={toggleSubmissionsOpen}
+          onToggleResubmissions={toggleAllowResubmissions}
+          maxTeamSize={settings?.max_team_size ?? 5}
+          onMaxTeamSizeChange={(next) => void patchSettings({ max_team_size: next })}
+        />
+
+        <JudgingCriteriaPanel
+          criteria={criteria}
+          onChange={(key, nextValue) => void patchSettings({ [key]: nextValue })}
+        />
+
+        <TracksPanel activeTracks={activeTracks} onToggleTrack={handleToggleTrack} />
+
+        <AdminSessionPanel
+          username={sessionUser}
+          duration={formatDuration(durationNow - sessionStart)}
+          onLogout={handleLogout}
+        />
+
+        <JudgeAccountsPanel
+          judges={judges}
+          onCreate={handleCreateJudge}
+          onUpdate={handleUpdateJudge}
+          onDelete={handleDeleteJudge}
+        />
       </div>
     </>
   );

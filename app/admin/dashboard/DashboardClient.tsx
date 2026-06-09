@@ -1,11 +1,11 @@
 "use client";
 
 import { Check, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminShellConfig, type AdminMetric } from "../components/AdminShell";
 import { usePortalSettings } from "../components/PortalSettingsContext";
 import { HACKX_TRACKS, type AdminSubmission, type SubmissionStatus } from "@/lib/types";
-import { mockSubmissions } from "@/lib/mock";
+import { deleteAdminSubmission, fetchAdminSubmissions, updateAdminSubmission } from "@/lib/client/admin-api";
 import SubmissionViewOverlay, { type EditDraft } from "../components/SubmissionViewOverlay";
 import styles from "./Dashboard.module.css";
 
@@ -203,38 +203,94 @@ function RecentSubmissionsTable({ submissions, onView }: { submissions: AdminSub
 export default function DashboardClient({ initialState }: { initialState: DashboardState }) {
   const { submissionsOpen, allowResubmissions, toggleSubmissionsOpen, toggleAllowResubmissions } = usePortalSettings();
   const [data, setData] = useState<AdminSubmission[]>(
-    initialState === "empty" ? emptySubmissions : mockSubmissions
+    initialState === "empty" ? emptySubmissions : []
   );
+  const [loading, setLoading] = useState(initialState !== "empty");
+  const [error, setError] = useState("");
   const [viewingId, setViewingId] = useState<string | null>(null);
   const viewingSubmission = useMemo(() => data.find((s) => s.id === viewingId) ?? null, [data, viewingId]);
   const shellMetrics = useMemo(() => buildMetrics(data), [data]);
 
-  function handleApprove(id: string) {
-    setData((prev) => prev.map((s) => s.id === id ? { ...s, status: "approved" as SubmissionStatus } : s));
+  const loadSubmissions = useCallback(async () => {
+    if (initialState === "empty") {
+      setData(emptySubmissions);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      const payload = await fetchAdminSubmissions();
+      setData(payload.submissions);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load submissions.");
+    } finally {
+      setLoading(false);
+    }
+  }, [initialState]);
+
+  useEffect(() => {
+    void loadSubmissions();
+  }, [loadSubmissions]);
+
+  async function handleApprove(id: string) {
+    try {
+      await updateAdminSubmission(id, { status: "approved" });
+      setData((prev) => prev.map((s) => s.id === id ? { ...s, status: "approved" as SubmissionStatus } : s));
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : "Unable to approve submission.");
+    }
   }
 
-  function handleReject(id: string) {
-    setData((prev) => prev.map((s) => s.id === id ? { ...s, status: "rejected" as SubmissionStatus } : s));
+  async function handleReject(id: string) {
+    try {
+      await updateAdminSubmission(id, { status: "rejected" });
+      setData((prev) => prev.map((s) => s.id === id ? { ...s, status: "rejected" as SubmissionStatus } : s));
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : "Unable to reject submission.");
+    }
   }
 
-  function handleDelete(id: string) {
-    setViewingId(null);
-    setData((prev) => prev.filter((s) => s.id !== id));
+  async function handleDelete(id: string) {
+    try {
+      await deleteAdminSubmission(id);
+      setViewingId(null);
+      setData((prev) => prev.filter((s) => s.id !== id));
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Unable to delete submission.");
+    }
   }
 
-  function handleSave(id: string, draft: EditDraft) {
-    setData((prev) => prev.map((s) => s.id !== id ? s : {
-      ...s,
-      projectName:  draft.projectName,
-      track:        draft.track,
-      status:       draft.status,
-      githubUrl:    draft.githubUrl    || undefined,
-      liveUrl:      draft.liveUrl      || null,
-      pitchDeckUrl: draft.pitchDeckUrl || undefined,
-      videoDemoUrl: draft.videoDemoUrl || null,
-      description:  draft.description  || undefined,
-      shortPitch:   draft.shortPitch   || undefined,
-    }));
+  async function handleSave(id: string, draft: EditDraft) {
+    try {
+      await updateAdminSubmission(id, {
+        projectName: draft.projectName,
+        track: draft.track,
+        status: draft.status,
+        githubUrl: draft.githubUrl,
+        liveUrl: draft.liveUrl,
+        pitchDeckUrl: draft.pitchDeckUrl,
+        videoDemoUrl: draft.videoDemoUrl,
+        description: draft.description,
+        shortPitch: draft.shortPitch,
+      });
+
+      setData((prev) => prev.map((s) => s.id !== id ? s : {
+        ...s,
+        projectName:  draft.projectName,
+        track:        draft.track,
+        status:       draft.status,
+        githubUrl:    draft.githubUrl    || undefined,
+        liveUrl:      draft.liveUrl      || null,
+        pitchDeckUrl: draft.pitchDeckUrl || undefined,
+        videoDemoUrl: draft.videoDemoUrl || null,
+        description:  draft.description  || undefined,
+        shortPitch:   draft.shortPitch   || undefined,
+      }));
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Unable to save submission.");
+    }
   }
 
   return (
@@ -243,7 +299,7 @@ export default function DashboardClient({ initialState }: { initialState: Dashbo
 
       <header className={styles.contentHeader}>
         <h2>&gt; DASHBOARD_OVERVIEW</h2>
-        <p>{"// REAL-TIME SUBMISSION STATUS"}</p>
+        <p>{error ? `// ${error.toUpperCase()}` : (loading ? "// LOADING LIVE SUBMISSIONS" : "// REAL-TIME SUBMISSION STATUS")}</p>
       </header>
 
       <div className={styles.dashboardGrid}>

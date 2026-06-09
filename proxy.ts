@@ -1,38 +1,68 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { PORTAL_SESSION_COOKIE, readSessionFromCookies, sessionCookieOptions } from "@/lib/auth/session";
 
-/**
- * Proxy — Next.js 16's renamed `middleware` (a file named `middleware.ts` will
- * NOT run in Next 16). Runs on the server before the admin + judge portal routes
- * render, and is the single place portal access should be enforced.
- *
- * SCAFFOLD ONLY — this enforces nothing yet. Login is currently a mock
- * (app/components/portal/PortalLogin.tsx) with no real session to validate, so
- * every matched request is passed straight through.
- *
- * TODO(auth): once real auth exists, accept `request: NextRequest`, validate the
- * session + role, and redirect unauthenticated users to the matching login page:
- *
- *   import type { NextRequest } from "next/server";
- *   export async function proxy(request: NextRequest) {
- *     const { pathname } = request.nextUrl;
- *     const isLogin = pathname === "/admin/login" || pathname === "/judge/login";
- *     const session = await getSession(request);            // real check
- *     if (!isLogin && !session) {
- *       const portal = pathname.startsWith("/admin") ? "admin" : "judge";
- *       return NextResponse.redirect(new URL(`/${portal}/login`, request.url));
- *     }
- *     return NextResponse.next();
- *   }
- *
- * A proxy matcher is NOT a substitute for per-request checks — also validate
- * auth inside any route handler / Server Action that reads or mutates data.
- */
-export function proxy() {
+function redirectTo(path: string, request: NextRequest, clearSession = false) {
+  const response = NextResponse.redirect(new URL(path, request.url));
+  if (clearSession) {
+    response.cookies.set(PORTAL_SESSION_COOKIE, "", sessionCookieOptions(0));
+  }
+  return response;
+}
+
+export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const session = readSessionFromCookies(request.cookies);
+
+  const isAdmin = pathname.startsWith("/admin");
+  const isJudge = pathname.startsWith("/judge");
+  const isAdminLogin = pathname === "/admin/login";
+  const isJudgeLogin = pathname === "/judge/login";
+
+  if (!isAdmin && !isJudge) return NextResponse.next();
+
+  if (pathname === "/admin") {
+    if (!session) return redirectTo("/admin/login", request);
+    return session.role === "admin"
+      ? redirectTo("/admin/dashboard", request)
+      : redirectTo("/judge/dashboard", request, true);
+  }
+
+  if (pathname === "/judge") {
+    if (!session) return redirectTo("/judge/login", request);
+    return session.role === "judge"
+      ? redirectTo("/judge/dashboard", request)
+      : redirectTo("/admin/dashboard", request, true);
+  }
+
+  if (isAdminLogin) {
+    if (!session) return NextResponse.next();
+    return session.role === "admin"
+      ? redirectTo("/admin/dashboard", request)
+      : redirectTo("/judge/dashboard", request);
+  }
+
+  if (isJudgeLogin) {
+    if (!session) return NextResponse.next();
+    return session.role === "judge"
+      ? redirectTo("/judge/dashboard", request)
+      : redirectTo("/admin/dashboard", request);
+  }
+
+  if (isAdmin) {
+    if (!session) return redirectTo("/admin/login", request);
+    if (session.role !== "admin") return redirectTo("/judge/login", request, true);
+    return NextResponse.next();
+  }
+
+  if (isJudge) {
+    if (!session) return redirectTo("/judge/login", request);
+    if (session.role !== "judge") return redirectTo("/admin/login", request, true);
+    return NextResponse.next();
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  // Run only on the protected portals. Login pages are matched too for now;
-  // exclude or special-case them when the redirect logic above is added.
   matcher: ["/admin/:path*", "/judge/:path*"],
 };

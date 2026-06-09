@@ -1,11 +1,10 @@
 /* eslint-disable react/jsx-no-comment-textnodes */
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import type { JudgeProject } from "@/lib/types";
-import { MOCK_JUDGE_PROJECTS } from "@/lib/mock";
 import { C, FM, FB, SPRING, SHADOW, SHADOW_LG, RESPONSIVE_CSS } from "./constants";
 import { CRITERIA, makeBlankScore, calcLiveTotal, isFieldInvalid, type CriterionKey } from "./scoring";
 import type { ScoreEntry } from "./types";
@@ -13,7 +12,25 @@ import { PlaceholderThumb, RedBar } from "./components/atoms";
 import { ScoringPanel } from "./components/ScoringPanel";
 import { OverlayModal } from "./components/OverlayModal";
 
-const TRACKS = ["ALL", ...Array.from(new Set(MOCK_JUDGE_PROJECTS.map(p => p.track)))];
+type JudgeProjectsResponse = {
+  projects: JudgeProject[];
+  savedScores: Record<
+    string,
+    {
+      technical_execution: number | null;
+      problem_solution_fit: number | null;
+      innovation_creativity: number | null;
+      presentation_quality: number | null;
+      private_comment: string | null;
+      total: number | null;
+    }
+  >;
+  session: {
+    username: string;
+    role: "judge";
+  };
+  submissionStatusOpen: boolean;
+};
 
 export default function JudgeDashboardClient() {
   const router = useRouter();
@@ -21,22 +38,120 @@ export default function JudgeDashboardClient() {
   const [overlayProject, setOverlayProject] = useState<JudgeProject | null>(null);
   const [activeTrack,    setActiveTrack]    = useState<string>("ALL");
   const [mobileNavOpen,  setMobileNavOpen]  = useState(false);
-  const [scores,         setScores]         = useState<Record<string, ScoreEntry>>(
-    Object.fromEntries(MOCK_JUDGE_PROJECTS.map(p => [p.id, makeBlankScore()]))
+  const [projectsData,   setProjectsData]   = useState<JudgeProject[]>([]);
+  const [scores,         setScores]         = useState<Record<string, ScoreEntry>>({});
+  const [sessionUser,    setSessionUser]    = useState("judge");
+  const [submissionOpen, setSubmissionOpen] = useState(true);
+  const [loading,        setLoading]        = useState(true);
+  const [loadError,      setLoadError]      = useState("");
+
+  const TRACKS = useMemo(
+    () => ["ALL", ...Array.from(new Set(projectsData.map((project) => project.track)))],
+    [projectsData]
   );
 
+  const loadProjects = useCallback(async () => {
+    setLoading(true);
+    setLoadError("");
+
+    try {
+      const response = await fetch("/api/judge/projects", { cache: "no-store" });
+      const payload = (await response.json()) as Partial<JudgeProjectsResponse> & { error?: string };
+      if (!response.ok) {
+        setLoadError(payload.error ?? "Unable to load projects.");
+        if (response.status === 401 || response.status === 403) {
+          router.replace("/judge/login");
+        }
+        return;
+      }
+
+      const projects = Array.isArray(payload.projects) ? payload.projects : [];
+      const savedScores = payload.savedScores ?? {};
+      const mergedScores: Record<string, ScoreEntry> = {};
+
+      for (const project of projects) {
+        const saved = savedScores[project.id];
+        mergedScores[project.id] = {
+          techExec: saved?.technical_execution != null ? String(saved.technical_execution) : "",
+          problemSolution: saved?.problem_solution_fit != null ? String(saved.problem_solution_fit) : "",
+          innovation: saved?.innovation_creativity != null ? String(saved.innovation_creativity) : "",
+          presentation: saved?.presentation_quality != null ? String(saved.presentation_quality) : "",
+          comment: saved?.private_comment ?? "",
+          saved: typeof saved?.total === "number",
+          savedTotal: typeof saved?.total === "number" ? saved.total : 0,
+        };
+      }
+
+      setProjectsData(projects);
+      setScores(mergedScores);
+      if (typeof payload.session?.username === "string" && payload.session.username) {
+        setSessionUser(payload.session.username);
+      }
+      if (typeof payload.submissionStatusOpen === "boolean") {
+        setSubmissionOpen(payload.submissionStatusOpen);
+      }
+    } catch {
+      setLoadError("Unable to reach the judge API.");
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    void loadProjects();
+  }, [loadProjects]);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // Ignore network failures and force logout navigation.
+    }
+    router.replace("/judge/login");
+  }, [router]);
+
   function updateScore(projectId: string, field: string, value: string) {
-    setScores(prev => ({ ...prev, [projectId]: { ...prev[projectId], [field]: value, saved: false } }));
-  }
-  function saveScore(projectId: string) {
-    const s = scores[projectId];
-    if (CRITERIA.some(c => isFieldInvalid(s[c.key as CriterionKey], c.max))) return;
-    const total = calcLiveTotal(s);
-    setScores(prev => ({ ...prev, [projectId]: { ...prev[projectId], saved: true, savedTotal: total } }));
+    setScores((prev) => {
+      const base = prev[projectId] ?? makeBlankScore();
+      return { ...prev, [projectId]: { ...base, [field]: value, saved: false } };
+    });
   }
 
-  const projects    = activeTrack === "ALL" ? MOCK_JUDGE_PROJECTS : MOCK_JUDGE_PROJECTS.filter(p => p.track === activeTrack);
-  const scoredCount = MOCK_JUDGE_PROJECTS.filter(p => scores[p.id]?.saved).length;
+  async function saveScore(projectId: string) {
+    const score = scores[projectId] ?? makeBlankScore();
+    if (CRITERIA.some((criterion) => isFieldInvalid(score[criterion.key as CriterionKey], criterion.max))) {
+      return;
+    }
+
+    const response = await fetch(`/api/judge/scores/${projectId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        techExec: score.techExec,
+        problemSolution: score.problemSolution,
+        innovation: score.innovation,
+        presentation: score.presentation,
+        comment: score.comment,
+      }),
+    });
+
+    const payload = await response.json().catch(() => ({} as { error?: string; total?: number }));
+    if (!response.ok) {
+      setLoadError(payload.error ?? "Unable to save score.");
+      return;
+    }
+
+    const total = typeof payload.total === "number" ? payload.total : calcLiveTotal(score);
+    setScores((prev) => ({
+      ...prev,
+      [projectId]: { ...(prev[projectId] ?? makeBlankScore()), saved: true, savedTotal: total },
+    }));
+  }
+
+  const projects = activeTrack === "ALL"
+    ? projectsData
+    : projectsData.filter((project) => project.track === activeTrack);
+  const scoredCount = projectsData.filter((project) => scores[project.id]?.saved).length;
 
   return (
     <div style={{ minHeight: "100vh", background: C.pageBg, display: "flex", flexDirection: "column" }}>
@@ -62,10 +177,10 @@ export default function JudgeDashboardClient() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
           <span className="r-topbar-status" style={{ fontFamily: FM, fontSize: 11, color: C.muted, whiteSpace: "nowrap" }}>
-            SUBMISSION: <span style={{ color: C.red }}>OPEN</span>
+            SUBMISSION: <span style={{ color: C.red }}>{submissionOpen ? "OPEN" : "CLOSED"}</span>
           </span>
-          <span className="r-topbar-email" style={{ fontFamily: FM, fontSize: 11, color: C.muted, whiteSpace: "nowrap" }}>&gt; judge_XX</span>
-          <motion.button className="r-topbar-logout" onClick={() => router.push("/judge/login")} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} transition={SPRING}
+          <span className="r-topbar-email" style={{ fontFamily: FM, fontSize: 11, color: C.muted, whiteSpace: "nowrap" }}>&gt; {sessionUser}</span>
+          <motion.button className="r-topbar-logout" onClick={handleLogout} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} transition={SPRING}
             style={{ height: 24, padding: "0 10px", background: "transparent", border: `1px solid ${C.red}`, fontFamily: FM, fontSize: 11, color: C.red, cursor: "pointer", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
             LOGOUT
           </motion.button>
@@ -146,8 +261,13 @@ export default function JudgeDashboardClient() {
             <div style={{ fontFamily: FM, fontSize: 13, color: C.red, letterSpacing: "0.06em", marginBottom: 3 }}>&gt; SCORE_PROJECTS</div>
             <div style={{ fontFamily: FM, fontSize: 10, color: C.muted, letterSpacing: "0.06em", marginBottom: 3 }}>// JUDGE VIEW — SCORE APPROVED SUBMISSIONS</div>
             <div style={{ fontFamily: FM, fontSize: 10, color: C.muted, letterSpacing: "0.04em" }}>
-              SCORED: <span style={{ color: C.white, fontWeight: 700 }}>{scoredCount}</span> / {MOCK_JUDGE_PROJECTS.length} PROJECTS
+              SCORED: <span style={{ color: C.white, fontWeight: 700 }}>{scoredCount}</span> / {projectsData.length} PROJECTS
             </div>
+            {loadError ? (
+              <div style={{ fontFamily: FM, fontSize: 10, color: C.red, letterSpacing: "0.04em", marginTop: 4 }}>
+                // {loadError.toUpperCase()}
+              </div>
+            ) : null}
           </div>
 
           {/* Project list */}
@@ -194,7 +314,11 @@ export default function JudgeDashboardClient() {
               </span>
             </div>
 
-            {projects.length === 0 ? (
+            {loading ? (
+              <div style={{ fontFamily: FM, fontSize: 12, color: C.muted, textAlign: "center", paddingTop: 40, letterSpacing: "0.06em" }}>
+                [ LOADING PROJECTS... ]
+              </div>
+            ) : projects.length === 0 ? (
               <div style={{ fontFamily: FM, fontSize: 12, color: C.muted, textAlign: "center", paddingTop: 40, letterSpacing: "0.06em" }}>
                 [ NO APPROVED SUBMISSIONS TO SCORE YET ]
               </div>
@@ -358,7 +482,7 @@ export default function JudgeDashboardClient() {
               {/* Footer — logout */}
               <div style={{ flexShrink: 0, padding: "16px 20px", borderTop: `1px solid #2a2a2a` }}>
                 <motion.button
-                  onClick={() => router.push("/judge/login")}
+                  onClick={handleLogout}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   transition={SPRING}

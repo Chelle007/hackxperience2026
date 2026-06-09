@@ -35,7 +35,6 @@ export default function PortalLogin({ defaultRole }: PortalLoginProps) {
   const [loading,  setLoading]  = useState(false);
 
   const isAdmin     = defaultRole === "admin";
-  const portalLabel = isAdmin ? "ADMIN PORTAL" : "JUDGE PORTAL";
   const idLabel     = isAdmin ? "admin_id" : "judge_id";
   const pwLabel     = isAdmin ? "admin_password" : "judge_password";
   const dashRoute   = isAdmin ? "/admin/dashboard" : "/judge/dashboard";
@@ -52,10 +51,31 @@ export default function PortalLogin({ defaultRole }: PortalLoginProps) {
       setError("// ERROR: all fields required");
       return;
     }
+
     setLoading(true);
-    await new Promise<void>((r) => setTimeout(r, 800));
-    setLoading(false);
-    router.push(dashRoute);
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role: defaultRole,
+          username: userId.trim(),
+          password,
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({} as { error?: string; redirectTo?: string }));
+      if (!response.ok) {
+        setError(`// ERROR: ${payload.error ?? "authentication failed"}`);
+        return;
+      }
+
+      router.replace(payload.redirectTo ?? dashRoute);
+    } catch {
+      setError("// ERROR: network failure, try again");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -176,7 +196,7 @@ export default function PortalLogin({ defaultRole }: PortalLoginProps) {
                   letterSpacing: "0.02em",
                 }}
               >
-                // HACKXPERIENCE 2026
+                {"// HACKXPERIENCE 2026"}
               </span>
               <motion.button
                 onClick={() => router.push("/")}
@@ -239,7 +259,7 @@ export default function PortalLogin({ defaultRole }: PortalLoginProps) {
                 letterSpacing: "0.02em",
               }}
             >
-              // RESTRICTED ACCESS — AUTHORISED PERSONNEL ONLY
+              {"// RESTRICTED ACCESS — AUTHORISED PERSONNEL ONLY"}
             </p>
           </div>
 

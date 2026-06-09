@@ -38,6 +38,7 @@ export interface SubmissionRow {
   status: DbSubmissionStatus;
   submitted_at: string;
   updated_at: string;
+  is_draft?: boolean | null;
   project_name: string;
   team_id: string;
   track: string;
@@ -52,6 +53,9 @@ export interface SubmissionRow {
   demo_video_url: string | null;
   members: TeamMember[];
   notes: string | null;
+  admin_notes?: string | null;
+  rejection_reason?: string | null;
+  lead_email?: string | null;
 }
 
 /**

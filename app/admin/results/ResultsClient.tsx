@@ -1,13 +1,11 @@
 "use client";
 
 import { Download } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminShellConfig, type AdminMetric } from "../components/AdminShell";
 import type { AdminSubmission } from "@/lib/types";
-import { mockSubmissions } from "@/lib/mock";
+import { fetchAdminSubmissions } from "@/lib/client/admin-api";
 import styles from "./Results.module.css";
-
-const judgeIds = ["judge1", "judge2", "judge3"];
 
 function buildMetrics(submissions: AdminSubmission[]): AdminMetric[] {
   const pending = submissions.filter((submission) => submission.status === "pending").length;
@@ -80,7 +78,7 @@ function escapeCsv(value: string) {
   return `"${value.replace(/"/g, '""')}"`;
 }
 
-function buildCsv(submissions: AdminSubmission[]) {
+function buildCsv(submissions: AdminSubmission[], judgeIds: string[]) {
   const header = ["Project", "Team", ...judgeIds.map((judgeId) => judgeId.toUpperCase()), "Average Score"];
   const rows = submissions.map((submission) => [
     submission.projectName,
@@ -95,11 +93,33 @@ function buildCsv(submissions: AdminSubmission[]) {
 }
 
 export default function ResultsClient() {
+  const [data, setData] = useState<AdminSubmission[]>([]);
+  const [judgeIds, setJudgeIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [exportState, setExportState] = useState("");
-  const shellMetrics = useMemo(() => buildMetrics(mockSubmissions), []);
+  const shellMetrics = useMemo(() => buildMetrics(data), [data]);
+
+  const loadResults = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const payload = await fetchAdminSubmissions();
+      setData(payload.submissions);
+      setJudgeIds(payload.judgeIds);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load aggregate scores.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadResults();
+  }, [loadResults]);
 
   function exportScoresCsv() {
-    const csv = buildCsv(mockSubmissions);
+    const csv = buildCsv(data, judgeIds);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -118,7 +138,7 @@ export default function ResultsClient() {
       <header className={styles.contentHeader}>
         <div>
           <h2>&gt; AGGREGATE_SCORES</h2>
-          <p>{"// VIEW JUDGES SCORES & AVERAGES"}</p>
+          <p>{error ? `// ${error.toUpperCase()}` : (loading ? "// LOADING JUDGES SCORES" : "// VIEW JUDGES SCORES & AVERAGES")}</p>
         </div>
         <button type="button" className={styles.exportButton} onClick={exportScoresCsv}>
           <Download aria-hidden="true" />
@@ -136,7 +156,7 @@ export default function ResultsClient() {
           ))}
           <div className={styles.tableHead}>AVERAGE_SCORE</div>
 
-          {mockSubmissions.map((submission) => {
+          {data.map((submission) => {
             const average = scoredAverage(submission);
 
             return (
