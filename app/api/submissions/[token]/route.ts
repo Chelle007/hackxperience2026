@@ -26,7 +26,8 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 // PUT /api/submissions/[token] — update a submission by edit token
 export async function PUT(req: NextRequest, { params }: RouteContext) {
   const { token } = await params;
-  const body = await req.json();
+  const body = (await req.json().catch(() => null)) ?? {};
+  const isDraft = typeof body?.isDraft === "boolean" ? body.isDraft : undefined;
 
   const { data, error } = await supabaseServer
     .from("submissions")
@@ -45,6 +46,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       demo_video_url:        body.demoVideoUrl || null,
       members:               body.members ?? [],
       notes:                 body.notes || null,
+      ...(typeof isDraft === "boolean" ? { is_draft: isDraft } : {}),
     })
     .eq("edit_token", token)
     .select("id, edit_token")
@@ -63,6 +65,7 @@ function dbToForm(row: SubmissionRow): Submission {
     id:               row.id,
     editToken:        row.edit_token,
     status:           row.status,
+    isDraft:          row.is_draft ?? true,
     submittedAt:      row.submitted_at,
     updatedAt:        row.updated_at,
     // form fields

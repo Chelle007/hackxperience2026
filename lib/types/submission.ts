@@ -7,7 +7,10 @@ export type HackxTrack = (typeof HACKX_TRACKS)[number];
 
 /** A single team member on a submission. */
 export type TeamMember = {
+  id?: string;
   name: string;
+  studentId?: string;
+  role?: string;
   email: string;
 };
 
@@ -67,6 +70,7 @@ export interface Submission {
   id: string;
   editToken: string;
   status: DbSubmissionStatus;
+  isDraft?: boolean;
   submittedAt: string;
   updatedAt: string;
   // Identity
@@ -98,6 +102,7 @@ export interface JudgeProject {
   name: string;
   teamId: string;
   teamName: string;
+  thumbnailUrl?: string | null;
   category: string;
   track: string;
   description: string;
@@ -124,6 +129,7 @@ export type AdminSubmission = {
   id: string;
   projectName: string;
   teamName: string;
+  thumbnailUrl?: string | null;
   track: string;
   status: SubmissionStatus;
   submittedAt: string;

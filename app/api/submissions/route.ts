@@ -3,7 +3,8 @@ import { supabaseServer } from "@/lib/supabase-server";
 
 // POST /api/submissions — create a new submission
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const body = (await req.json().catch(() => null)) ?? {};
+  const isDraft = typeof body?.isDraft === "boolean" ? body.isDraft : true;
 
   const { data, error } = await supabaseServer
     .from("submissions")
@@ -22,6 +23,7 @@ export async function POST(req: NextRequest) {
       demo_video_url:        body.demoVideoUrl || null,
       members:               body.members ?? [],
       notes:                 body.notes || null,
+      is_draft:              isDraft,
     })
     .select("id, edit_token")
     .single();

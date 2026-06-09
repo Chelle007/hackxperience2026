@@ -149,11 +149,21 @@ export default function SubmissionViewOverlay({
               <div className={styles.body}>
 
                 <div className={styles.thumbnail}>
-                  <svg className={styles.thumbnailSvg} xmlns="http://www.w3.org/2000/svg">
-                    <line x1="0" y1="0" x2="100%" y2="100%" stroke="rgba(204,0,0,0.06)" strokeWidth="1.5" />
-                    <line x1="100%" y1="0" x2="0" y2="100%" stroke="rgba(204,0,0,0.06)" strokeWidth="1.5" />
-                  </svg>
-                  <span className={styles.thumbnailLabel}>[ PROJECT THUMBNAIL ]</span>
+                  {submission.thumbnailUrl ? (
+                    <img
+                      src={submission.thumbnailUrl}
+                      alt={`${submission.projectName} thumbnail`}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                    />
+                  ) : (
+                    <>
+                      <svg className={styles.thumbnailSvg} xmlns="http://www.w3.org/2000/svg">
+                        <line x1="0" y1="0" x2="100%" y2="100%" stroke="rgba(204,0,0,0.06)" strokeWidth="1.5" />
+                        <line x1="100%" y1="0" x2="0" y2="100%" stroke="rgba(204,0,0,0.06)" strokeWidth="1.5" />
+                      </svg>
+                      <span className={styles.thumbnailLabel}>[ PROJECT THUMBNAIL ]</span>
+                    </>
+                  )}
                 </div>
 
                 {submission.projectAccessKey ? (
@@ -273,6 +283,8 @@ export default function SubmissionViewOverlay({
                               <div className={styles.memberInfo}>
                                 <div className={styles.memberName}>{member.name}</div>
                                 <div className={styles.memberEmail}>{member.email}</div>
+                                {member.role ? <div className={styles.memberEmail}>ROLE: {member.role}</div> : null}
+                                {member.studentId ? <div className={styles.memberEmail}>STUDENT ID: {member.studentId}</div> : null}
                               </div>
                             </div>
                             {i < submission.members!.length - 1 ? (

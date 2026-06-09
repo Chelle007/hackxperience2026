@@ -58,13 +58,23 @@ export function OverlayModal({ project, onClose }: { project: JudgeProject; onCl
         >
           {/* Thumbnail */}
           <div style={{ width: "100%", aspectRatio: "16/9", background: "rgba(200,190,180,0.05)", border: `1px solid ${C.darkRed}`, position: "relative", overflow: "hidden", flexShrink: 0 }}>
-            <svg width="100%" height="100%" style={{ position: "absolute" }}>
-              <line x1="0" y1="0" x2="100%" y2="100%" stroke="rgba(204,0,0,0.07)" strokeWidth="1" />
-              <line x1="100%" y1="0" x2="0" y2="100%" stroke="rgba(204,0,0,0.07)" strokeWidth="1" />
-            </svg>
-            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ fontFamily: FM, fontSize: 11, color: C.muted, letterSpacing: "0.1em" }}>[ PROJECT THUMBNAIL ]</span>
-            </div>
+            {project.thumbnailUrl ? (
+              <img
+                src={project.thumbnailUrl}
+                alt={`${project.name} thumbnail`}
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              />
+            ) : (
+              <>
+                <svg width="100%" height="100%" style={{ position: "absolute" }}>
+                  <line x1="0" y1="0" x2="100%" y2="100%" stroke="rgba(204,0,0,0.07)" strokeWidth="1" />
+                  <line x1="100%" y1="0" x2="0" y2="100%" stroke="rgba(204,0,0,0.07)" strokeWidth="1" />
+                </svg>
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ fontFamily: FM, fontSize: 11, color: C.muted, letterSpacing: "0.1em" }}>[ PROJECT THUMBNAIL ]</span>
+                </div>
+              </>
+            )}
           </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
@@ -121,6 +131,16 @@ export function OverlayModal({ project, onClose }: { project: JudgeProject; onCl
                   <div>
                     <div style={{ fontFamily: FM, fontSize: 13, color: C.offWhite }}>{m.name}</div>
                     <div style={{ fontFamily: FM, fontSize: 11, color: C.muted2, marginTop: 2, wordBreak: "break-all" }}>{m.email.toUpperCase()}</div>
+                    {m.role ? (
+                      <div style={{ fontFamily: FM, fontSize: 11, color: C.muted2, marginTop: 2 }}>
+                        ROLE: {m.role.toUpperCase()}
+                      </div>
+                    ) : null}
+                    {m.studentId ? (
+                      <div style={{ fontFamily: FM, fontSize: 11, color: C.muted2, marginTop: 2, wordBreak: "break-all" }}>
+                        STUDENT ID: {m.studentId.toUpperCase()}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
                 {i < project.members.length - 1 && <Divider />}

@@ -7,6 +7,11 @@ import {
   type JudgeIdentifier,
   type JudgeScoreRow,
 } from "@/lib/server/portal-data";
+import {
+  normalizeJudgeScoreRows,
+  resolveJudgeScoresIdColumn,
+  selectJudgeScoresColumns,
+} from "@/lib/server/judge-scores";
 import { usernameFromSupabaseEmail } from "@/lib/auth/portal-identity";
 import type { SubmissionRow } from "@/lib/types";
 
@@ -61,6 +66,16 @@ export async function GET(request: NextRequest) {
   const auth = requireRole(request, "admin");
   if (!auth.ok) return auth.response;
 
+  let judgeScoreIdColumn: Awaited<ReturnType<typeof resolveJudgeScoresIdColumn>>;
+  try {
+    judgeScoreIdColumn = await resolveJudgeScoresIdColumn();
+  } catch (columnError) {
+    return NextResponse.json(
+      { error: columnError instanceof Error ? columnError.message : "Unable to resolve judge score column." },
+      { status: 500 },
+    );
+  }
+
   const [submissionsResult, scoreRowsResult, judgeRolesResult] = await Promise.all([
     supabaseServer
       .from("submissions")
@@ -68,7 +83,7 @@ export async function GET(request: NextRequest) {
       .order("submitted_at", { ascending: false }),
     supabaseServer
       .from("judges_scores")
-      .select("judges_id,submission_id,technical_execution,problem_solution_fit,innovation_creativity,presentation_quality,private_comment"),
+      .select(selectJudgeScoresColumns(judgeScoreIdColumn)),
     supabaseServer
       .from("user_roles")
       .select("id,user_id,role")
@@ -84,7 +99,10 @@ export async function GET(request: NextRequest) {
   }
 
   const submissions = (submissionsResult.data ?? []) as SubmissionRow[];
-  const scoreRows = (scoreRowsResult.data ?? []) as JudgeScoreRow[];
+  const scoreRows = normalizeJudgeScoreRows(
+    (scoreRowsResult.data ?? []) as unknown as Record<string, unknown>[],
+    judgeScoreIdColumn,
+  ) as JudgeScoreRow[];
 
   const scoreRowsBySubmission = new Map<string, JudgeScoreRow[]>();
   for (const row of scoreRows) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { normalizePortalUsername, toSupabaseAuthEmail, usernameFromSupabaseEmail } from "@/lib/auth/portal-identity";
 import { requireRole } from "@/lib/auth/route-guard";
 import { supabaseServer } from "@/lib/supabase-server";
+import { resolveJudgeScoresIdColumn } from "@/lib/server/judge-scores";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -165,10 +166,20 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: roleDeleteError.message }, { status: 500 });
   }
 
+  let judgeScoreIdColumn: Awaited<ReturnType<typeof resolveJudgeScoresIdColumn>>;
+  try {
+    judgeScoreIdColumn = await resolveJudgeScoresIdColumn();
+  } catch (columnError) {
+    return NextResponse.json(
+      { error: columnError instanceof Error ? columnError.message : "Unable to resolve judge score column." },
+      { status: 500 },
+    );
+  }
+
   const scoreDelete = await supabaseServer
     .from("judges_scores")
     .delete()
-    .eq("judges_id", toDatabaseRoleId(judgeId));
+    .eq(judgeScoreIdColumn, toDatabaseRoleId(judgeId));
 
   if (scoreDelete.error && !isMissingTableError(scoreDelete.error)) {
     return NextResponse.json({ error: scoreDelete.error.message }, { status: 500 });

@@ -107,6 +107,61 @@ function deserializeForm(stored: SerializableForm): FormState {
   };
 }
 
+function hasAnyDraftInput(form: FormState) {
+  if (
+    form.projectName.trim() ||
+    form.teamId.trim() ||
+    form.track.trim() ||
+    form.description.trim() ||
+    form.pitch.trim() ||
+    form.githubRepoUrl.trim() ||
+    form.liveDemoUrl.trim() ||
+    form.pitchDeckShareUrl.trim() ||
+    form.demoVideoUrl.trim() ||
+    form.notes.trim()
+  ) {
+    return true;
+  }
+
+  if (form.techStack.length > 0) return true;
+  if (form.pitchDeckFile || form.thumbnailFile) return true;
+
+  return form.members.some(
+    (member) =>
+      member.name.trim() ||
+      member.studentId.trim() ||
+      member.role.trim() ||
+      member.email.trim(),
+  );
+}
+
+const DRAFT_PLACEHOLDER_TEXT = "[DRAFT]";
+const DRAFT_PLACEHOLDER_URL = "https://example.com/draft";
+
+function buildDraftPayload({
+  form,
+  fallbackTeamId,
+  fallbackTrack,
+}: {
+  form: FormState;
+  fallbackTeamId: string;
+  fallbackTrack: string;
+}) {
+  const serialized = serializeForm(form);
+
+  return {
+    ...serialized,
+    projectName: serialized.projectName.trim() || DRAFT_PLACEHOLDER_TEXT,
+    teamId: serialized.teamId.trim() || fallbackTeamId,
+    track: serialized.track.trim() || fallbackTrack,
+    description: serialized.description.trim() || DRAFT_PLACEHOLDER_TEXT,
+    pitch: serialized.pitch.trim() || DRAFT_PLACEHOLDER_TEXT,
+    githubRepoUrl: serialized.githubRepoUrl.trim() || DRAFT_PLACEHOLDER_URL,
+    pitchDeckShareUrl: serialized.pitchDeckShareUrl.trim() || DRAFT_PLACEHOLDER_URL,
+    isDraft: true,
+  };
+}
+
 function isValidUrl(url: string): boolean {
   if (!url?.trim()) return false;
   try { new URL(url); return true; } catch { return false; }
@@ -1369,6 +1424,8 @@ export default function SubmitPage() {
   const [thumbnailUploadError, setThumbnailUploadError] = useState<string | null>(null);
   const [pitchDeckUploadError, setPitchDeckUploadError] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const draftFallbackTeamIdRef = useRef(`draft_${Math.random().toString(36).slice(2, 12)}`);
+  const draftSyncInFlightRef = useRef(false);
 
   const maxTeamSize = settings.max_team_size;
   const maxFileSizeMb = settings.max_file_size;
@@ -1393,9 +1450,13 @@ export default function SubmitPage() {
           } else {
             setForm(deserializeForm(data));
             setEditToken(storedToken);
+            const isDraftFromDb = Boolean((data as { isDraft?: unknown }).isDraft);
             if (urlToken) {
               setView("form");
               setIsEditing(true);
+            } else if (isDraftFromDb) {
+              setView("form");
+              setHasDraft(true);
             } else {
               setSubmitted(true);
             }
@@ -1461,6 +1522,49 @@ export default function SubmitPage() {
     }, 1500);
     return () => clearTimeout(id);
   }, [form, step, maxReached, submitted]);
+
+  // Database draft sync:
+  // - creates a draft row as soon as user starts filling fields (is_draft = true)
+  // - keeps updating that draft row while user is working
+  useEffect(() => {
+    if (submitted || isEditing || isMountLoading || view !== "form" || isSubmitting) return;
+    if (!hasAnyDraftInput(form)) return;
+
+    const fallbackTrack = trackOptions[0] ?? TRACKS[0] ?? "Open Innovation";
+    const draftPayload = buildDraftPayload({
+      form,
+      fallbackTeamId: draftFallbackTeamIdRef.current,
+      fallbackTrack,
+    });
+
+    const timeoutId = setTimeout(async () => {
+      if (draftSyncInFlightRef.current) return;
+      draftSyncInFlightRef.current = true;
+
+      try {
+        const url = editToken ? `/api/submissions/${editToken}` : "/api/submissions";
+        const method = editToken ? "PUT" : "POST";
+
+        const response = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(draftPayload),
+        });
+
+        if (!response.ok) return;
+        const result = (await response.json().catch(() => ({}))) as { editToken?: string };
+
+        if (!editToken && typeof result.editToken === "string" && result.editToken) {
+          setEditToken(result.editToken);
+          localStorage.setItem("hx26_edit_token", result.editToken);
+        }
+      } finally {
+        draftSyncInFlightRef.current = false;
+      }
+    }, 900);
+
+    return () => clearTimeout(timeoutId);
+  }, [editToken, form, isEditing, isMountLoading, isSubmitting, submitted, trackOptions, view]);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -1530,6 +1634,7 @@ export default function SubmitPage() {
         ...serializeForm(form),
         thumbnailUrl,
         pitchDeckUploadUrl,
+        isDraft: false,
       };
 
       // 3. POST (create) or PUT (update)

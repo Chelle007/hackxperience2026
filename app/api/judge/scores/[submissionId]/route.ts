@@ -3,6 +3,11 @@ import { requireRole } from "@/lib/auth/route-guard";
 import { verifyRoleMapping } from "@/lib/auth/role-mapping";
 import { supabaseServer } from "@/lib/supabase-server";
 import { totalScore, type JudgeScoreRow } from "@/lib/server/portal-data";
+import {
+  normalizeJudgeScoreRows,
+  resolveJudgeScoresIdColumn,
+  selectJudgeScoresColumns,
+} from "@/lib/server/judge-scores";
 
 type RouteContext = {
   params: Promise<{ submissionId: string }>;
@@ -32,6 +37,16 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
   });
   if (!roleCheck.ok) {
     return NextResponse.json({ error: roleCheck.error }, { status: roleCheck.status });
+  }
+
+  let judgeScoreIdColumn: Awaited<ReturnType<typeof resolveJudgeScoresIdColumn>>;
+  try {
+    judgeScoreIdColumn = await resolveJudgeScoresIdColumn();
+  } catch (columnError) {
+    return NextResponse.json(
+      { error: columnError instanceof Error ? columnError.message : "Unable to resolve judge score column." },
+      { status: 500 },
+    );
   }
 
   const { submissionId } = await params;
@@ -84,29 +99,34 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Submission is not available for scoring." }, { status: 404 });
   }
 
+  const upsertPayload = {
+    [judgeScoreIdColumn]: auth.session.userId,
+    submission_id: submissionId,
+    technical_execution: technicalExecution,
+    problem_solution_fit: problemSolutionFit,
+    innovation_creativity: innovationCreativity,
+    presentation_quality: presentationQuality,
+    private_comment: privateComment,
+  };
+
   const { data, error } = await supabaseServer
     .from("judges_scores")
-    .upsert(
-      {
-        judges_id: auth.session.userId,
-        submission_id: submissionId,
-        technical_execution: technicalExecution,
-        problem_solution_fit: problemSolutionFit,
-        innovation_creativity: innovationCreativity,
-        presentation_quality: presentationQuality,
-        private_comment: privateComment,
-      },
-      { onConflict: "judges_id,submission_id" }
-    )
-    .select("judges_id,submission_id,technical_execution,problem_solution_fit,innovation_creativity,presentation_quality,private_comment")
-    .single<JudgeScoreRow>();
+    .upsert(upsertPayload, { onConflict: `${judgeScoreIdColumn},submission_id` })
+    .select(selectJudgeScoresColumns(judgeScoreIdColumn))
+    .single<Record<string, unknown>>();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  const normalized = normalizeJudgeScoreRows(data ? [data] : [], judgeScoreIdColumn);
+  const row = normalized[0] as JudgeScoreRow | undefined;
+  if (!row) {
+    return NextResponse.json({ error: "Unable to parse saved score row." }, { status: 500 });
+  }
+
   return NextResponse.json({
     ok: true,
-    total: totalScore(data),
+    total: totalScore(row),
   });
 }

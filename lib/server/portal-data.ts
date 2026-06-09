@@ -45,9 +45,25 @@ function normalizeTeamMembers(value: unknown): TeamMember[] {
   return value
     .map((entry) => {
       if (!entry || typeof entry !== "object") return null;
-      const row = entry as { name?: unknown; email?: unknown };
+      const row = entry as {
+        id?: unknown;
+        name?: unknown;
+        studentId?: unknown;
+        role?: unknown;
+        email?: unknown;
+      };
       if (typeof row.name !== "string" || typeof row.email !== "string") return null;
-      return { name: row.name, email: row.email };
+
+      const member: TeamMember = {
+        name: row.name,
+        email: row.email,
+      };
+
+      if (typeof row.id === "string" && row.id.trim()) member.id = row.id;
+      if (typeof row.studentId === "string" && row.studentId.trim()) member.studentId = row.studentId;
+      if (typeof row.role === "string" && row.role.trim()) member.role = row.role;
+
+      return member;
     })
     .filter((entry): entry is TeamMember => Boolean(entry));
 }
@@ -122,6 +138,7 @@ export function mapSubmissionToAdminView(
     id: row.id,
     projectName: row.project_name,
     teamName: deriveTeamDisplayName(row),
+    thumbnailUrl: row.thumbnail_url,
     teamId: row.team_id,
     track: cleanTrack(row.track),
     status: mapDbStatusToUi(row.status),
@@ -148,6 +165,7 @@ export function mapSubmissionToJudgeProject(row: SubmissionRow): JudgeProject {
     name: row.project_name,
     teamId: row.team_id,
     teamName: deriveTeamDisplayName(row),
+    thumbnailUrl: row.thumbnail_url,
     category: cleanTrack(row.track),
     track: cleanTrack(row.track),
     description: row.description,

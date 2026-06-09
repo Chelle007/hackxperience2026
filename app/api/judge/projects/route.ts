@@ -3,6 +3,11 @@ import { requireRole } from "@/lib/auth/route-guard";
 import { verifyRoleMapping } from "@/lib/auth/role-mapping";
 import { supabaseServer } from "@/lib/supabase-server";
 import { mapSubmissionToJudgeProject, totalScore, type JudgeScoreRow } from "@/lib/server/portal-data";
+import {
+  normalizeJudgeScoreRows,
+  resolveJudgeScoresIdColumn,
+  selectJudgeScoresColumns,
+} from "@/lib/server/judge-scores";
 import type { SubmissionRow } from "@/lib/types";
 
 type JudgeSavedScore = {
@@ -26,6 +31,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: roleCheck.error }, { status: roleCheck.status });
   }
 
+  let judgeScoreIdColumn: Awaited<ReturnType<typeof resolveJudgeScoresIdColumn>>;
+  try {
+    judgeScoreIdColumn = await resolveJudgeScoresIdColumn();
+  } catch (columnError) {
+    return NextResponse.json(
+      { error: columnError instanceof Error ? columnError.message : "Unable to resolve judge score column." },
+      { status: 500 },
+    );
+  }
+
   const [submissionsResult, scoresResult, settingsResult] = await Promise.all([
     supabaseServer
       .from("submissions")
@@ -34,8 +49,8 @@ export async function GET(request: NextRequest) {
       .order("submitted_at", { ascending: false }),
     supabaseServer
       .from("judges_scores")
-      .select("judges_id,submission_id,technical_execution,problem_solution_fit,innovation_creativity,presentation_quality,private_comment")
-      .eq("judges_id", auth.session.userId),
+      .select(selectJudgeScoresColumns(judgeScoreIdColumn))
+      .eq(judgeScoreIdColumn, auth.session.userId),
     supabaseServer
       .from("settings")
       .select("submission_status")
@@ -55,7 +70,10 @@ export async function GET(request: NextRequest) {
   }
 
   const submissions = (submissionsResult.data ?? []) as SubmissionRow[];
-  const scoreRows = (scoresResult.data ?? []) as JudgeScoreRow[];
+  const scoreRows = normalizeJudgeScoreRows(
+    (scoresResult.data ?? []) as unknown as Record<string, unknown>[],
+    judgeScoreIdColumn,
+  ) as JudgeScoreRow[];
   const savedScores: Record<string, JudgeSavedScore> = {};
 
   for (const row of scoreRows) {
