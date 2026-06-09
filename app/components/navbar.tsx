@@ -97,7 +97,7 @@ export default function Navbar() {
       <div className="flex items-center gap-2 sm:gap-3">
         <button
           id="login_secure"
-          onClick={() => router.push("/admin/login")}
+          onClick={() => router.push("/login")}
           className="login_secure bg-[#c00000] hover:bg-[#a00000] text-white text-[11px] sm:text-[12px] font-bold tracking-[0.10em] px-4 py-1.5 cursor-pointer transition-colors duration-150 whitespace-nowrap"
         >
           LOGIN_SECURE

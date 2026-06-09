@@ -17,17 +17,55 @@ function compareHex(expectedHex: string, actualHex: string) {
   return timingSafeEqual(left, right);
 }
 
+function hashHex(algorithm: "md5" | "sha1" | "sha256" | "sha512", value: string) {
+  return createHash(algorithm).update(value, "utf8").digest("hex");
+}
+
+function verifyPrefixedHash(stored: string, supplied: string) {
+  const normalized = stored.trim();
+
+  for (const separator of [":", "$"] as const) {
+    const idx = normalized.indexOf(separator);
+    if (idx <= 0) continue;
+
+    const algo = normalized.slice(0, idx).toLowerCase();
+    const digest = normalized.slice(idx + 1);
+
+    if (algo === "md5" || algo === "sha1" || algo === "sha256" || algo === "sha512") {
+      return compareHex(digest, hashHex(algo, supplied));
+    }
+  }
+
+  return null;
+}
+
+function verifyRawHexHash(stored: string, supplied: string) {
+  const normalized = stored.trim();
+  if (!/^[a-f0-9]+$/i.test(normalized)) return null;
+
+  if (normalized.length === 32) return compareHex(normalized, hashHex("md5", supplied));
+  if (normalized.length === 40) return compareHex(normalized, hashHex("sha1", supplied));
+  if (normalized.length === 64) return compareHex(normalized, hashHex("sha256", supplied));
+  if (normalized.length === 128) return compareHex(normalized, hashHex("sha512", supplied));
+  return null;
+}
+
 /**
  * Supports either:
  * 1) plain text passwords (`stored = hunter2`)
- * 2) prefixed sha256 hashes (`stored = sha256:<hex-digest>`)
+ * 2) prefixed digests (`sha256:<hex>`, `sha256$<hex>`, `md5:<hex>`, etc)
+ * 3) raw hex digests (32/40/64/128 chars for md5/sha1/sha256/sha512)
  */
 export function verifyPassword(stored: string, supplied: string) {
-  if (stored.startsWith("sha256:")) {
-    const expected = stored.slice("sha256:".length);
-    const suppliedDigest = createHash("sha256").update(supplied, "utf8").digest("hex");
-    return compareHex(expected, suppliedDigest);
-  }
+  const prefixed = verifyPrefixedHash(stored, supplied);
+  if (prefixed !== null) return prefixed;
+
+  const rawHex = verifyRawHexHash(stored, supplied);
+  if (rawHex !== null) return rawHex;
 
   return compareText(stored, supplied);
+}
+
+export function hashPasswordSha256(plainPassword: string) {
+  return `sha256:${hashHex("sha256", plainPassword)}`;
 }

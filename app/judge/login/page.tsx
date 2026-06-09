@@ -1,5 +1,5 @@
-import PortalLogin from "../../components/portal/PortalLogin";
+import { redirect } from "next/navigation";
 
 export default function JudgeLoginPage() {
-  return <PortalLogin defaultRole="judge" />;
+  redirect("/login?role=judge");
 }

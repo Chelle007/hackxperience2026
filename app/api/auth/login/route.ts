@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabaseServer
     .from(table)
     .select("id,username,password")
-    .eq("username", username)
+    .ilike("username", username)
     .maybeSingle<LoginRow>();
 
   if (error || !data || !verifyPassword(data.password, password)) {

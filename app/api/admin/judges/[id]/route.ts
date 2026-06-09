@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/route-guard";
 import { supabaseServer } from "@/lib/supabase-server";
+import { hashPasswordSha256 } from "@/lib/auth/password";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -28,7 +29,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     updatePayload.username = body.username.trim();
   }
   if (typeof body?.password === "string" && body.password) {
-    updatePayload.password = body.password;
+    updatePayload.password = hashPasswordSha256(body.password);
   }
 
   if (Object.keys(updatePayload).length === 0) {

@@ -1,77 +1,122 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
+import { supabaseBrowser } from "@/lib/supabase-browser";
+import { normalizePortalUsername, toSupabaseAuthEmail } from "@/lib/auth/portal-identity";
 
 const C = {
-  pageBg:       "#F5F0E8",
-  cardBg:       "#FFFFFF",
-  panelBg:      "#F5F0E8",
+  pageBg: "#F5F0E8",
+  cardBg: "#FFFFFF",
+  panelBg: "#F5F0E8",
   activeRoleBg: "#CC0000",
-  inputBg:      "#FFFFFF",
-  red:          "#CC0000",
-  muted:        "#888888",
-  dimBorder:    "#E5E0D8",
-  offWhite:     "#F5F0E8",
-  dark:         "#1A1A1A",
+  inputBg: "#FFFFFF",
+  red: "#CC0000",
+  muted: "#888888",
+  offWhite: "#F5F0E8",
+  dark: "#1A1A1A",
 } as const;
 
-const FM     = "var(--font-admin-mono, var(--font-ibm-plex-mono, 'IBM Plex Mono')), monospace";
-const FB     = "var(--font-admin-display, var(--font-bebas-neue, 'Bebas Neue')), sans-serif";
+const FM = "var(--font-admin-mono, var(--font-ibm-plex-mono, 'IBM Plex Mono')), monospace";
+const FB = "var(--font-admin-display, var(--font-bebas-neue, 'Bebas Neue')), sans-serif";
 const SPRING = { type: "spring" as const, stiffness: 400, damping: 20 };
+type PortalRole = "judge" | "admin";
 
-export type PortalRole = "judge" | "admin";
+type UserRoleRow = {
+  id: number | string;
+  role: string;
+};
 
-interface PortalLoginProps {
-  defaultRole: PortalRole;
+function normalizeRole(value: unknown): PortalRole | null {
+  if (typeof value !== "string") return null;
+  const role = value.trim().toLowerCase();
+  if (role === "admin" || role === "judge") return role;
+  return null;
 }
 
-export default function PortalLogin({ defaultRole }: PortalLoginProps) {
+export default function LoginPage() {
   const router = useRouter();
-  const [userId,   setUserId]   = useState("");
+  const searchParams = useSearchParams();
+  const roleFromQuery = normalizeRole(searchParams.get("role")) ?? "admin";
+
+  const [activeRole, setActiveRole] = useState<PortalRole>(roleFromQuery);
+  const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
-  const [error,    setError]    = useState("");
-  const [loading,  setLoading]  = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const isAdmin     = defaultRole === "admin";
-  const idLabel     = isAdmin ? "admin_id" : "judge_id";
-  const pwLabel     = isAdmin ? "admin_password" : "judge_password";
-  const dashRoute   = isAdmin ? "/admin/dashboard" : "/judge/dashboard";
-
-  function switchRole(next: PortalRole) {
-    if (next === defaultRole) return;
-    router.push(next === "admin" ? "/admin/login" : "/judge/login");
-  }
+  const isAdmin = activeRole === "admin";
+  const idLabel = isAdmin ? "admin_id" : "judge_id";
+  const pwLabel = isAdmin ? "admin_password" : "judge_password";
+  const idPlaceholder = isAdmin ? "Enter admin username..." : "Enter judge username...";
+  const dashRoute = isAdmin ? "/admin/dashboard" : "/judge/dashboard";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    if (!userId.trim() || !password.trim()) {
+
+    const normalizedUsername = normalizePortalUsername(userId);
+    if (!normalizedUsername || !password.trim()) {
       setError("// ERROR: all fields required");
       return;
     }
 
+    const supabaseEmail = toSupabaseAuthEmail(normalizedUsername);
+
     setLoading(true);
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          role: defaultRole,
-          username: userId.trim(),
-          password,
-        }),
+      const { data: authData, error: authError } = await supabaseBrowser.auth.signInWithPassword({
+        email: supabaseEmail,
+        password,
       });
 
-      const payload = await response.json().catch(() => ({} as { error?: string; redirectTo?: string }));
-      if (!response.ok) {
-        setError(`// ERROR: ${payload.error ?? "authentication failed"}`);
+      if (authError || !authData.user || !authData.session) {
+        setError(`// ERROR: ${authError?.message ?? "authentication failed"}`);
         return;
       }
 
-      router.replace(payload.redirectTo ?? dashRoute);
+      const { data: roleRows, error: roleError } = await supabaseBrowser
+        .from("user_roles")
+        .select("id,role")
+        .eq("user_id", authData.user.id);
+
+      if (roleError) {
+        await supabaseBrowser.auth.signOut();
+        setError(`// ERROR: ${roleError.message}`);
+        return;
+      }
+
+      const matchedRole = ((roleRows ?? []) as UserRoleRow[]).find(
+        (row) => normalizeRole(row.role) === activeRole
+      );
+
+      if (!matchedRole) {
+        await supabaseBrowser.auth.signOut();
+        setError("// ERROR: Unauthorized role for this portal");
+        return;
+      }
+
+      const syncResponse = await fetch("/api/auth/portal-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role: activeRole,
+          accessToken: authData.session.access_token,
+          username: normalizedUsername,
+        }),
+      });
+
+      const syncPayload = await syncResponse.json().catch(() => ({} as { error?: string }));
+      if (!syncResponse.ok) {
+        await supabaseBrowser.auth.signOut();
+        setError(`// ERROR: ${syncPayload.error ?? "Unable to establish portal session"}`);
+        return;
+      }
+
+      router.replace(dashRoute);
     } catch {
+      await supabaseBrowser.auth.signOut();
       setError("// ERROR: network failure, try again");
     } finally {
       setLoading(false);
@@ -171,7 +216,6 @@ export default function PortalLogin({ defaultRole }: PortalLoginProps) {
             position: "relative",
           }}
         >
-          {/* Red accent bar */}
           <div
             style={{
               position: "absolute",
@@ -183,7 +227,6 @@ export default function PortalLogin({ defaultRole }: PortalLoginProps) {
             }}
           />
 
-          {/* Header */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <span
@@ -263,14 +306,13 @@ export default function PortalLogin({ defaultRole }: PortalLoginProps) {
             </p>
           </div>
 
-          {/* Role toggle */}
           <div style={{ display: "flex", marginBottom: 22 }}>
-            {(["admin", "judge"] as PortalRole[]).map((r, i) => {
-              const isActive = r === defaultRole;
+            {(["admin", "judge"] as PortalRole[]).map((role, i) => {
+              const isActive = role === activeRole;
               return (
                 <motion.button
-                  key={r}
-                  onClick={() => switchRole(r)}
+                  key={role}
+                  onClick={() => setActiveRole(role)}
                   aria-current={isActive ? "true" : undefined}
                   className={undefined}
                   whileHover={!isActive ? { backgroundColor: "#EDE8E0" } : {}}
@@ -290,13 +332,12 @@ export default function PortalLogin({ defaultRole }: PortalLoginProps) {
                     transition: "background 0.15s, color 0.15s",
                   }}
                 >
-                  {r.toUpperCase()}
+                  {role.toUpperCase()}
                 </motion.button>
               );
             })}
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} noValidate>
             <div style={{ marginBottom: 16 }}>
               <label
@@ -319,7 +360,7 @@ export default function PortalLogin({ defaultRole }: PortalLoginProps) {
                 className="portal-input"
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
-                placeholder="Enter username..."
+                placeholder={idPlaceholder}
                 autoComplete="username"
                 style={{
                   display: "block",
@@ -363,7 +404,7 @@ export default function PortalLogin({ defaultRole }: PortalLoginProps) {
                 className="portal-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password..."
+                placeholder={isAdmin ? "Enter admin password..." : "Enter judge password..."}
                 autoComplete="current-password"
                 style={{
                   display: "block",

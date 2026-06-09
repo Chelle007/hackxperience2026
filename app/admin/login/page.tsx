@@ -1,5 +1,5 @@
-import PortalLogin from "../../components/portal/PortalLogin";
+import { redirect } from "next/navigation";
 
 export default function AdminLoginPage() {
-  return <PortalLogin defaultRole="admin" />;
+  redirect("/login?role=admin");
 }

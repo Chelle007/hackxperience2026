@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/route-guard";
 import { supabaseServer } from "@/lib/supabase-server";
+import { hashPasswordSha256 } from "@/lib/auth/password";
 
 type JudgeRow = {
   id: number;
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
 
   const { data, error } = await supabaseServer
     .from("judges")
-    .insert({ username, password })
+    .insert({ username, password: hashPasswordSha256(password) })
     .select("id,username")
     .single<JudgeRow>();
 
