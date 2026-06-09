@@ -3,7 +3,8 @@
 import { Download } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AdminShellConfig, type AdminMetric } from "../components/AdminShell";
-import { mockSubmissions, type AdminSubmission } from "../data/mockSubmissions";
+import type { AdminSubmission } from "@/lib/types";
+import { mockSubmissions } from "@/lib/mock";
 import styles from "./Results.module.css";
 
 const judgeIds = ["judge1", "judge2", "judge3"];

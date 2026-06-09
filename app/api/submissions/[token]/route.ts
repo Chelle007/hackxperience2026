@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
+import type { Submission, SubmissionRow } from "@/lib/types";
 
 interface RouteContext {
   params: Promise<{ token: string }>;
@@ -19,7 +20,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Submission not found" }, { status: 404 });
   }
 
-  return NextResponse.json(dbToForm(data));
+  return NextResponse.json(dbToForm(data as SubmissionRow));
 }
 
 // PUT /api/submissions/[token] — update a submission by edit token
@@ -56,8 +57,8 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
   return NextResponse.json({ id: data.id, editToken: data.edit_token });
 }
 
-// Map snake_case DB row → camelCase form shape
-function dbToForm(row: Record<string, unknown>) {
+// Map snake_case DB row → camelCase form shape (the canonical Submission)
+function dbToForm(row: SubmissionRow): Submission {
   return {
     id:               row.id,
     editToken:        row.edit_token,

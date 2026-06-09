@@ -20,6 +20,7 @@ const NAV_ITEMS = [
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -92,13 +93,58 @@ export default function Navbar() {
         })}
       </div>
 
-      {/* Right — Login button */}
-      <button
-        onClick={() => pathname === "/" ? scrollTo("registry") : router.push("/#registry")}
-        className="bg-[#c00000] hover:bg-[#a00000] text-white text-[11px] sm:text-[12px] font-bold tracking-[0.10em] px-4 py-1.5 cursor-pointer transition-colors duration-150 whitespace-nowrap"
-      >
-        LOGIN_SECURE
-      </button>
+      {/* Right — Login button + mobile menu toggle */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        <button
+          onClick={() => pathname === "/" ? scrollTo("registry") : router.push("/#registry")}
+          className="bg-[#c00000] hover:bg-[#a00000] text-white text-[11px] sm:text-[12px] font-bold tracking-[0.10em] px-4 py-1.5 cursor-pointer transition-colors duration-150 whitespace-nowrap"
+        >
+          LOGIN_SECURE
+        </button>
+        {/* Hamburger — only below md, where the center links are hidden */}
+        <button
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-label="Toggle navigation menu"
+          aria-expanded={menuOpen}
+          className="md:hidden flex items-center justify-center text-white cursor-pointer p-1"
+        >
+          {menuOpen ? (
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="3" y1="3" x2="15" y2="15" />
+              <line x1="15" y1="3" x2="3" y2="15" />
+            </svg>
+          ) : (
+            <svg width="18" height="14" viewBox="0 0 18 14" fill="currentColor">
+              <rect width="18" height="2" />
+              <rect y="6" width="18" height="2" />
+              <rect y="12" width="18" height="2" />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {/* Mobile dropdown — replaces the hidden center links below md */}
+      {menuOpen && (
+        <div
+          className="md:hidden absolute top-11 left-0 right-0 flex flex-col border-t border-white/10"
+          style={{ backgroundColor: "#1d1c17" }}
+        >
+          {NAV_ITEMS.map((item) => {
+            const isActive = item.href ? pathname === item.href : false;
+            return (
+              <button
+                key={item.label}
+                onClick={() => { handleNavClick(item); setMenuOpen(false); }}
+                className={`text-left text-[12px] font-medium tracking-[0.08em] px-4 sm:px-6 py-3 border-b border-white/5 transition-colors duration-150 ${
+                  isActive ? "text-white" : "text-white/70 hover:text-white"
+                }`}
+              >
+                [{item.label}]
+              </button>
+            );
+          })}
+        </div>
+      )}
     </nav>
   );
 }

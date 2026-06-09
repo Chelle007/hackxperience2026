@@ -1,20 +1,6 @@
-export interface Project {
-  id: string;
-  title: string;
-  description: string;
-  longDescription?: string;
-  image: string;
-  year: '2025' | '2024';
-  teamName: string;
-  tags: string[];
-  links?: {
-    github?: string;
-    demo?: string;
-  };
-  achievements?: string[];
-  rank?: 'WINNER' | 'RUNNER_UP' | 'SECOND_RUNNER_UP' | 'SPECIAL_MENTION';
-  createdAt: string; // ISO date string for sorting
-}
+// Mock gallery projects — placeholder data for the public gallery until it is
+// populated from approved submissions. Types live in @/lib/types.
+import type { Project } from "@/lib/types";
 
 export const mockProjects: Project[] = [
   {
@@ -133,4 +119,3 @@ export const mockProjects: Project[] = [
     createdAt: '2025-05-22T19:00:00Z'
   }
 ];
-

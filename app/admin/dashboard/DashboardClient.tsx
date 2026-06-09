@@ -4,7 +4,8 @@ import { Check, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AdminShellConfig, type AdminMetric } from "../components/AdminShell";
 import { usePortalSettings } from "../components/PortalSettingsContext";
-import { HACKX_TRACKS, mockSubmissions, type AdminSubmission, type SubmissionStatus } from "../data/mockSubmissions";
+import { HACKX_TRACKS, type AdminSubmission, type SubmissionStatus } from "@/lib/types";
+import { mockSubmissions } from "@/lib/mock";
 import SubmissionViewOverlay, { type EditDraft } from "../components/SubmissionViewOverlay";
 import styles from "./Dashboard.module.css";
 

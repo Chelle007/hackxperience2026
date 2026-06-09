@@ -19,6 +19,8 @@ const adminMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "HACKX ADMIN",
   description: "HackXperience 2026 admin submission portal.",
+  // Restricted area — keep it out of search engines (mirrors the judge portal).
+  robots: { index: false, follow: false },
 };
 
 export default function AdminLayout({ children }: Readonly<{ children: ReactNode }>) {

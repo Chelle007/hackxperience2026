@@ -1,40 +1,6 @@
-export type SubmissionStatus = "pending" | "approved" | "rejected";
-
-export const HACKX_TRACKS = ["AI / ML", "IoT / Hardware", "Web Dev", "Open Innovation"] as const;
-
-export type SubmissionScore = {
-  judgeId: string;
-  score: number | null;
-};
-
-export type TeamMember = {
-  name: string;
-  email: string;
-};
-
-export type AdminSubmission = {
-  id: string;
-  projectName: string;
-  teamName: string;
-  track: string;
-  status: SubmissionStatus;
-  submittedAt: string;
-  scores: SubmissionScore[];
-  // Detail overlay fields
-  teamId?: string;
-  updatedAt?: string;
-  projectAccessKey?: string;
-  description?: string;
-  shortPitch?: string;
-  techStack?: string[];
-  githubUrl?: string;
-  liveUrl?: string | null;
-  pitchDeckUrl?: string;
-  pitchDeckFileUrl?: string | null;
-  videoDemoUrl?: string | null;
-  members?: TeamMember[];
-  additionalNotes?: string | null;
-};
+// Mock admin submissions — placeholder data until the admin portal is wired
+// to Supabase. Types live in @/lib/types.
+import type { AdminSubmission } from "@/lib/types";
 
 export const mockSubmissions: AdminSubmission[] = [
   {

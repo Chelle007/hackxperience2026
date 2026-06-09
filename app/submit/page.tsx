@@ -405,7 +405,7 @@ function StepRail({ active, onStepClick, maxReached, lastSaved }: {
   active: number; onStepClick: (i: number) => void; maxReached: number; lastSaved: LastSaved | null;
 }) {
   return (
-    <div style={{ width: 200, flexShrink: 0, display: "flex", flexDirection: "column" }}>
+    <div className="submit-step-rail" style={{ width: 200, flexShrink: 0, display: "flex", flexDirection: "column" }}>
       {STEPS.map(([n, label, sub], i) => {
         const isA = i === active;
         const isD = i !== active && i <= maxReached;
@@ -471,7 +471,7 @@ function InfoSidebar({ step }: { step: number }) {
   const pcts = [25, 50, 75, 95];
   const pct = pcts[step] ?? 25;
   return (
-    <div style={{ width: 220, flexShrink: 0, display: "flex", flexDirection: "column", gap: 18 }}>
+    <div className="submit-info-sidebar" style={{ width: 220, flexShrink: 0, display: "flex", flexDirection: "column", gap: 18 }}>
       <Card padding={18}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <Mono size={11} weight={800}>&gt; PROGRESS</Mono>
@@ -566,7 +566,7 @@ function Step01({ form, setForm, onNext }: { form: FormState; setForm: (f: FormS
           <FieldLabel required>Project Name</FieldLabel>
           <SInput value={form.projectName} onChange={set("projectName")} placeholder="Enter your project name…" />
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: 18 }}>
           <div>
             <FieldLabel required>Team ID</FieldLabel>
             <SInput value={form.teamId} onChange={set("teamId")} placeholder="e.g. TEAM_07" />
@@ -743,6 +743,9 @@ function Step03({ form, setForm, onNext, onBack }: { form: FormState; setForm: (
   return (
     <>
       <StepHeader n="03" title="TEAM_MANIFEST" status={`Add all team members — min 1, max 5 · Currently ${form.members.length}`} />
+      {/* Horizontal-scroll wrapper — keeps the member table's column layout intact on narrow screens */}
+      <div style={{ overflowX: "auto" }}>
+        <div style={{ minWidth: 560 }}>
       <div style={{ display: "grid", gridTemplateColumns: "36px 1.3fr 0.85fr 1fr 1.3fr 28px", gap: 6, background: DARK_BG, padding: "10px 8px", border: `1.5px solid ${DARK_BG}` }}>
         {["#", "Name", "Student ID", "Role", "Email", ""].map((h, i) => (
           <Mono key={i} color="#fff" size={10} weight={800} style={{ padding: "0 4px" }}>{h}</Mono>
@@ -795,6 +798,8 @@ function Step03({ form, setForm, onNext, onBack }: { form: FormState; setForm: (
           </motion.div>
         )}
       </AnimatePresence>
+        </div>
+      </div>
       <div style={{ height: 18 }} />
       <FieldLabel hint="OPTIONAL">Additional Notes</FieldLabel>
       <STextarea value={form.notes} onChange={(v) => setForm({ ...form, notes: v })} placeholder="Anything the judges should know? e.g. 'Stanley led ML; Wei Quan led UX.'" h={70} />
@@ -977,7 +982,7 @@ function SuccessState({ form, editToken, isNew }: { form: FormState; editToken: 
       </motion.div>
 
       {/* ID + Timestamp cards */}
-      <motion.div {...up(0.18)} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 18 }}>
+      <motion.div {...up(0.18)} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: 14, marginBottom: 18 }}>
         <Card padding={16}>
           <Mono color={MUTED} size={10} weight={600}>// Submission ID</Mono>
           <div style={{ height: 6 }} />
@@ -1078,7 +1083,7 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isBeforeOp
 
       {/* ── Before-open gate ── */}
       {isBeforeOpen && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "stretch" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))", gap: 32, alignItems: "stretch" }}>
           {/* Left: countdown card */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -1161,7 +1166,7 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isBeforeOp
         </div>
       )}
 
-      {!isBeforeOpen && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "stretch" }}>
+      {!isBeforeOpen && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))", gap: 32, alignItems: "stretch" }}>
         {/* Left: dark terminal card */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -1497,7 +1502,14 @@ export default function SubmitPage() {
         {view === "form" && !submitted && (
           <>
             <PageHero tick={tick} />
-            <div style={{ padding: "0 48px 48px", display: "flex", gap: 24, alignItems: "flex-start" }}>
+            <style>{`
+              @media (max-width: 1024px) {
+                .submit-form-layout { flex-direction: column !important; }
+                .submit-step-rail,
+                .submit-info-sidebar { width: 100% !important; }
+              }
+            `}</style>
+            <div className="submit-form-layout" style={{ padding: "0 48px 48px", display: "flex", gap: 24, alignItems: "flex-start" }}>
               <StepRail
                 active={step}
                 onStepClick={(i) => { if (i <= maxReached) setStep(i); }}

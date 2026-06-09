@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
-import { mockProjects, Project } from '../../lib/mock-data';
+import type { Project } from '@/lib/types';
+import { mockProjects } from '@/lib/mock';
 import { supabaseBrowser } from '../../lib/supabase-browser';
 import { IBM_Plex_Mono, Montserrat } from "next/font/google";
 import { motion, AnimatePresence } from 'framer-motion';
@@ -75,10 +76,11 @@ export default function GalleryPage() {
     async function fetchProjects() {
       try {
         setLoading(true);
+        // Reads the safe `public_projects` view (approved rows, no PII), not the
+        // base `submissions` table — the anon key has no access to that table.
         const { data, error } = await supabaseBrowser
-          .from('submissions')
-          .select('*')
-          .eq('status', 'APPROVED');
+          .from('public_projects')
+          .select('*');
 
         if (error) throw error;
 

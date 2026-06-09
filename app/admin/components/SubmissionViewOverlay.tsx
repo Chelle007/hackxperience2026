@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { HACKX_TRACKS, type AdminSubmission, type SubmissionStatus } from "../data/mockSubmissions";
+import { HACKX_TRACKS, type AdminSubmission, type SubmissionStatus } from "@/lib/types";
 import editStyles from "./SubmissionEditOverlay.module.css";
 import styles from "./SubmissionViewOverlay.module.css";
 

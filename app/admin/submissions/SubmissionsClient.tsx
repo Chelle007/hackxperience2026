@@ -5,7 +5,8 @@ import { Check, ChevronDown, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AdminShellConfig, type AdminMetric } from "../components/AdminShell";
 import SubmissionViewOverlay, { type EditDraft } from "../components/SubmissionViewOverlay";
-import { mockSubmissions, type AdminSubmission, type SubmissionStatus } from "../data/mockSubmissions";
+import type { AdminSubmission, SubmissionStatus } from "@/lib/types";
+import { mockSubmissions } from "@/lib/mock";
 import styles from "./Submissions.module.css";
 
 export type SubmissionFilter = "all" | "pending" | "approved" | "rejected";
