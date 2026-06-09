@@ -1,7 +1,7 @@
 import "server-only";
 
 import { supabaseServer } from "@/lib/supabase-server";
-import { normalizePortalUsername } from "@/lib/auth/portal-identity";
+import { normalizePortalUsername, usernameFromSupabaseEmail } from "@/lib/auth/portal-identity";
 import type { PortalUserId } from "@/lib/auth/session";
 
 export type JudgeScoresIdColumn = "judges_id" | "judge_id";
@@ -14,9 +14,16 @@ type ErrorLike = {
   code?: string;
   message?: string;
 };
+type AuthUserListItem = {
+  id: string;
+  email?: string | null;
+};
 
 let cachedJudgeScoresIdColumn: JudgeScoresIdColumn | null = null;
 let cachedJudgeScoresIdColumns: JudgeScoresIdColumn[] | null = null;
+const authUserIdByUsernameCache = new Map<string, string | null>();
+const AUTH_PER_PAGE = 200;
+const AUTH_MAX_PAGES = 25;
 
 function isMissingColumnError(error: ErrorLike | null | undefined, column: JudgeScoresIdColumn) {
   if (!error) return false;
@@ -76,6 +83,47 @@ export function toDatabaseJudgeActorId(value: PortalUserId): string | number {
 
 function sameActorId(left: string | number, right: string | number) {
   return String(left) === String(right);
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+async function findAuthUserIdByPortalUsername(username: string) {
+  const normalizedUsername = normalizePortalUsername(username);
+  if (!normalizedUsername) return null;
+
+  if (authUserIdByUsernameCache.has(normalizedUsername)) {
+    return authUserIdByUsernameCache.get(normalizedUsername) ?? null;
+  }
+
+  let page = 1;
+  for (let checkedPages = 0; checkedPages < AUTH_MAX_PAGES; checkedPages += 1) {
+    const { data, error } = await supabaseServer.auth.admin.listUsers({
+      page,
+      perPage: AUTH_PER_PAGE,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    for (const user of data.users as AuthUserListItem[]) {
+      const portalUsername =
+        usernameFromSupabaseEmail(user.email) ||
+        normalizePortalUsername(user.email);
+      if (portalUsername === normalizedUsername) {
+        authUserIdByUsernameCache.set(normalizedUsername, user.id);
+        return user.id;
+      }
+    }
+
+    if (!data.nextPage) break;
+    page = data.nextPage;
+  }
+
+  authUserIdByUsernameCache.set(normalizedUsername, null);
+  return null;
 }
 
 export async function resolveJudgeScoresIdColumn(): Promise<JudgeScoresIdColumn> {
@@ -238,11 +286,47 @@ export async function resolveJudgeActorCandidates({
   createLegacyIfMissing?: boolean;
 }) {
   const primaryActorId = toDatabaseJudgeActorId(sessionUserId);
+  let mappedAuthUserId: string | null = null;
+
+  // Compatibility: older cookies might hold user_roles.id; map it to user_roles.user_id.
+  if (typeof sessionUserId === "string") {
+    const roleRowId = sessionUserId.trim();
+    if (isUuid(roleRowId)) {
+      const mappedResult = await supabaseServer
+        .from("user_roles")
+        .select("user_id")
+        .eq("id", roleRowId)
+        .maybeSingle<{ user_id: string }>();
+
+      if (mappedResult.error) {
+        throw new Error(mappedResult.error.message);
+      }
+
+      if (typeof mappedResult.data?.user_id === "string" && mappedResult.data.user_id.trim()) {
+        mappedAuthUserId = mappedResult.data.user_id.trim();
+      }
+    }
+  }
+
+  const usernameMappedAuthUserId = await findAuthUserIdByPortalUsername(sessionUsername);
+
   const legacyJudgeId = await resolveLegacyJudgeId(sessionUsername, {
     createIfMissing: createLegacyIfMissing,
   });
 
   const candidates: Array<string | number> = [primaryActorId];
+  if (
+    mappedAuthUserId &&
+    !candidates.some((candidate) => sameActorId(candidate, mappedAuthUserId))
+  ) {
+    candidates.push(mappedAuthUserId);
+  }
+  if (
+    usernameMappedAuthUserId &&
+    !candidates.some((candidate) => sameActorId(candidate, usernameMappedAuthUserId))
+  ) {
+    candidates.push(usernameMappedAuthUserId);
+  }
   if (
     typeof legacyJudgeId === "number" &&
     !candidates.some((candidate) => sameActorId(candidate, legacyJudgeId))
