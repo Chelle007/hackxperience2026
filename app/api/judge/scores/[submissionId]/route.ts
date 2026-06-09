@@ -4,10 +4,10 @@ import { verifyRoleMapping } from "@/lib/auth/role-mapping";
 import { supabaseServer } from "@/lib/supabase-server";
 import { totalScore, type JudgeScoreRow } from "@/lib/server/portal-data";
 import {
-  isJudgeScoreActorIdError,
+  type JudgeScoresIdColumn,
   normalizeJudgeScoreRows,
   resolveJudgeActorCandidates,
-  resolveJudgeScoresIdColumn,
+  resolveJudgeScoresIdColumns,
   selectJudgeScoresColumns,
 } from "@/lib/server/judge-scores";
 
@@ -41,9 +41,9 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: roleCheck.error }, { status: roleCheck.status });
   }
 
-  let judgeScoreIdColumn: Awaited<ReturnType<typeof resolveJudgeScoresIdColumn>>;
+  let judgeScoreIdColumns: Awaited<ReturnType<typeof resolveJudgeScoresIdColumns>>;
   try {
-    judgeScoreIdColumn = await resolveJudgeScoresIdColumn();
+    judgeScoreIdColumns = await resolveJudgeScoresIdColumns();
   } catch (columnError) {
     return NextResponse.json(
       { error: columnError instanceof Error ? columnError.message : "Unable to resolve judge score column." },
@@ -106,7 +106,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     actorCandidates = await resolveJudgeActorCandidates({
       sessionUserId: auth.session.userId,
       sessionUsername: auth.session.username,
-      createLegacyIfMissing: false,
+      createLegacyIfMissing: true,
     });
   } catch (actorError) {
     return NextResponse.json(
@@ -115,12 +115,12 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     );
   }
 
-  async function upsertForActorId(actorId: string | number) {
+  async function upsertForActorId(column: JudgeScoresIdColumn, actorId: string | number) {
     return supabaseServer
       .from("judges_scores")
       .upsert(
         {
-          [judgeScoreIdColumn]: actorId,
+          [column]: actorId,
           submission_id: submissionId,
           technical_execution: technicalExecution,
           problem_solution_fit: problemSolutionFit,
@@ -128,51 +128,42 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
           presentation_quality: presentationQuality,
           private_comment: privateComment,
         },
-        { onConflict: `${judgeScoreIdColumn},submission_id` },
+        { onConflict: `${column},submission_id` },
       )
-      .select(selectJudgeScoresColumns(judgeScoreIdColumn))
+      .select(selectJudgeScoresColumns(column))
       .single<Record<string, unknown>>();
   }
 
-  let { data, error } = await upsertForActorId(actorCandidates.primaryActorId);
+  const actorIds = actorCandidates.candidates;
+  let savedRow: JudgeScoreRow | null = null;
+  let lastErrorMessage = "Unable to save score.";
 
-  if (error && isJudgeScoreActorIdError(error)) {
-    try {
-      const fallbackCandidates = await resolveJudgeActorCandidates({
-        sessionUserId: auth.session.userId,
-        sessionUsername: auth.session.username,
-        createLegacyIfMissing: true,
-      });
+  for (const judgeScoreIdColumn of judgeScoreIdColumns) {
+    for (const actorId of actorIds) {
+      const { data, error } = await upsertForActorId(judgeScoreIdColumn, actorId);
 
-      const fallbackActorId = fallbackCandidates.legacyJudgeId;
-      if (
-        typeof fallbackActorId === "number" &&
-        String(fallbackActorId) !== String(actorCandidates.primaryActorId)
-      ) {
-        const retry = await upsertForActorId(fallbackActorId);
-        data = retry.data;
-        error = retry.error;
+      if (error) {
+        lastErrorMessage = error.message || lastErrorMessage;
+        continue;
       }
-    } catch (fallbackError) {
-      return NextResponse.json(
-        { error: fallbackError instanceof Error ? fallbackError.message : "Unable to resolve judge identity." },
-        { status: 500 },
-      );
+
+      const normalized = normalizeJudgeScoreRows(data ? [data] : [], judgeScoreIdColumn);
+      const row = normalized[0] as JudgeScoreRow | undefined;
+      if (row) {
+        savedRow = row;
+        break;
+      }
     }
+
+    if (savedRow) break;
   }
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  const normalized = normalizeJudgeScoreRows(data ? [data] : [], judgeScoreIdColumn);
-  const row = normalized[0] as JudgeScoreRow | undefined;
-  if (!row) {
-    return NextResponse.json({ error: "Unable to parse saved score row." }, { status: 500 });
+  if (!savedRow) {
+    return NextResponse.json({ error: lastErrorMessage }, { status: 500 });
   }
 
   return NextResponse.json({
     ok: true,
-    total: totalScore(row),
+    total: totalScore(savedRow),
   });
 }

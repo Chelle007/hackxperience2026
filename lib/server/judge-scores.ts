@@ -16,6 +16,7 @@ type ErrorLike = {
 };
 
 let cachedJudgeScoresIdColumn: JudgeScoresIdColumn | null = null;
+let cachedJudgeScoresIdColumns: JudgeScoresIdColumn[] | null = null;
 
 function isMissingColumnError(error: ErrorLike | null | undefined, column: JudgeScoresIdColumn) {
   if (!error) return false;
@@ -80,7 +81,19 @@ function sameActorId(left: string | number, right: string | number) {
 export async function resolveJudgeScoresIdColumn(): Promise<JudgeScoresIdColumn> {
   if (cachedJudgeScoresIdColumn) return cachedJudgeScoresIdColumn;
 
-  const candidates: JudgeScoresIdColumn[] = ["judges_id", "judge_id"];
+  const columns = await resolveJudgeScoresIdColumns();
+  cachedJudgeScoresIdColumn = columns[0];
+  return columns[0];
+}
+
+export async function resolveJudgeScoresIdColumns(): Promise<JudgeScoresIdColumn[]> {
+  if (cachedJudgeScoresIdColumns && cachedJudgeScoresIdColumns.length > 0) {
+    return cachedJudgeScoresIdColumns;
+  }
+
+  // Prefer `judge_id` first because some environments keep this as the FK-backed column.
+  const candidates: JudgeScoresIdColumn[] = ["judge_id", "judges_id"];
+  const available: JudgeScoresIdColumn[] = [];
   let lastError: string | null = null;
 
   for (const candidate of candidates) {
@@ -90,8 +103,8 @@ export async function resolveJudgeScoresIdColumn(): Promise<JudgeScoresIdColumn>
       .limit(1);
 
     if (!error) {
-      cachedJudgeScoresIdColumn = candidate;
-      return candidate;
+      available.push(candidate);
+      continue;
     }
 
     if (!isMissingColumnError(error, candidate)) {
@@ -101,7 +114,15 @@ export async function resolveJudgeScoresIdColumn(): Promise<JudgeScoresIdColumn>
     lastError = error.message;
   }
 
-  throw new Error(lastError ?? "Unable to resolve judge score identity column.");
+  if (available.length === 0) {
+    throw new Error(lastError ?? "Unable to resolve judge score identity column.");
+  }
+
+  cachedJudgeScoresIdColumns = available;
+  if (!cachedJudgeScoresIdColumn) {
+    cachedJudgeScoresIdColumn = available[0];
+  }
+  return available;
 }
 
 function toNullableNumber(value: unknown) {
