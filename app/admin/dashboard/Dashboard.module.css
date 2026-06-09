@@ -1,0 +1,615 @@
+.contentHeader {
+  margin: -26px -24px 24px -26px;
+  min-height: 70px;
+  padding: 26px 26px 14px;
+  background: #1a1a1a;
+  border-top: 3px solid #cc0000;
+  border-bottom: 1px solid #3a0808;
+}
+
+.contentHeader h2,
+.contentHeader p {
+  margin: 0;
+  font-weight: 400;
+}
+
+.contentHeader h2 {
+  color: #cc0000;
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.contentHeader p {
+  margin-top: 3px;
+  color: #888888;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: minmax(420px, 1fr) minmax(320px, 463px);
+  gap: 24px;
+}
+
+.chartPanel,
+.quickPanel,
+.tablePanel {
+  background: #ffffff;
+  border: 1px solid #cc0000;
+  box-shadow: 4px 4px 0 0 #cc0000;
+}
+
+.chartPanel {
+  min-height: 226px;
+  padding: 16px 18px 20px;
+}
+
+.quickPanel {
+  min-height: 226px;
+  padding: 16px 18px 20px;
+}
+
+.tablePanel {
+  grid-column: 1 / -1;
+  min-height: 156px;
+  padding: 16px 18px 20px;
+}
+
+.sectionHeader {
+  color: #cc0000;
+  font-size: 12px;
+  line-height: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #cc0000;
+}
+
+.chartWrap {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+  gap: 8px;
+  min-height: 154px;
+  padding: 16px 0 0;
+}
+
+.trackColumn {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 2px;
+  text-align: center;
+}
+
+.barArea {
+  position: relative;
+  height: 132px;
+}
+
+.bar {
+  position: absolute;
+  left: 2%;
+  right: 2%;
+  bottom: 13px;
+  display: block;
+  background: #cc0000;
+}
+
+.baseline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 13px;
+  height: 1px;
+  background: #1a1a1a;
+}
+
+.barValue {
+  position: absolute;
+  left: 0;
+  right: 0;
+  color: #1a1a1a;
+  font-size: 10px;
+  line-height: 13px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.trackLabel {
+  color: #1a1a1a;
+  font-size: 10px;
+  line-height: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quickActions {
+  display: grid;
+  gap: 24px;
+  padding-top: 24px;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: #1a1a1a;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.toggle {
+  width: 32px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border: 0;
+  background: #d0c8bc;
+  cursor: pointer;
+  transition: transform 0.12s, background 0.15s;
+}
+
+.toggleOn {
+  justify-content: flex-end;
+  background: #cc0000;
+}
+
+.toggleOff {
+  justify-content: flex-start;
+  background: #d0c8bc;
+}
+
+.toggleThumb {
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+}
+
+.toggle:active {
+  transform: scale(0.96);
+}
+
+.exportButton {
+  min-height: 28px;
+  padding: 6px 8px;
+  border: 1px solid #cc0000;
+  background: #ffffff;
+  color: #cc0000;
+  text-align: left;
+  font-size: 12px;
+  line-height: 16px;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+
+.exportButton:hover {
+  background: #cc0000;
+  color: #ffffff;
+  box-shadow: 2px 2px 0 0 #1a1a1a;
+}
+
+.exportButton:active {
+  transform: translateY(1px);
+}
+
+.tableFrame {
+  overflow-x: auto;
+}
+
+.tableGrid {
+  min-width: 1080px;
+  display: grid;
+  grid-template-columns: 138px 1.55fr 1.55fr 120px 150px 170px 220px;
+}
+
+.tableHead {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid #cc0000;
+  background: #1a1a1a;
+  color: #888888;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.tableRow {
+  display: contents;
+}
+
+.tableCell {
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e0d8;
+  color: #1a1a1a;
+  font-size: 10px;
+  line-height: 13px;
+  overflow-wrap: anywhere;
+}
+
+.thumbnail {
+  position: relative;
+  width: 87px;
+  height: 51px;
+  display: block;
+  overflow: hidden;
+  background: #ede8e0;
+}
+
+.thumbnailLineA,
+.thumbnailLineB {
+  position: absolute;
+  left: -8px;
+  top: 25px;
+  width: 103px;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.thumbnailLineA {
+  transform: rotate(30deg);
+}
+
+.thumbnailLineB {
+  transform: rotate(-30deg);
+}
+
+.statusBadge {
+  min-width: 74px;
+  min-height: 21px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  font-size: 10px;
+  line-height: 13px;
+}
+
+.statusPENDING {
+  color: #1a1a1a;
+  background: transparent;
+  border: 1px solid #1a1a1a;
+}
+
+.statusAPPROVED {
+  color: #ffffff;
+  background: #1a1a1a;
+  border: 1px solid #1a1a1a;
+}
+
+.statusREJECTED {
+  color: #ffffff;
+  background: #cc0000;
+  border: 1px solid #cc0000;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.iconAction,
+.textAction {
+  min-height: 21px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #1a1a1a;
+  background: #ffffff;
+  color: #1a1a1a;
+  font-size: 10px;
+  line-height: 13px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.12s;
+}
+
+.iconAction {
+  width: 21px;
+  padding: 0;
+}
+
+.iconAction svg,
+.textAction svg {
+  width: 13px;
+  height: 13px;
+}
+
+.iconAction:hover,
+.textAction:hover {
+  background: #f5f0e8;
+  border-color: #cc0000;
+  color: #cc0000;
+}
+
+.iconAction:active,
+.textAction:active {
+  transform: translateY(1px);
+}
+
+.approveAction {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  color: #ffffff;
+}
+
+.approveAction:hover {
+  background: #3a3a3a;
+  border-color: #888888;
+  color: #ffffff;
+}
+
+.approveAction:active {
+  background: #262626;
+}
+
+.rejectAction {
+  background: #cc0000;
+  border-color: #cc0000;
+  color: #ffffff;
+}
+
+.rejectAction:hover {
+  background: #aa0000;
+  border-color: #aa0000;
+  color: #ffffff;
+}
+
+.rejectAction:active {
+  background: #8f0000;
+}
+
+.textAction {
+  padding: 4px 8px;
+  white-space: nowrap;
+  font-family: var(--font-admin-mono), monospace;
+}
+
+.deleteAction {
+  border-color: #cc0000;
+  color: #cc0000;
+  background: #ffffff;
+}
+
+.deleteAction:hover {
+  background: #ffe8e8;
+  border-color: #aa0000;
+  color: #aa0000;
+}
+
+.deleteAction:active {
+  background: #ffd6d6;
+}
+
+.emptyRow {
+  grid-column: 1 / -1;
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #e5e0d8;
+  color: #888888;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+@media (max-width: 1100px) {
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) {
+  .toggle {
+    width: 56px;
+    height: 44px;
+    padding: 6px;
+  }
+
+  .toggleThumb {
+    width: 20px;
+    height: 20px;
+  }
+
+  .exportButton,
+  .iconAction,
+  .textAction {
+    min-height: 44px;
+  }
+
+  .iconAction {
+    width: 44px;
+  }
+
+  .textAction {
+    padding: 0 14px;
+  }
+
+  .actions {
+    gap: 8px;
+  }
+
+  .tableFrame {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 768px) {
+  .contentHeader {
+    margin: -20px -16px 18px;
+    padding: 22px 16px 14px;
+  }
+
+  .chartPanel,
+  .quickPanel,
+  .tablePanel {
+    padding: 14px;
+  }
+
+  .tablePanel {
+    overflow: visible;
+    box-shadow: 2px 2px 0 0 #cc0000;
+  }
+
+  .tableFrame {
+    overflow: visible;
+  }
+
+  .tableGrid {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .tableHead {
+    display: none;
+  }
+
+  .tableRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+    padding: 12px;
+    border: 1px solid #e5e0d8;
+    background: #ffffff;
+    box-shadow: 2px 2px 0 0 #cc0000;
+  }
+
+  .tableCell[data-label="THUMBNAIL"],
+  .tableCell[data-label="PROJECT"],
+  .tableCell[data-label="TEAM"],
+  .tableCell[data-label="SUBMITTED"],
+  .tableCell[data-label="ACTIONS"] {
+    grid-column: 1 / -1;
+  }
+
+  .tableCell {
+    min-height: 0;
+    padding: 0;
+    border-bottom: 0;
+    display: block;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .tableCell::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    color: #888888;
+    font-size: 10px;
+    line-height: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .tableCell[data-label="THUMBNAIL"]::before {
+    display: none;
+  }
+
+  .tableCell[data-label="ACTIONS"] {
+    padding-top: 8px;
+    border-top: 1px solid #f0ebe2;
+    margin-top: 2px;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .iconAction {
+    width: 44px;
+    height: 44px;
+  }
+
+  .textAction {
+    min-height: 44px;
+    padding: 0 14px;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+
+  .statusBadge {
+    min-height: 24px;
+  }
+
+  .quickActions {
+    gap: 14px;
+    padding-top: 18px;
+  }
+
+  .toggleRow {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .trackLabel,
+  .barValue {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .chartWrap {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    min-height: 100px;
+  }
+
+  .barArea {
+    height: 80px;
+  }
+
+  .trackLabel {
+    font-size: 9px;
+  }
+
+  .barValue {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboardGrid {
+    gap: 14px;
+  }
+
+  .chartPanel,
+  .quickPanel,
+  .tablePanel {
+    padding: 10px 12px 12px;
+  }
+
+  .chartWrap {
+    gap: 8px;
+    padding-top: 10px;
+  }
+
+  .barArea {
+    height: 64px;
+  }
+
+  .quickActions {
+    gap: 10px;
+    padding-top: 12px;
+  }
+
+  .tableGrid {
+    gap: 10px;
+  }
+
+  .tableRow {
+    padding: 10px;
+    gap: 6px 10px;
+  }
+}

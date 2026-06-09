@@ -1,0 +1,253 @@
+.contentHeader {
+  margin: -26px -24px 24px -26px;
+  min-height: 70px;
+  padding: 22px 24px 18px 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #1a1a1a;
+  border-top: 3px solid #cc0000;
+  border-bottom: 1px solid #3a0808;
+}
+
+.contentHeader h2,
+.contentHeader p {
+  margin: 0;
+  font-weight: 400;
+}
+
+.contentHeader h2 {
+  color: #cc0000;
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.contentHeader p {
+  margin-top: 3px;
+  color: #888888;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.exportButton {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid #cc0000;
+  background: #ffffff;
+  color: #cc0000;
+  font-family: var(--font-admin-mono), monospace;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, color 0.15s;
+}
+
+.exportButton svg {
+  width: 14px;
+  height: 14px;
+}
+
+.exportButton:hover {
+  background: #cc0000;
+  color: #ffffff;
+  box-shadow: 2px 2px 0 0 #1a1a1a;
+}
+
+.exportButton:active {
+  background: #aa0000;
+  color: #ffffff;
+  box-shadow: 1px 1px 0 0 #1a1a1a;
+}
+
+.tablePanel {
+  background: #ffffff;
+  border: 1px solid #cc0000;
+  box-shadow: 4px 4px 0 0 #cc0000;
+  padding: 18px 18px 20px;
+  overflow-x: auto;
+}
+
+.tableGrid {
+  min-width: 880px;
+  display: grid;
+  grid-template-columns: minmax(280px, 1.45fr) repeat(3, minmax(150px, 1fr)) minmax(170px, 1fr);
+  align-items: stretch;
+}
+
+.tableHead {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  border-bottom: 1px solid #cc0000;
+  color: #888888;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.tableRow {
+  display: contents;
+}
+
+.tableCell {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 10px 4px;
+  border-bottom: 1px solid #e5e0d8;
+  color: #1a1a1a;
+  font-size: 10px;
+  line-height: 13px;
+}
+
+.projectCell {
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+}
+
+.projectName,
+.teamName {
+  max-width: 240px;
+  overflow-wrap: anywhere;
+}
+
+.projectName {
+  color: #1a1a1a;
+}
+
+.teamName {
+  color: #888888;
+}
+
+.averageCell {
+  color: #cc0000;
+}
+
+.averageSuffix {
+  color: #888888;
+}
+
+.exportState {
+  min-height: 16px;
+  margin: 10px 0 0;
+  color: #1a1a1a;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+@media (max-width: 900px) {
+  .contentHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 1024px) {
+  .exportButton {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+
+  .tablePanel {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 768px) {
+  .contentHeader {
+    margin: -20px -16px 18px;
+    padding: 22px 16px 14px;
+  }
+
+  .exportButton {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+
+  .tablePanel {
+    padding: 14px;
+    overflow: visible;
+    box-shadow: 2px 2px 0 0 #cc0000;
+  }
+
+  .tableGrid {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .tableHead {
+    display: none;
+  }
+
+  .tableRow {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #e5e0d8;
+    background: #ffffff;
+    box-shadow: 2px 2px 0 0 #cc0000;
+  }
+
+  .tableCell {
+    min-height: 0;
+    padding: 0;
+    border-bottom: 0;
+    display: block;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .tableCell::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    color: #888888;
+    font-size: 10px;
+    line-height: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .projectCell {
+    gap: 2px;
+  }
+
+  .projectName,
+  .teamName {
+    max-width: none;
+  }
+
+  .averageCell {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .contentHeader {
+    margin: -20px -16px 20px;
+    padding: 22px 16px 14px;
+  }
+
+  .exportButton {
+    width: 100%;
+  }
+
+  .tablePanel {
+    padding: 14px;
+  }
+}
