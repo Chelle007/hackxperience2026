@@ -11,6 +11,7 @@ import type { ScoreEntry } from "./types";
 import { PlaceholderThumb, RedBar } from "./components/atoms";
 import { ScoringPanel } from "./components/ScoringPanel";
 import { OverlayModal } from "./components/OverlayModal";
+import { useSettings } from "@/lib/hooks/use-settings";
 
 type JudgeProjectsResponse = {
   projects: JudgeProject[];
@@ -32,7 +33,21 @@ type JudgeProjectsResponse = {
   submissionStatusOpen: boolean;
 };
 
+function formatDeadline(value: Date | null) {
+  if (!value) return "--";
+  return value.toLocaleString("en-SG", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Singapore",
+    timeZoneName: "short",
+  });
+}
+
 export default function JudgeDashboardClient() {
+  const { settings, deadlineAt } = useSettings();
   const router = useRouter();
   const [expandedId,     setExpandedId]     = useState<string | null>(null);
   const [overlayProject, setOverlayProject] = useState<JudgeProject | null>(null);
@@ -100,6 +115,10 @@ export default function JudgeDashboardClient() {
   useEffect(() => {
     void loadProjects();
   }, [loadProjects]);
+
+  useEffect(() => {
+    setSubmissionOpen(settings.submission_status);
+  }, [settings.submission_status]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -223,7 +242,7 @@ export default function JudgeDashboardClient() {
             {[
               { label: "EVENT_DATE", value: "JUN 25, 2026",                vc: C.red      },
               { label: "VENUE",      value: "SIM STUDENT HUB BLK B LVL 1", vc: C.offWhite },
-              { label: "DEADLINE",   value: "12:00 SGT",                   vc: C.red      },
+              { label: "DEADLINE",   value: formatDeadline(deadlineAt),     vc: C.red      },
             ].map(({ label, value, vc }) => (
               <div key={label}>
                 <div style={{ fontFamily: FM, fontSize: 10, color: C.muted, letterSpacing: "0.06em" }}>{label}</div>

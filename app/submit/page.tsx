@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import Navbar from "../components/navbar";
 import { supabaseBrowser } from "@/lib/supabase-browser";
+import { useSettings } from "@/lib/hooks/use-settings";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -32,11 +33,6 @@ const FS = "var(--font-montserrat), system-ui, sans-serif";
 const FM = "var(--font-ibm-plex-mono), ui-monospace, monospace";
 const SHADOW = "6px 6px 0 0 #1d1c17";
 const SHADOW_SM = "4px 4px 0 0 #1d1c17";
-
-// Set these in .env.local to control the submission window.
-// Leave unset to keep submissions always open (dev/testing mode).
-const OPEN_AT   = process.env.NEXT_PUBLIC_SUBMISSION_OPEN_AT   ? new Date(process.env.NEXT_PUBLIC_SUBMISSION_OPEN_AT)   : null;
-const DEADLINE  = process.env.NEXT_PUBLIC_SUBMISSION_DEADLINE  ? new Date(process.env.NEXT_PUBLIC_SUBMISSION_DEADLINE)  : null;
 
 function fmtDeadline(d: Date) {
   return d.toLocaleString("en-SG", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Singapore", timeZoneName: "short" });
@@ -90,9 +86,6 @@ interface StoredSubmission {
   form: SerializableForm;
 }
 
-const MAX_DECK_BYTES = 25 * 1024 * 1024;
-const MAX_THUMB_BYTES = 5 * 1024 * 1024;
-
 function serializeForm(form: FormState): SerializableForm {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { pitchDeckFile: _pdf, thumbnailFile: _tf, ...rest } = form;
@@ -119,11 +112,11 @@ function isValidUrl(url: string): boolean {
   try { new URL(url); return true; } catch { return false; }
 }
 
-function validateStep(step: number, form: FormState): boolean {
+function validateStep(step: number, form: FormState, maxTeamSize: number): boolean {
   switch (step) {
     case 0: return !!(form.projectName.trim() && form.teamId.trim() && form.track && form.description.trim() && form.pitch.trim());
     case 1: return isValidUrl(form.githubRepoUrl) && isValidUrl(form.pitchDeckShareUrl) && (form.liveDemoUrl === "" || isValidUrl(form.liveDemoUrl)) && (form.demoVideoUrl === "" || isValidUrl(form.demoVideoUrl));
-    case 2: return form.members.length > 0 && form.members.every(m => m.name.trim() && m.studentId.trim() && m.role.trim() && m.email.trim());
+    case 2: return form.members.length > 0 && form.members.length <= maxTeamSize && form.members.every(m => m.name.trim() && m.studentId.trim() && m.role.trim() && m.email.trim());
     default: return true;
   }
 }
@@ -355,7 +348,7 @@ function ConfirmModal({ form, onCancel, onConfirm, isEditing }: {
 
 // ─── Page Hero ────────────────────────────────────────────────
 
-function PageHero({ tick }: { tick: Tick }) {
+function PageHero({ tick, deadline }: { tick: Tick; deadline: Date | null }) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
     <div style={{ padding: "36px 48px 28px", display: "flex", alignItems: "flex-end", gap: 32, justifyContent: "space-between", flexWrap: "wrap" }}>
@@ -371,7 +364,7 @@ function PageHero({ tick }: { tick: Tick }) {
         <div style={{ height: 14 }} />
         <Mono color={MUTED} size={11} style={{ whiteSpace: "normal" }}>// 24-HOUR HACKXPERIENCE 2026 · ONE RECORD PER TEAM · RESUBMIT UNTIL DEADLINE</Mono>
       </div>
-      {DEADLINE && (
+      {deadline && (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
           <span style={{ display: "inline-flex", alignItems: "center", height: 26, padding: "0 12px", background: DARK_BG, color: "#fff", fontFamily: FM, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em" }}>
             // DEADLINE_IN
@@ -385,7 +378,7 @@ function PageHero({ tick }: { tick: Tick }) {
               </div>
             ))}
           </div>
-          {DEADLINE && <Mono color={MUTED} size={10}>// Deadline: {fmtDeadline(DEADLINE)}</Mono>}
+          {deadline && <Mono color={MUTED} size={10}>// Deadline: {fmtDeadline(deadline)}</Mono>}
         </div>
       )}
     </div>
@@ -394,19 +387,25 @@ function PageHero({ tick }: { tick: Tick }) {
 
 // ─── Step Rail ────────────────────────────────────────────────
 
-const STEPS = [
-  ["01", "IDENTITY", "Name, track, pitch"],
-  ["02", "ASSETS", "Repo, deck, files"],
-  ["03", "MANIFEST", "1–5 members"],
-  ["04", "REVIEW", "Confirm + submit"],
-];
+function getStepRows(maxTeamSize: number): [string, string, string][] {
+  return [
+    ["01", "IDENTITY", "Name, track, pitch"],
+    ["02", "ASSETS", "Repo, deck, files"],
+    ["03", "MANIFEST", `1-${maxTeamSize} members`],
+    ["04", "REVIEW", "Confirm + submit"],
+  ];
+}
 
-function StepRail({ active, onStepClick, maxReached, lastSaved }: {
-  active: number; onStepClick: (i: number) => void; maxReached: number; lastSaved: LastSaved | null;
+function StepRail({ active, onStepClick, maxReached, maxTeamSize, lastSaved }: {
+  active: number;
+  onStepClick: (i: number) => void;
+  maxReached: number;
+  maxTeamSize: number;
+  lastSaved: LastSaved | null;
 }) {
   return (
     <div className="submit-step-rail" style={{ width: 200, flexShrink: 0, display: "flex", flexDirection: "column" }}>
-      {STEPS.map(([n, label, sub], i) => {
+      {getStepRows(maxTeamSize).map(([n, label, sub], i) => {
         const isA = i === active;
         const isD = i !== active && i <= maxReached;
         const isClickable = i <= maxReached;
@@ -549,7 +548,23 @@ function FormFooter({ onNext, onBack, nextLabel, showBack = true, disabled }: {
 const TECH_TAGS = ["REACT", "NEXT.JS", "TAILWIND", "NODE.JS", "PYTHON", "OPENAI API", "SUPABASE", "FIREBASE", "VERCEL", "GITHUB", "OTHER"];
 const TRACKS = ["AI for Campus Life", "Web Development", "Mobile App", "IoT / Hardware", "Data Analytics", "Open Track"];
 
-function Step01({ form, setForm, onNext }: { form: FormState; setForm: (f: FormState) => void; onNext: () => void }) {
+function Step01({
+  form,
+  setForm,
+  onNext,
+  maxTeamSize,
+  maxFileSizeMb,
+  thumbnailError,
+  setThumbnailError,
+}: {
+  form: FormState;
+  setForm: (f: FormState) => void;
+  onNext: () => void;
+  maxTeamSize: number;
+  maxFileSizeMb: number;
+  thumbnailError: string | null;
+  setThumbnailError: (message: string | null) => void;
+}) {
   const set = (k: keyof FormState) => (v: string) => setForm({ ...form, [k]: v });
   const toggleTag = (tag: string) => {
     const stack = form.techStack.includes(tag) ? form.techStack.filter(t => t !== tag) : [...form.techStack, tag];
@@ -598,9 +613,10 @@ function Step01({ form, setForm, onNext }: { form: FormState; setForm: (f: FormS
           <FieldLabel hint="16:9 RECOMMENDED">Thumbnail</FieldLabel>
           <input ref={thumbRef} type="file" accept="image/*" style={{ display: "none" }}
             onChange={(e) => {
+              setThumbnailError(null);
               const file = e.target.files?.[0];
-              if (file && file.size > MAX_THUMB_BYTES) {
-                alert("Thumbnail must be under 5 MB.");
+              if (file && file.size > maxFileSizeMb * 1024 * 1024) {
+                setThumbnailError(`File exceeds maximum allowed size of ${maxFileSizeMb} MB`);
                 e.target.value = "";
                 return;
               }
@@ -622,11 +638,16 @@ function Step01({ form, setForm, onNext }: { form: FormState; setForm: (f: FormS
             ) : (
               <>
                 <Mono color={MUTED} size={11}>[ Click to Upload ]</Mono>
-                <Mono color={MUTED} size={10}>.JPG .PNG .WEBP · ≤ 5 MB</Mono>
+                <Mono color={MUTED} size={10}>.JPG .PNG .WEBP · ≤ {maxFileSizeMb} MB</Mono>
                 <Mono color={MUTED} size={10}>// Cropped to 16:9 on display</Mono>
               </>
             )}
           </motion.div>
+          {thumbnailError && (
+            <Mono color={RED} size={10} style={{ display: "block", marginTop: 6 }}>
+              // {thumbnailError}
+            </Mono>
+          )}
         </div>
         <div>
           <FieldLabel hint="SELECT ALL THAT APPLY">Tech Stack</FieldLabel>
@@ -635,14 +656,32 @@ function Step01({ form, setForm, onNext }: { form: FormState; setForm: (f: FormS
           </div>
         </div>
       </div>
-      <FormFooter onNext={onNext} nextLabel="Next: Assets →" showBack={false} disabled={!validateStep(0, form)} />
+      <FormFooter onNext={onNext} nextLabel="Next: Assets →" showBack={false} disabled={!validateStep(0, form, maxTeamSize)} />
     </>
   );
 }
 
 // ─── Step 02: Assets ──────────────────────────────────────────
 
-function Step02({ form, setForm, onNext, onBack }: { form: FormState; setForm: (f: FormState) => void; onNext: () => void; onBack: () => void }) {
+function Step02({
+  form,
+  setForm,
+  onNext,
+  onBack,
+  maxTeamSize,
+  maxFileSizeMb,
+  pitchDeckError,
+  setPitchDeckError,
+}: {
+  form: FormState;
+  setForm: (f: FormState) => void;
+  onNext: () => void;
+  onBack: () => void;
+  maxTeamSize: number;
+  maxFileSizeMb: number;
+  pitchDeckError: string | null;
+  setPitchDeckError: (message: string | null) => void;
+}) {
   const set = (k: keyof FormState) => (v: string) => setForm({ ...form, [k]: v });
   const deckRef = useRef<HTMLInputElement>(null);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -677,9 +716,10 @@ function Step02({ form, setForm, onNext, onBack }: { form: FormState; setForm: (
           <FieldLabel hint="PDF / PPTX · OPTIONAL">Upload Pitch Deck</FieldLabel>
           <input ref={deckRef} type="file" accept=".pdf,.ppt,.pptx" style={{ display: "none" }}
             onChange={(e) => {
+              setPitchDeckError(null);
               const file = e.target.files?.[0];
-              if (file && file.size > MAX_DECK_BYTES) {
-                alert("Pitch deck must be under 25 MB.");
+              if (file && file.size > maxFileSizeMb * 1024 * 1024) {
+                setPitchDeckError(`File exceeds maximum allowed size of ${maxFileSizeMb} MB`);
                 e.target.value = "";
                 return;
               }
@@ -705,10 +745,15 @@ function Step02({ form, setForm, onNext, onBack }: { form: FormState; setForm: (
             ) : (
               <>
                 <Mono color={MUTED} size={12}>[ Click to Upload ]</Mono>
-                <Mono color={MUTED} size={10}>.PDF .PPTX · ≤ 25 MB</Mono>
+                <Mono color={MUTED} size={10}>.PDF .PPTX · ≤ {maxFileSizeMb} MB</Mono>
               </>
             )}
           </motion.div>
+          {pitchDeckError && (
+            <Mono color={RED} size={10} style={{ display: "block", marginTop: 6 }}>
+              // {pitchDeckError}
+            </Mono>
+          )}
         </div>
         <div>
           <FieldLabel hint="YOUTUBE / LOOM / GOOGLE DRIVE · OPTIONAL">Demo Video URL</FieldLabel>
@@ -718,7 +763,7 @@ function Step02({ form, setForm, onNext, onBack }: { form: FormState; setForm: (
           )}
         </div>
       </div>
-      <FormFooter onNext={onNext} onBack={onBack} nextLabel="Next: Team →" disabled={!validateStep(1, form)} />
+      <FormFooter onNext={onNext} onBack={onBack} nextLabel="Next: Team →" disabled={!validateStep(1, form, maxTeamSize)} />
     </>
   );
 }
@@ -731,9 +776,21 @@ const memberInputStyle: React.CSSProperties = {
   width: "100%", boxShadow: SHADOW_SM, boxSizing: "border-box",
 };
 
-function Step03({ form, setForm, onNext, onBack }: { form: FormState; setForm: (f: FormState) => void; onNext: () => void; onBack: () => void }) {
+function Step03({
+  form,
+  setForm,
+  onNext,
+  onBack,
+  maxTeamSize,
+}: {
+  form: FormState;
+  setForm: (f: FormState) => void;
+  onNext: () => void;
+  onBack: () => void;
+  maxTeamSize: number;
+}) {
   const addMember = () => {
-    if (form.members.length < 5)
+    if (form.members.length < maxTeamSize)
       setForm({ ...form, members: [...form.members, { id: Date.now().toString(), name: "", studentId: "", role: "", email: "" }] });
   };
   const removeMember = (id: string) => setForm({ ...form, members: form.members.filter(m => m.id !== id) });
@@ -742,7 +799,7 @@ function Step03({ form, setForm, onNext, onBack }: { form: FormState; setForm: (
 
   return (
     <>
-      <StepHeader n="03" title="TEAM_MANIFEST" status={`Add all team members — min 1, max 5 · Currently ${form.members.length}`} />
+      <StepHeader n="03" title="TEAM_MANIFEST" status={`Add all team members — min 1, max ${maxTeamSize} · Currently ${form.members.length}`} />
       {/* Horizontal-scroll wrapper — keeps the member table's column layout intact on narrow screens */}
       <div style={{ overflowX: "auto" }}>
         <div style={{ minWidth: 560 }}>
@@ -777,7 +834,7 @@ function Step03({ form, setForm, onNext, onBack }: { form: FormState; setForm: (
             </div>
           </motion.div>
         ))}
-        {form.members.length < 5 && (
+        {form.members.length < maxTeamSize && (
           <motion.div
             key="add-member"
             initial={{ opacity: 0 }}
@@ -793,7 +850,7 @@ function Step03({ form, setForm, onNext, onBack }: { form: FormState; setForm: (
               style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 8px", border: `1.5px solid ${DARK_BG}`, background: "rgba(192,0,0,0.04)", cursor: "pointer" }}
             >
               <Badge n={String(form.members.length + 1).padStart(2, "0")} size={26} />
-              <Mono color={RED} size={11} weight={800}>[ + Add Member ] — Row {form.members.length + 1} of 5</Mono>
+              <Mono color={RED} size={11} weight={800}>[ + Add Member ] — Row {form.members.length + 1} of {maxTeamSize}</Mono>
             </motion.div>
           </motion.div>
         )}
@@ -803,16 +860,17 @@ function Step03({ form, setForm, onNext, onBack }: { form: FormState; setForm: (
       <div style={{ height: 18 }} />
       <FieldLabel hint="OPTIONAL">Additional Notes</FieldLabel>
       <STextarea value={form.notes} onChange={(v) => setForm({ ...form, notes: v })} placeholder="Anything the judges should know? e.g. 'Stanley led ML; Wei Quan led UX.'" h={70} />
-      <FormFooter onNext={onNext} onBack={onBack} nextLabel="Next: Review →" disabled={!validateStep(2, form)} />
+      <FormFooter onNext={onNext} onBack={onBack} nextLabel="Next: Review →" disabled={!validateStep(2, form, maxTeamSize)} />
     </>
   );
 }
 
 // ─── Step 04: Review & Submit ─────────────────────────────────
 
-function Step04({ form, onBack, onSubmit, isEditing, isPastDeadline, isSubmitting, submitError }: {
+function Step04({ form, onBack, onSubmit, isEditing, isPastDeadline, resubmissionOpen, isSubmitting, submitError }: {
   form: FormState; onBack: () => void; onSubmit: () => void;
   isEditing: boolean; isPastDeadline: boolean;
+  resubmissionOpen: boolean;
   isSubmitting: boolean; submitError: string | null;
 }) {
   const [consent, setConsent] = useState(false);
@@ -908,6 +966,12 @@ function Step04({ form, onBack, onSubmit, isEditing, isPastDeadline, isSubmittin
         </div>
       )}
 
+      {isEditing && !resubmissionOpen && (
+        <div style={{ background: "rgba(192,0,0,0.06)", border: `1px dashed ${RED}`, padding: "10px 14px", marginBottom: 12 }}>
+          <Mono color={RED} size={11} weight={700}>// Resubmissions are currently disabled by the organizer.</Mono>
+        </div>
+      )}
+
       {submitError && (
         <div style={{ background: "rgba(192,0,0,0.06)", border: `1px dashed ${RED}`, padding: "10px 14px", marginBottom: 12 }}>
           <Mono color={RED} size={11} weight={700}>// Error: {submitError}</Mono>
@@ -916,7 +980,7 @@ function Step04({ form, onBack, onSubmit, isEditing, isPastDeadline, isSubmittin
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: `1.5px dashed ${LINE}`, paddingTop: 18 }}>
         <RedBtn ghost onClick={onBack} disabled={isSubmitting}>&lt; Back</RedBtn>
-        <RedBtn onClick={() => setShowModal(true)} disabled={!consent || isPastDeadline || isSubmitting}>
+        <RedBtn onClick={() => setShowModal(true)} disabled={!consent || isPastDeadline || (isEditing && !resubmissionOpen) || isSubmitting}>
           {isSubmitting ? "Submitting…" : isEditing ? "Update Submission" : "Submit"}
         </RedBtn>
       </div>
@@ -1059,11 +1123,12 @@ function SuccessState({ form, editToken, isNew }: { form: FormState; editToken: 
 
 // ─── Submission Landing ───────────────────────────────────────
 
-function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isBeforeOpen, openTick }: {
+function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isSubmissionOpen, deadline, maxTeamSize }: {
   tick: Tick; onStart: () => void; hasDraft: boolean;
-  isPastDeadline: boolean; isBeforeOpen: boolean; openTick: Tick;
+  isPastDeadline: boolean; isSubmissionOpen: boolean; deadline: Date | null; maxTeamSize: number;
 }) {
   const pad = (n: number) => String(n).padStart(2, "0");
+  const isBeforeOpen = !isSubmissionOpen;
   return (
     <div style={{ minHeight: "calc(100vh - 44px)", display: "flex", flexDirection: "column", justifyContent: "center", padding: "48px 48px 64px", maxWidth: 1200, margin: "0 auto", width: "100%" }}>
       <motion.div
@@ -1077,7 +1142,7 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isBeforeOp
           background: isBeforeOpen ? MUTED : GREEN,
           color: "#fff", fontFamily: FM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em",
         }}>
-          {isBeforeOpen ? "// Submissions Not Yet Open" : "// Submissions Open"}
+          {isBeforeOpen ? "// Submissions Closed" : "// Submissions Open"}
         </span>
       </motion.div>
 
@@ -1096,11 +1161,11 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isBeforeOp
               <Mono color={MUTED} size={11} weight={700} style={{ letterSpacing: "0.14em" }}>// Submission_Gate · Locked</Mono>
               <div style={{ height: 24 }} />
               <div style={{ fontFamily: FS, fontWeight: 800, fontSize: "clamp(36px, 4vw, 56px)", lineHeight: 0.93, letterSpacing: "-0.02em", textTransform: "uppercase", color: "#fff" }}>
-                SUBMISSIONS<br />OPEN IN
+                SUBMISSIONS<br />CURRENTLY CLOSED
               </div>
               <div style={{ height: 32 }} />
               <div style={{ display: "flex", gap: 8 }}>
-                {([["DAYS", openTick.d], ["HRS", openTick.h], ["MIN", openTick.m], ["SEC", openTick.s]] as [string, number][]).map(([u, n]) => (
+                {([["DAYS", tick.d], ["HRS", tick.h], ["MIN", tick.m], ["SEC", tick.s]] as [string, number][]).map(([u, n]) => (
                   <div key={u} style={{ flex: 1, padding: "14px 0", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", textAlign: "center" }}>
                     <div style={{ fontFamily: FM, fontSize: 36, fontWeight: 700, color: RED, lineHeight: 1 }}>{pad(n)}</div>
                     <div style={{ height: 6 }} />
@@ -1110,21 +1175,21 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isBeforeOp
               </div>
             </div>
             <div>
-              {OPEN_AT && (
+              {deadline && (
                 <div style={{ borderTop: "1px dashed rgba(255,255,255,0.12)", paddingTop: 20, marginTop: 28 }}>
-                  <Mono color="rgba(255,255,255,0.35)" size={10} weight={600}>// Opens At</Mono>
+                  <Mono color="rgba(255,255,255,0.35)" size={10} weight={600}>// Deadline</Mono>
                   <div style={{ height: 8 }} />
                   <div style={{ fontFamily: FM, fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.75)", letterSpacing: "0.04em" }}>
-                    {OPEN_AT.toLocaleDateString("en-SG", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Singapore" })}
+                    {deadline.toLocaleDateString("en-SG", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Singapore" })}
                     {" · "}
-                    {OPEN_AT.toLocaleTimeString("en-SG", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Singapore", timeZoneName: "short" })}
+                    {deadline.toLocaleTimeString("en-SG", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Singapore", timeZoneName: "short" })}
                   </div>
                 </div>
               )}
               <div style={{ height: 16 }} />
               <div style={{ fontFamily: FM, fontSize: 11, color: "rgba(255,255,255,0.3)", lineHeight: 1.7 }}>
-                // This page unlocks automatically.<br />
-                // Return when the hackathon begins.
+                // Submissions are currently disabled by the organiser.<br />
+                // Please check back later.
               </div>
             </div>
           </motion.div>
@@ -1146,7 +1211,7 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isBeforeOp
                 ["01", "Project Identity", "Your project name, team ID, chosen track, and a short pitch (~100 words)."],
                 ["02", "GitHub Repo", "A public repository link — must be accessible to judges by the deadline."],
                 ["03", "Pitch Deck", "A PDF deck or a shareable Google Slides / Canva link."],
-                ["04", "Team Details", "Full name, student ID, role, and email for every member (1–5 people)."],
+                ["04", "Team Details", `Full name, student ID, role, and email for every member (1-${maxTeamSize} people).`],
               ] as [string, string, string][]).map(([n, title, desc], i) => (
                 <div key={n} style={{ display: "flex", gap: 14, padding: "12px 0", borderTop: i ? `1px dashed ${LINE}` : "none" }}>
                   <Badge n={n} size={26} />
@@ -1188,7 +1253,7 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isBeforeOp
             </div>
           </div>
 
-          {DEADLINE && (
+          {deadline && (
             <div style={{ marginTop: 40 }}>
               <Mono color="rgba(255,255,255,0.4)" size={10} weight={600}>// Time Remaining</Mono>
               <div style={{ height: 12 }} />
@@ -1202,7 +1267,7 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isBeforeOp
                 ))}
               </div>
               <div style={{ height: 8 }} />
-              {DEADLINE && <Mono color="rgba(255,255,255,0.3)" size={10}>// Deadline: {fmtDeadline(DEADLINE)}</Mono>}
+              {deadline && <Mono color="rgba(255,255,255,0.3)" size={10}>// Deadline: {fmtDeadline(deadline)}</Mono>}
             </div>
           )}
         </motion.div>
@@ -1221,7 +1286,7 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isBeforeOp
             {([
               ["01", "Identity", "Fill in your project name, team ID, track, and a short pitch."],
               ["02", "Assets", "Link your GitHub repo and pitch deck URL. Upload your deck if you have it."],
-              ["03", "Team", "Add all team members — minimum 1, maximum 5."],
+              ["03", "Team", `Add all team members — minimum 1, maximum ${maxTeamSize}.`],
               ["04", "Review", "Check your submission, give consent, and submit. You can resubmit until the deadline."],
             ] as [string, string, string][]).map(([n, title, desc], i) => (
               <div key={n} style={{ display: "flex", gap: 14, padding: "12px 0", borderTop: i ? `1px dashed ${LINE}` : "none" }}>
@@ -1243,9 +1308,9 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isBeforeOp
           )}
 
           {/* CTA */}
-          {isPastDeadline ? (
+          {isPastDeadline || !isSubmissionOpen ? (
             <div style={{ width: "100%", height: 72, background: DARK_BG, border: `1.5px solid ${DARK_BG}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Mono color={MUTED} size={13} weight={700}>// Submissions Closed{DEADLINE ? ` · ${fmtDeadline(DEADLINE)}` : ""}</Mono>
+              <Mono color={MUTED} size={13} weight={700}>// Submissions Closed{deadline ? ` · ${fmtDeadline(deadline)}` : ""}</Mono>
             </div>
           ) : (
             <motion.button
@@ -1284,13 +1349,13 @@ const INITIAL_FORM: FormState = {
 // ─── Main Page ────────────────────────────────────────────────
 
 export default function SubmitPage() {
+  const { settings, deadlineAt, loading: settingsLoading, error: settingsError, refresh: refreshSettings } = useSettings();
   const [view, setView] = useState<"landing" | "form">("landing");
   const [step, setStep] = useState(0);
   const [maxReached, setMaxReached] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [tick, setTick] = useState<Tick>({ d: 0, h: 0, m: 0, s: 0 });
-  const [openTick, setOpenTick] = useState<Tick>({ d: 0, h: 0, m: 0, s: 0 });
   const [lastSaved, setLastSaved] = useState<LastSaved | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editToken, setEditToken] = useState<string | null>(null);
@@ -1299,9 +1364,15 @@ export default function SubmitPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isNewSubmission, setIsNewSubmission] = useState(false);
   const [isMountLoading, setIsMountLoading] = useState(true);
+  const [thumbnailUploadError, setThumbnailUploadError] = useState<string | null>(null);
+  const [pitchDeckUploadError, setPitchDeckUploadError] = useState<string | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
-  const isPastDeadline = DEADLINE !== null && Date.now() > DEADLINE.getTime();
-  const isBeforeOpen   = OPEN_AT  !== null && Date.now() < OPEN_AT.getTime();
+  const maxTeamSize = settings.max_team_size;
+  const maxFileSizeMb = settings.max_file_size;
+  const isSubmissionOpen = settings.submission_status;
+  const isResubmissionOpen = settings.resubmission_status;
+  const isPastDeadline = deadlineAt !== null && nowMs > deadlineAt.getTime();
 
   // Load from DB (via token) or localStorage draft on mount
   useEffect(() => {
@@ -1347,28 +1418,29 @@ export default function SubmitPage() {
   }, []);
 
   useEffect(() => {
-    if (!DEADLINE) return;
-    const update = () => {
-      const diff = DEADLINE.getTime() - Date.now();
-      if (diff <= 0) { setTick({ d: 0, h: 0, m: 0, s: 0 }); return; }
-      setTick({ d: Math.floor(diff / 86400000), h: Math.floor((diff % 86400000) / 3600000), m: Math.floor((diff % 3600000) / 60000), s: Math.floor((diff % 60000) / 1000) });
-    };
-    update();
-    const id = setInterval(update, 1000);
+    const id = setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
     return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
-    if (!OPEN_AT) return;
-    const update = () => {
-      const diff = OPEN_AT.getTime() - Date.now();
-      if (diff <= 0) { setOpenTick({ d: 0, h: 0, m: 0, s: 0 }); return; }
-      setOpenTick({ d: Math.floor(diff / 86400000), h: Math.floor((diff % 86400000) / 3600000), m: Math.floor((diff % 3600000) / 60000), s: Math.floor((diff % 60000) / 1000) });
-    };
-    update();
-    const id = setInterval(update, 1000);
-    return () => clearInterval(id);
-  }, []);
+    if (!deadlineAt) {
+      setTick({ d: 0, h: 0, m: 0, s: 0 });
+      return;
+    }
+    const diff = deadlineAt.getTime() - nowMs;
+    if (diff <= 0) {
+      setTick({ d: 0, h: 0, m: 0, s: 0 });
+      return;
+    }
+    setTick({
+      d: Math.floor(diff / 86400000),
+      h: Math.floor((diff % 86400000) / 3600000),
+      m: Math.floor((diff % 3600000) / 60000),
+      s: Math.floor((diff % 60000) / 1000),
+    });
+  }, [deadlineAt, nowMs]);
 
   // Autosave: debounce 1.5s after any form change, persist to localStorage
   useEffect(() => {
@@ -1390,8 +1462,37 @@ export default function SubmitPage() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setSubmitError(null);
+    setThumbnailUploadError(null);
+    setPitchDeckUploadError(null);
 
     try {
+      const latestSettings = await refreshSettings().catch(() => settings);
+      const configuredLimitMb = latestSettings.max_file_size;
+      const maxFileBytes = configuredLimitMb * 1024 * 1024;
+      const tooLargeMessage = `File exceeds maximum allowed size of ${configuredLimitMb} MB`;
+
+      if (!latestSettings.submission_status) {
+        throw new Error("Submissions are currently closed.");
+      }
+
+      if (isEditing && !latestSettings.resubmission_status) {
+        throw new Error("Resubmissions are currently disabled.");
+      }
+
+      if (form.members.length > latestSettings.max_team_size) {
+        throw new Error(`Team exceeds maximum size of ${latestSettings.max_team_size} members.`);
+      }
+
+      if (form.thumbnailFile && form.thumbnailFile.size > maxFileBytes) {
+        setThumbnailUploadError(tooLargeMessage);
+        throw new Error(tooLargeMessage);
+      }
+
+      if (form.pitchDeckFile && form.pitchDeckFile.size > maxFileBytes) {
+        setPitchDeckUploadError(tooLargeMessage);
+        throw new Error(tooLargeMessage);
+      }
+
       // 1. Upload files to Supabase Storage (if selected)
       // Preserve existing URLs when no new file is chosen
       let thumbnailUrl: string | null = form.thumbnailUrl ?? null;
@@ -1490,18 +1591,26 @@ export default function SubmitPage() {
     >
       <Navbar />
       <div style={{ paddingTop: 44 }}>
-        {isMountLoading && (
+        {(isMountLoading || settingsLoading) && (
           <div style={{ minHeight: "80vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Mono color={MUTED} size={12} weight={600}>// Loading…</Mono>
           </div>
         )}
-        {!isMountLoading && <>
+        {!(isMountLoading || settingsLoading) && <>
         {view === "landing" && (
-          <SubmissionLanding tick={tick} onStart={() => setView("form")} hasDraft={hasDraft} isPastDeadline={isPastDeadline} isBeforeOpen={isBeforeOpen} openTick={openTick} />
+          <SubmissionLanding
+            tick={tick}
+            onStart={() => setView("form")}
+            hasDraft={hasDraft}
+            isPastDeadline={isPastDeadline}
+            isSubmissionOpen={isSubmissionOpen}
+            deadline={deadlineAt}
+            maxTeamSize={maxTeamSize}
+          />
         )}
-        {view === "form" && !submitted && (
+        {view === "form" && !submitted && isSubmissionOpen && (
           <>
-            <PageHero tick={tick} />
+            <PageHero tick={tick} deadline={deadlineAt} />
             <style>{`
               @media (max-width: 1024px) {
                 .submit-form-layout { flex-direction: column !important; }
@@ -1514,6 +1623,7 @@ export default function SubmitPage() {
                 active={step}
                 onStepClick={(i) => { if (i <= maxReached) setStep(i); }}
                 maxReached={maxReached}
+                maxTeamSize={maxTeamSize}
                 lastSaved={lastSaved}
               />
               <Card padding={28} style={{ flex: 1, minWidth: 0, minHeight: 520 }}>
@@ -1525,16 +1635,67 @@ export default function SubmitPage() {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
                   >
-                    {step === 0 && <Step01 form={form} setForm={setForm} onNext={goNext} />}
-                    {step === 1 && <Step02 form={form} setForm={setForm} onNext={goNext} onBack={() => setStep(0)} />}
-                    {step === 2 && <Step03 form={form} setForm={setForm} onNext={goNext} onBack={() => setStep(1)} />}
-                    {step === 3 && <Step04 form={form} onBack={() => setStep(2)} onSubmit={handleSubmit} isEditing={isEditing} isPastDeadline={isPastDeadline} isSubmitting={isSubmitting} submitError={submitError} />}
+                    {step === 0 && (
+                      <Step01
+                        form={form}
+                        setForm={setForm}
+                        onNext={goNext}
+                        maxTeamSize={maxTeamSize}
+                        maxFileSizeMb={maxFileSizeMb}
+                        thumbnailError={thumbnailUploadError}
+                        setThumbnailError={setThumbnailUploadError}
+                      />
+                    )}
+                    {step === 1 && (
+                      <Step02
+                        form={form}
+                        setForm={setForm}
+                        onNext={goNext}
+                        onBack={() => setStep(0)}
+                        maxTeamSize={maxTeamSize}
+                        maxFileSizeMb={maxFileSizeMb}
+                        pitchDeckError={pitchDeckUploadError}
+                        setPitchDeckError={setPitchDeckUploadError}
+                      />
+                    )}
+                    {step === 2 && <Step03 form={form} setForm={setForm} onNext={goNext} onBack={() => setStep(1)} maxTeamSize={maxTeamSize} />}
+                    {step === 3 && (
+                      <Step04
+                        form={form}
+                        onBack={() => setStep(2)}
+                        onSubmit={handleSubmit}
+                        isEditing={isEditing}
+                        isPastDeadline={isPastDeadline}
+                        resubmissionOpen={isResubmissionOpen}
+                        isSubmitting={isSubmitting}
+                        submitError={submitError}
+                      />
+                    )}
                   </motion.div>
                 </AnimatePresence>
               </Card>
               <InfoSidebar step={step} />
             </div>
           </>
+        )}
+        {view === "form" && !submitted && !isSubmissionOpen && (
+          <div style={{ padding: "48px" }}>
+            <Card padding={24}>
+              <Mono color={RED} size={12} weight={700}>
+                // SUBMISSIONS ARE CURRENTLY CLOSED.
+              </Mono>
+              {deadlineAt && (
+                <Mono color={MUTED} size={10} style={{ display: "block", marginTop: 8 }}>
+                  // DEADLINE: {fmtDeadline(deadlineAt)}
+                </Mono>
+              )}
+              {settingsError && (
+                <Mono color={RED} size={10} style={{ display: "block", marginTop: 8 }}>
+                  // {settingsError}
+                </Mono>
+              )}
+            </Card>
+          </div>
         )}
         {submitted && (
           <div style={{ padding: "48px" }}>

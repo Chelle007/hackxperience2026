@@ -7,6 +7,7 @@ type SettingsRow = {
   submission_status: boolean;
   resubmission_status: boolean;
   max_team_size: number;
+  max_file_size: number;
   deadline: string;
   active_tracks: string[] | null;
   technical_execution_value: number;
@@ -16,6 +17,69 @@ type SettingsRow = {
   updated_at: string;
 };
 
+type UserRoleRow = {
+  role: string;
+};
+
+type AdminAuthResult =
+  | { ok: true; adminUserId: string }
+  | { ok: false; response: NextResponse };
+
+function normalizeRole(value: unknown) {
+  if (typeof value !== "string") return "";
+  return value.trim().toLowerCase();
+}
+
+function readBearerToken(request: NextRequest) {
+  const raw = request.headers.get("authorization") ?? "";
+  const [scheme, token] = raw.split(" ");
+  if (scheme?.toLowerCase() !== "bearer" || !token) return "";
+  return token.trim();
+}
+
+async function verifyAdminRole(request: NextRequest): Promise<AdminAuthResult> {
+  const accessToken = readBearerToken(request);
+  if (!accessToken) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Missing Supabase access token." }, { status: 401 }),
+    };
+  }
+
+  const { data: authUser, error: authError } = await supabaseServer.auth.getUser(accessToken);
+  if (authError || !authUser.user) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Invalid Supabase session." }, { status: 401 }),
+    };
+  }
+
+  const { data: roleRows, error: roleError } = await supabaseServer
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", authUser.user.id);
+
+  if (roleError) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: roleError.message }, { status: 500 }),
+    };
+  }
+
+  const hasAdminRole = ((roleRows ?? []) as UserRoleRow[]).some(
+    (row) => normalizeRole(row.role) === "admin",
+  );
+
+  if (!hasAdminRole) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Unauthorized. Admin role required." }, { status: 403 }),
+    };
+  }
+
+  return { ok: true, adminUserId: authUser.user.id };
+}
+
 export async function GET(request: NextRequest) {
   const auth = requireRole(request, "admin");
   if (!auth.ok) return auth.response;
@@ -23,8 +87,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabaseServer
     .from("settings")
     .select("*")
-    .order("id", { ascending: true })
-    .limit(1)
+    .eq("id", 1)
     .maybeSingle<SettingsRow>();
 
   if (error) {
@@ -38,6 +101,9 @@ export async function PATCH(request: NextRequest) {
   const auth = requireRole(request, "admin");
   if (!auth.ok) return auth.response;
 
+  const adminAuth = await verifyAdminRole(request);
+  if (!adminAuth.ok) return adminAuth.response;
+
   const body = await request.json().catch(() => null);
 
   const updatePayload: Partial<SettingsRow> = {};
@@ -49,6 +115,9 @@ export async function PATCH(request: NextRequest) {
   }
   if (typeof body?.max_team_size === "number") {
     updatePayload.max_team_size = Math.max(1, Math.min(20, Math.round(body.max_team_size)));
+  }
+  if (typeof body?.max_file_size === "number") {
+    updatePayload.max_file_size = Math.max(1, Math.min(32767, Math.round(body.max_file_size)));
   }
   if (typeof body?.deadline === "string") {
     updatePayload.deadline = body.deadline;
@@ -73,32 +142,21 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "No valid fields to update." }, { status: 400 });
   }
 
-  const existing = await supabaseServer
-    .from("settings")
-    .select("id")
-    .order("id", { ascending: true })
-    .limit(1)
-    .maybeSingle<{ id: number }>();
-
-  if (existing.error) {
-    return NextResponse.json({ error: existing.error.message }, { status: 500 });
-  }
-  if (!existing.data) {
-    return NextResponse.json(
-      { error: "Settings row missing. Seed the settings table first." },
-      { status: 404 }
-    );
-  }
-
   const { data, error } = await supabaseServer
     .from("settings")
     .update(updatePayload)
-    .eq("id", existing.data.id)
+    .eq("id", 1)
     .select("*")
-    .single<SettingsRow>();
+    .maybeSingle<SettingsRow>();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  if (!data) {
+    return NextResponse.json(
+      { error: "Settings row missing at id=1. Seed the settings table first." },
+      { status: 404 }
+    );
   }
 
   return NextResponse.json({ settings: data });

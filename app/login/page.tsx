@@ -307,35 +307,31 @@ function LoginPageContent() {
           </div>
 
           <div style={{ display: "flex", marginBottom: 22 }}>
-            {(["admin", "judge"] as PortalRole[]).map((role, i) => {
-              const isActive = role === activeRole;
-              return (
-                <motion.button
-                  key={role}
-                  onClick={() => setActiveRole(role)}
-                  aria-current={isActive ? "true" : undefined}
-                  className={undefined}
-                  whileHover={!isActive ? { backgroundColor: "#EDE8E0" } : {}}
-                  whileTap={!isActive ? { scale: 0.97 } : {}}
-                  transition={{ duration: 0.15 }}
-                  style={{
-                    flex: 1,
-                    height: 34,
-                    background: isActive ? C.activeRoleBg : C.panelBg,
-                    border: `1px solid ${C.red}`,
-                    borderLeft: i === 1 ? "none" : `1px solid ${C.red}`,
-                    fontFamily: FM,
-                    fontSize: 11,
-                    color: isActive ? "#FFFFFF" : C.dark,
-                    cursor: isActive ? "default" : "pointer",
-                    letterSpacing: "0.08em",
-                    transition: "background 0.15s, color 0.15s",
-                  }}
-                >
-                  {role.toUpperCase()}
-                </motion.button>
-              );
-            })}
+            <button
+              type="button"
+              onClick={() => setActiveRole("admin")}
+              className={`admin-role-btn flex-1 h-[34px] border border-[#cc0000] text-[11px] tracking-[0.08em] transition-colors duration-150 ${
+                activeRole === "admin"
+                  ? "bg-black text-white font-bold"
+                  : "bg-[#f5f0e8] text-[#1a1a1a] hover:bg-[#ede8e0]"
+              }`}
+              style={{ fontFamily: FM }}
+            >
+              ADMIN
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveRole("judge")}
+              className={`admin-role-btn flex-1 h-[34px] border border-l-0 border-[#cc0000] text-[11px] tracking-[0.08em] transition-colors duration-150 ${
+                activeRole === "judge"
+                  ? "bg-black text-white font-bold"
+                  : "bg-[#f5f0e8] text-[#1a1a1a] hover:bg-[#ede8e0]"
+              }`}
+              style={{ fontFamily: FM }}
+            >
+              JUDGE
+            </button>
           </div>
 
           <form onSubmit={handleSubmit} noValidate>

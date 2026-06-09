@@ -24,6 +24,7 @@ import {
   type ReactNode,
 } from "react";
 import styles from "./AdminShell.module.css";
+import { useSettings } from "@/lib/hooks/use-settings";
 
 export type AdminMetricTone = "neutral" | "amber" | "emerald" | "red";
 
@@ -87,6 +88,52 @@ const defaultShellState: AdminShellState = {
     },
   ],
 };
+
+function formatDeadlineMeta(value: Date | null): string {
+  if (!value) return "--";
+  return value.toLocaleString("en-SG", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Singapore",
+    timeZoneName: "short",
+  });
+}
+
+function formatDeadlineCountdown(value: Date | null, nowMs: number): {
+  value: string;
+  helper: string;
+  tone: AdminMetricTone;
+} {
+  if (!value) {
+    return {
+      value: "00.00.00",
+      helper: "until close",
+      tone: "neutral",
+    };
+  }
+
+  const diff = value.getTime() - nowMs;
+  if (diff <= 0) {
+    return {
+      value: "00.00.00",
+      helper: "closed",
+      tone: "red",
+    };
+  }
+
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const minutes = Math.floor((diff % 3600000) / 60000);
+
+  return {
+    value: [days, hours, minutes].map((part) => String(part).padStart(2, "0")).join("."),
+    helper: "until close",
+    tone: "neutral",
+  };
+}
 
 type AdminShellContextValue = {
   state: AdminShellState;
@@ -229,12 +276,37 @@ function MetricCard({ metric }: { metric: AdminMetric }) {
 }
 
 export function AdminShellFrame({ children }: { children: ReactNode }) {
+  const { settings, deadlineAt } = useSettings();
   const pathname = usePathname();
   const router = useRouter();
   const { state } = useAdminShellContext();
   const activeNav = useMemo(() => getActiveNav(pathname), [pathname]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [sessionUser, setSessionUser] = useState("admin");
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const deadlineMetric = useMemo(
+    () => formatDeadlineCountdown(deadlineAt, nowMs),
+    [deadlineAt, nowMs],
+  );
+  const metrics = useMemo(
+    () => state.metrics.map((metric) => (
+      metric.key === "deadline_countdown" || metric.key === "deadline"
+        ? {
+          ...metric,
+          value: deadlineMetric.value,
+          helper: deadlineMetric.helper,
+          tone: deadlineMetric.tone,
+        }
+        : metric
+    )),
+    [state.metrics, deadlineMetric.helper, deadlineMetric.tone, deadlineMetric.value],
+  );
 
   const handleLogout = useCallback(async () => {
     try {
@@ -293,7 +365,7 @@ export function AdminShellFrame({ children }: { children: ReactNode }) {
 
           <div className={styles.topbarRight}>
             <span className={styles.statusText}>
-              SUBMISSION: <span className={styles.brandAccent}>STATUS</span>
+              SUBMISSION: <span className={styles.brandAccent}>{settings.submission_status ? "OPEN" : "CLOSED"}</span>
             </span>
             <span className={styles.handleText}>&gt; {sessionUser}</span>
             <button type="button" className={`${styles.topbarButton} ${styles.logoutButton}`} onClick={handleLogout}>
@@ -330,14 +402,14 @@ export function AdminShellFrame({ children }: { children: ReactNode }) {
             </div>
             <div className={styles.metaBlock}>
               <span className={styles.metaLabel}>DEADLINE</span>
-              <span className={`${styles.metaValue} ${styles.metaAccent}`}>12:00 SGT</span>
+              <span className={`${styles.metaValue} ${styles.metaAccent}`}>{formatDeadlineMeta(deadlineAt)}</span>
             </div>
           </div>
         </div>
       </section>
 
       <section className={styles.metrics} aria-label="Portal metrics">
-        {state.metrics.map((metric) => (
+        {metrics.map((metric) => (
           <MetricCard key={metric.key} metric={metric} />
         ))}
       </section>

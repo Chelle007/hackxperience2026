@@ -1,6 +1,7 @@
 "use client";
 
 import type { AdminSubmission } from "@/lib/types";
+import { supabaseBrowser } from "@/lib/supabase-browser";
 
 export type AdminSubmissionsPayload = {
   submissions: AdminSubmission[];
@@ -16,6 +17,7 @@ export type AdminSettingsRow = {
   submission_status: boolean;
   resubmission_status: boolean;
   max_team_size: number;
+  max_file_size: number;
   deadline: string;
   active_tracks: string[] | null;
   technical_execution_value: number;
@@ -40,6 +42,18 @@ async function handleResponse<T>(response: Response, fallback: string): Promise<
     throw new Error(payload.error ?? fallback);
   }
   return parseJson<T>(response);
+}
+
+async function requireAccessToken() {
+  const { data, error } = await supabaseBrowser.auth.getSession();
+  if (error) {
+    throw new Error(error.message);
+  }
+  const accessToken = data.session?.access_token;
+  if (!accessToken) {
+    throw new Error("Supabase session missing. Please log in again.");
+  }
+  return accessToken;
 }
 
 export async function fetchAdminSubmissions() {
@@ -67,9 +81,13 @@ export async function fetchAdminSettings() {
 }
 
 export async function updateAdminSettings(updates: Partial<AdminSettingsRow>) {
+  const accessToken = await requireAccessToken();
   const response = await fetch("/api/admin/settings", {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
     body: JSON.stringify(updates),
   });
   return handleResponse<{ settings: AdminSettingsRow }>(response, "Unable to save settings.");

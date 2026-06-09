@@ -52,19 +52,21 @@ function SubmissionConfigPanel({
   submissionsOpen,
   allowResubmissions,
   maxTeamSize,
+  maxFileSizeMb,
   onToggleSubmissionsOpen,
   onToggleResubmissions,
   onMaxTeamSizeChange,
+  onMaxFileSizeChange,
 }: {
   submissionsOpen: boolean;
   allowResubmissions: boolean;
   maxTeamSize: number;
+  maxFileSizeMb: number;
   onToggleSubmissionsOpen: () => void;
   onToggleResubmissions: () => void;
   onMaxTeamSizeChange: (next: number) => void;
+  onMaxFileSizeChange: (next: number) => void;
 }) {
-  const [maxFileSizeMb, setMaxFileSizeMb] = useState(50);
-
   function parsePositiveInt(raw: string, max: number) {
     const value = parseInt(raw, 10);
     if (!Number.isNaN(value) && value > 0 && value <= max) return value;
@@ -134,7 +136,7 @@ function SubmissionConfigPanel({
               max={500}
               onChange={(event) => {
                 const value = parsePositiveInt(event.target.value, 500);
-                if (value != null) setMaxFileSizeMb(value);
+                if (value != null) onMaxFileSizeChange(value);
               }}
               aria-label="Max file size in MB"
             />
@@ -603,7 +605,9 @@ export default function SettingsClient() {
           onToggleSubmissionsOpen={toggleSubmissionsOpen}
           onToggleResubmissions={toggleAllowResubmissions}
           maxTeamSize={settings?.max_team_size ?? 5}
+          maxFileSizeMb={settings?.max_file_size ?? 10}
           onMaxTeamSizeChange={(next) => void patchSettings({ max_team_size: next })}
+          onMaxFileSizeChange={(next) => void patchSettings({ max_file_size: next })}
         />
 
         <JudgingCriteriaPanel
