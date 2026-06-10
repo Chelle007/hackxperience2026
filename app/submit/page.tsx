@@ -55,6 +55,7 @@ interface FormState {
   description: string;
   pitch: string;
   techStack: string[];
+  otherTechStack: string;
   githubRepoUrl: string;
   liveDemoUrl: string;
   pitchDeckShareUrl: string;
@@ -102,6 +103,7 @@ function deserializeForm(stored: SerializableForm): FormState {
     pitchDeckShareUrl:  (s.pitchDeckShareUrl   ?? s.pitchDeckUrl   ?? "") as string,
     pitchDeckUploadUrl: (s.pitchDeckUploadUrl  ?? s.pitchDeckFileUrl ?? null) as string | null,
     demoVideoUrl:       (s.demoVideoUrl        ?? "") as string,
+    otherTechStack:     (s.otherTechStack      ?? "") as string,
     pitchDeckFile: null,
     thumbnailFile: null,
   };
@@ -124,6 +126,7 @@ function hasAnyDraftInput(form: FormState) {
   }
 
   if (form.techStack.length > 0) return true;
+  if (form.otherTechStack.trim()) return true;
   if (form.pitchDeckFile || form.thumbnailFile) return true;
 
   return form.members.some(
@@ -624,8 +627,9 @@ function Step01({
 }) {
   const set = (k: keyof FormState) => (v: string) => setForm({ ...form, [k]: v });
   const toggleTag = (tag: string) => {
-    const stack = form.techStack.includes(tag) ? form.techStack.filter(t => t !== tag) : [...form.techStack, tag];
-    setForm({ ...form, techStack: stack });
+    const removing = form.techStack.includes(tag);
+    const stack = removing ? form.techStack.filter(t => t !== tag) : [...form.techStack, tag];
+    setForm({ ...form, techStack: stack, ...(tag === "OTHER" && removing ? { otherTechStack: "" } : {}) });
   };
   const words = (s: string) => s.trim() ? s.trim().split(/\s+/).length : 0;
   const thumbRef = useRef<HTMLInputElement>(null);
@@ -711,6 +715,16 @@ function Step01({
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {TECH_TAGS.map(t => <STag key={t} active={form.techStack.includes(t)} onClick={() => toggleTag(t)}>{t}</STag>)}
           </div>
+          {form.techStack.includes("OTHER") && (
+            <div style={{ marginTop: 10 }}>
+              <FieldLabel hint="COMMA-SEPARATED · AUTO-UPPERCASED">Specify Other Tech</FieldLabel>
+              <SInput
+                value={form.otherTechStack}
+                onChange={(v) => setForm({ ...form, otherTechStack: v })}
+                placeholder="e.g. Flutter, Rust, TensorFlow"
+              />
+            </div>
+          )}
         </div>
       </div>
       <FormFooter onNext={onNext} nextLabel="Next: Assets →" showBack={false} disabled={!validateStep(0, form, maxTeamSize)} />
@@ -961,7 +975,10 @@ function Step04({ form, onBack, onSubmit, isEditing, isPastDeadline, resubmissio
           <RRow label="Track" value={form.track} />
           <RRow label="Description" value={form.description} />
           <RRow label="Pitch" value={form.pitch} />
-          <RRow label="Stack" value={form.techStack.join(" · ")} mono />
+          <RRow label="Stack" value={[
+            ...form.techStack.filter(t => t !== "OTHER"),
+            ...form.otherTechStack.split(",").map(t => t.trim().toUpperCase()).filter(Boolean),
+          ].filter((t, i, arr) => arr.indexOf(t) === i).join(" · ")} mono />
         </RBlock>
 
         <RBlock n="02" title="ASSETS">
@@ -1396,7 +1413,7 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isSubmissi
 
 const INITIAL_FORM: FormState = {
   projectName: "", teamId: "", track: "", description: "", pitch: "",
-  techStack: [], githubRepoUrl: "", liveDemoUrl: "", pitchDeckShareUrl: "",
+  techStack: [], otherTechStack: "", githubRepoUrl: "", liveDemoUrl: "", pitchDeckShareUrl: "",
   pitchDeckFile: null, pitchDeckUploadUrl: null, demoVideoUrl: "",
   thumbnailFile: null, thumbnailUrl: null,
   members: [{ id: "initial", name: "", studentId: "", role: "", email: "" }],
@@ -1629,9 +1646,17 @@ export default function SubmitPage() {
         }
       }
 
-      // 2. Build payload
+      // 2. Build payload — resolve "OTHER" into actual tech stack entries
+      const baseStack = form.techStack.filter(t => t !== "OTHER");
+      const customEntries = form.otherTechStack
+        .split(",")
+        .map(t => t.trim().toUpperCase())
+        .filter(Boolean);
+      const resolvedStack = [...new Set([...baseStack, ...customEntries])];
+
       const payload = {
         ...serializeForm(form),
+        techStack: resolvedStack,
         thumbnailUrl,
         pitchDeckUploadUrl,
         isDraft: false,
