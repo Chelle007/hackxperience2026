@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, X } from "lucide-react";
+import { Check, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminShellConfig, type AdminMetric } from "../components/AdminShell";
 import { usePortalSettings } from "../components/PortalSettingsContext";
@@ -205,28 +205,135 @@ function Thumbnail() {
   );
 }
 
-function SubmissionActions({ status, onViewClick }: { status: SubmissionStatus; onViewClick: () => void }) {
+function SubmissionActions({
+  status,
+  busy,
+  onApprove,
+  onReject,
+  onDeleteRequest,
+  onViewClick,
+}: {
+  status: SubmissionStatus;
+  busy: boolean;
+  onApprove: () => void;
+  onReject: () => void;
+  onDeleteRequest: () => void;
+  onViewClick: () => void;
+}) {
   return (
     <div className={styles.actions}>
       {status === "pending" ? (
-        <button type="button" className={`${styles.iconAction} ${styles.approveAction}`} aria-label="Approve submission">
+        <button
+          type="button"
+          className={`${styles.iconAction} ${styles.approveAction}`}
+          aria-label="Approve submission"
+          disabled={busy}
+          onClick={onApprove}
+        >
           <Check aria-hidden="true" />
         </button>
       ) : null}
-      <button type="button" className={`${styles.iconAction} ${styles.rejectAction}`} aria-label="Reject submission">
+      <button
+        type="button"
+        className={`${styles.iconAction} ${styles.rejectAction}`}
+        aria-label="Reject submission"
+        disabled={busy}
+        onClick={onReject}
+      >
         <X aria-hidden="true" />
       </button>
-      <button type="button" className={styles.textAction} onClick={onViewClick}>VIEW</button>
-      <button type="button" className={`${styles.textAction} ${styles.deleteAction}`}>DELETE</button>
+      <button
+        type="button"
+        className={styles.textAction}
+        disabled={busy}
+        onClick={onViewClick}
+      >
+        VIEW
+      </button>
+      <button
+        type="button"
+        className={`${styles.iconAction} ${styles.deleteAction}`}
+        aria-label="Delete submission"
+        disabled={busy}
+        onClick={onDeleteRequest}
+      >
+        <Trash2 aria-hidden="true" />
+      </button>
     </div>
   );
 }
 
-function RecentSubmissionsTable({ submissions, onView }: { submissions: AdminSubmission[]; onView: (id: string) => void }) {
+function DeleteConfirmModal({
+  projectName,
+  teamName,
+  busy,
+  onConfirm,
+  onCancel,
+}: {
+  projectName: string;
+  teamName: string;
+  busy: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className={styles.modalOverlay}>
+      <div className={styles.modalCard}>
+        <p className={styles.modalTitle}>!DELETE_PROJECT!</p>
+        <p className={styles.modalSubtitle}>// THIS CAN NOT BE UNDONE</p>
+        <p className={styles.modalBody}>
+          Are you sure you want to{" "}
+          <span className={styles.modalDanger}>PERMANENTLY DELETE</span>{" "}
+          {projectName}
+          <br />
+          {"[ "}{teamName}{" ]?"}
+        </p>
+        <div className={styles.modalBtns}>
+          <button
+            type="button"
+            className={styles.modalConfirmBtn}
+            disabled={busy}
+            onClick={onConfirm}
+          >
+            YES
+          </button>
+          <button
+            type="button"
+            className={styles.modalCancelBtn}
+            disabled={busy}
+            onClick={onCancel}
+          >
+            NO
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RecentSubmissionsTable({
+  submissions,
+  onView,
+  onApprove,
+  onReject,
+  onDelete,
+}: {
+  submissions: AdminSubmission[];
+  onView: (id: string) => void;
+  onApprove: (id: string) => Promise<void>;
+  onReject: (id: string) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+}) {
   const [search, setSearch] = useState("");
   const [trackFilter, setTrackFilter] = useState<TrackFilter>("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    projectName: string;
+    teamName: string;
+  } | null>(null);
 
   const displayed = useMemo(() => {
     let result = submissions;
@@ -249,86 +356,133 @@ function RecentSubmissionsTable({ submissions, onView }: { submissions: AdminSub
       .slice(0, 5);
   }, [submissions, trackFilter, statusFilter, search, sortDir]);
 
+  async function handleApproveRow(id: string) {
+    setBusyId(id);
+    try { await onApprove(id); } finally { setBusyId(null); }
+  }
+
+  async function handleRejectRow(id: string) {
+    setBusyId(id);
+    try { await onReject(id); } finally { setBusyId(null); }
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) return;
+    const { id } = deleteTarget;
+    setBusyId(id);
+    try {
+      await onDelete(id);
+      setDeleteTarget(null);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
-    <section className={styles.tablePanel}>
-      <div className={styles.tablePanelTop}>
-        <span className={styles.sectionHeaderText}>&gt; RECENT_SUBMISSIONS</span>
-        <a href="/admin/submissions" className={styles.viewAllBtn}>VIEW ALL →</a>
-      </div>
-
-      <div className={styles.tableToolbar}>
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search project or team..."
-          className={styles.searchInput}
-        />
-        <select
-          value={trackFilter}
-          onChange={(e) => setTrackFilter(e.target.value as TrackFilter)}
-          className={styles.filterSelect}
-        >
-          <option value="">ALL TRACKS</option>
-          {HACKX_TRACKS.map((t) => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-          className={styles.filterSelect}
-        >
-          <option value="">ALL STATUS</option>
-          <option value="pending">PENDING</option>
-          <option value="approved">APPROVED</option>
-          <option value="rejected">REJECTED</option>
-        </select>
-        <button
-          type="button"
-          onClick={() => setSortDir((d) => (d === "desc" ? "asc" : "desc"))}
-          className={styles.sortBtn}
-        >
-          DATE {sortDir === "desc" ? "↓ DESC" : "↑ ASC"}
-        </button>
-      </div>
-
-      <div className={styles.tableFrame}>
-        <div className={styles.tableGrid}>
-          <div className={styles.tableHead}>THUMBNAIL</div>
-          <div className={styles.tableHead}>PROJECT</div>
-          <div className={styles.tableHead}>TEAM</div>
-          <div className={styles.tableHead}>TRACK</div>
-          <div className={styles.tableHead}>STATUS</div>
-          <div className={styles.tableHead}>SUBMITTED</div>
-          <div className={styles.tableHead}>ACTIONS</div>
-
-          {submissions.length === 0 ? (
-            <div className={styles.emptyRow}>[ NO SUBMISSIONS YET ]</div>
-          ) : displayed.length === 0 ? (
-            <div className={styles.emptyRow}>[ NO RESULTS MATCH FILTERS ]</div>
-          ) : (
-            displayed.map((submission) => (
-              <div className={styles.tableRow} key={submission.id}>
-                <div className={styles.tableCell} data-label="THUMBNAIL">
-                  <Thumbnail />
-                </div>
-                <div className={styles.tableCell} data-label="PROJECT">{submission.projectName}</div>
-                <div className={styles.tableCell} data-label="TEAM">{submission.teamName}</div>
-                <div className={styles.tableCell} data-label="TRACK">{submission.track}</div>
-                <div className={styles.tableCell} data-label="STATUS">
-                  <StatusBadge status={submission.status} />
-                </div>
-                <div className={styles.tableCell} data-label="SUBMITTED">{submission.submittedAt}</div>
-                <div className={styles.tableCell} data-label="ACTIONS">
-                  <SubmissionActions status={submission.status} onViewClick={() => onView(submission.id)} />
-                </div>
-              </div>
-            ))
-          )}
+    <>
+      <section className={styles.tablePanel}>
+        <div className={styles.tablePanelTop}>
+          <span className={styles.sectionHeaderText}>&gt; RECENT_SUBMISSIONS</span>
+          <a href="/admin/submissions" className={styles.viewAllBtn}>VIEW ALL →</a>
         </div>
-      </div>
-    </section>
+
+        <div className={styles.tableToolbar}>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search project or team..."
+            className={styles.searchInput}
+          />
+          <select
+            value={trackFilter}
+            onChange={(e) => setTrackFilter(e.target.value as TrackFilter)}
+            className={styles.filterSelect}
+          >
+            <option value="">ALL TRACKS</option>
+            {HACKX_TRACKS.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+            className={styles.filterSelect}
+          >
+            <option value="">ALL STATUS</option>
+            <option value="pending">PENDING</option>
+            <option value="approved">APPROVED</option>
+            <option value="rejected">REJECTED</option>
+          </select>
+          <button
+            type="button"
+            onClick={() => setSortDir((d) => (d === "desc" ? "asc" : "desc"))}
+            className={styles.sortBtn}
+          >
+            DATE {sortDir === "desc" ? "↓ DESC" : "↑ ASC"}
+          </button>
+        </div>
+
+        <div className={styles.tableFrame}>
+          <div className={styles.tableGrid}>
+            <div className={styles.tableHead}>THUMBNAIL</div>
+            <div className={styles.tableHead}>PROJECT</div>
+            <div className={styles.tableHead}>TEAM</div>
+            <div className={styles.tableHead}>TRACK</div>
+            <div className={styles.tableHead}>STATUS</div>
+            <div className={styles.tableHead}>SUBMITTED</div>
+            <div className={styles.tableHead}>ACTIONS</div>
+
+            {submissions.length === 0 ? (
+              <div className={styles.emptyRow}>[ NO SUBMISSIONS YET ]</div>
+            ) : displayed.length === 0 ? (
+              <div className={styles.emptyRow}>[ NO RESULTS MATCH FILTERS ]</div>
+            ) : (
+              displayed.map((submission) => (
+                <div className={styles.tableRow} key={submission.id}>
+                  <div className={styles.tableCell} data-label="THUMBNAIL">
+                    <Thumbnail />
+                  </div>
+                  <div className={styles.tableCell} data-label="PROJECT">{submission.projectName}</div>
+                  <div className={styles.tableCell} data-label="TEAM">{submission.teamName}</div>
+                  <div className={styles.tableCell} data-label="TRACK">{submission.track}</div>
+                  <div className={styles.tableCell} data-label="STATUS">
+                    <StatusBadge status={submission.status} />
+                  </div>
+                  <div className={styles.tableCell} data-label="SUBMITTED">{submission.submittedAt}</div>
+                  <div className={styles.tableCell} data-label="ACTIONS">
+                    <SubmissionActions
+                      status={submission.status}
+                      busy={busyId === submission.id}
+                      onApprove={() => handleApproveRow(submission.id)}
+                      onReject={() => handleRejectRow(submission.id)}
+                      onDeleteRequest={() =>
+                        setDeleteTarget({
+                          id: submission.id,
+                          projectName: submission.projectName,
+                          teamName: submission.teamName,
+                        })
+                      }
+                      onViewClick={() => onView(submission.id)}
+                    />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+
+      {deleteTarget && (
+        <DeleteConfirmModal
+          projectName={deleteTarget.projectName}
+          teamName={deleteTarget.teamName}
+          busy={busyId === deleteTarget.id}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+    </>
   );
 }
 
@@ -474,7 +628,13 @@ export default function DashboardClient({ initialState }: { initialState: Dashbo
           </div>
         </section>
 
-        <RecentSubmissionsTable submissions={data} onView={(id) => setViewingId(id)} />
+        <RecentSubmissionsTable
+          submissions={data}
+          onView={(id) => setViewingId(id)}
+          onApprove={handleApprove}
+          onReject={handleReject}
+          onDelete={handleDelete}
+        />
       </div>
 
       <SubmissionViewOverlay
