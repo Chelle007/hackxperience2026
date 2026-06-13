@@ -293,13 +293,76 @@
 
 .body {
   display: grid;
-  grid-template-columns: 230px minmax(0, 1fr);
+  grid-template-columns: 1fr;
   min-height: calc(100vh - 54px - 122px - 121px);
 }
 
 .sidebar {
   background: #1a1a1a;
   border-right: 1px solid #cc0000;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebarNav {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebarProfile {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 13px 20px;
+  border-top: 1px solid #2a2a2a;
+  background: #111111;
+}
+
+.sidebarProfileInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sidebarProfileName {
+  font-size: 12px;
+  line-height: 16px;
+  color: #f5f0e8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebarProfileRole {
+  font-size: 10px;
+  line-height: 13px;
+  color: #888888;
+}
+
+.sidebarLogoutBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: 1px solid #cc0000;
+  background: transparent;
+  color: #cc0000;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.sidebarLogoutBtn:hover {
+  background: #3a0808;
+  border-color: #ff2222;
+}
+
+.sidebarLogoutBtn:active {
+  background: #5a1010;
 }
 
 .sidebarGroup {

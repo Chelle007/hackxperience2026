@@ -54,3 +54,6 @@ next-env.d.ts
 # supabase
 /supabase/entire_schema.sql
 /supabase/migrations/20260612000000_create_activity_logs.sql
+
+# screenshots
+/screenshots

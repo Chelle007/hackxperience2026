@@ -83,41 +83,6 @@
   50%       { opacity: 0.25; }
 }
 
-/* ── Tab strip ───────────────────────────────────────────── */
-
-.tabStrip {
-  display: flex;
-  margin: 0 -26px;
-  padding: 0 26px;
-  border-top: 1px solid #3a0808;
-}
-
-.tab {
-  display: inline-flex;
-  align-items: center;
-  height: 36px;
-  padding: 0 16px;
-  font-family: var(--font-admin-mono), monospace;
-  font-size: 11px;
-  line-height: 14px;
-  letter-spacing: 0.04em;
-  color: #888888;
-  text-decoration: none;
-  border-bottom: 2px solid transparent;
-  transition: color 0.15s, border-color 0.15s;
-  cursor: pointer;
-}
-
-.tab:hover {
-  color: #f5f0e8;
-}
-
-.tabActive {
-  color: #cc0000;
-  border-bottom-color: #cc0000;
-  cursor: default;
-}
-
 /* ── Table panel ─────────────────────────────────────────── */
 
 .tablePanel {
@@ -175,9 +140,18 @@
   box-shadow: 2px 2px 0 0 #cc0000;
 }
 
-.filterSelect {
+.filterDropdown {
+  position: relative;
+}
+
+.filterTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   height: 30px;
-  padding: 0 26px 0 8px;
+  padding: 0 8px;
+  min-width: 148px;
   background: #ffffff;
   border: 1px solid #1a1a1a;
   color: #1a1a1a;
@@ -186,15 +160,72 @@
   font-family: var(--font-admin-mono), monospace;
   cursor: pointer;
   outline: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%231a1a1a'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
+  white-space: nowrap;
   transition: border-color 0.15s;
 }
 
-.filterSelect:focus {
+.filterTrigger:hover,
+.filterTrigger:focus {
   border-color: #cc0000;
+}
+
+.filterChevron {
+  font-size: 8px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+
+.filterChevronOpen {
+  transform: rotate(180deg);
+}
+
+.filterMenu {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  min-width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: #f5f0e8;
+  border: 2px solid #cc0000;
+  z-index: 50;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.filterOption {
+  display: block;
+  padding: 7px 10px;
+  font-size: 11px;
+  line-height: 15px;
+  font-family: var(--font-admin-mono), monospace;
+  color: #1a1a1a;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.1s, color 0.1s;
+}
+
+.filterOption:hover {
+  background: #cc0000;
+  color: #f5f0e8;
+}
+
+.filterOptionSelected {
+  background: #1a1a1a;
+  color: #f5f0e8;
+}
+
+.filterOptionSelected:hover {
+  background: #cc0000;
+  color: #f5f0e8;
+}
+
+/* ── Filter dropdown wrapper ─────────────────────────────── */
+
+.filterDropdown {
+  /* toolbar context — CustomSelect handles internal sizing */
 }
 
 /* ── Table ───────────────────────────────────────────────── */
@@ -291,13 +322,70 @@
   line-height: 16px;
 }
 
+/* ── Pagination ──────────────────────────────────────────── */
+
+.paginationBar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  border-top: 1px solid #cc0000;
+  background: #ffffff;
+  flex-wrap: wrap;
+}
+
+.paginationBtn {
+  height: 28px;
+  padding: 0 10px;
+  background: #1a1a1a;
+  border: 1px solid #1a1a1a;
+  color: #f5f0e8;
+  font-family: var(--font-admin-mono), monospace;
+  font-size: 11px;
+  line-height: 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.paginationBtn:hover:not(:disabled) {
+  background: #cc0000;
+  border-color: #cc0000;
+}
+
+.paginationBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.paginationInfo {
+  font-family: var(--font-admin-mono), monospace;
+  font-size: 11px;
+  line-height: 16px;
+  color: #1a1a1a;
+}
+
+.paginationCount {
+  font-family: var(--font-admin-mono), monospace;
+  font-size: 11px;
+  line-height: 16px;
+  color: #888888;
+  margin-left: auto;
+}
+
 /* ── Responsive ──────────────────────────────────────────── */
 
 @media (max-width: 1024px) {
   .searchInput,
-  .filterSelect {
+  .filterTrigger {
     height: 44px;
     min-height: 44px;
+  }
+
+  .paginationBtn {
+    height: 44px;
+    min-height: 44px;
+    padding: 0 14px;
   }
 
   .tableFrame {
@@ -384,8 +472,12 @@
     flex-basis: 100%;
   }
 
-  .filterSelect {
+  .filterDropdown {
     flex: 1;
+  }
+
+  .filterTrigger {
+    width: 100%;
   }
 
   .realtimePill {

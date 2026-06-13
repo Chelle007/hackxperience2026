@@ -662,6 +662,72 @@
   background: #e5e0d8;
 }
 
+/* ── Update button ────────────────────────────── */
+
+.updateBtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 6px 14px;
+  background: #1a1a1a;
+  border: 1px solid #1a1a1a;
+  color: #f5f0e8;
+  font-family: var(--font-admin-mono), monospace;
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.updateBtn:hover {
+  background: #cc0000;
+  border-color: #cc0000;
+  color: #ffffff;
+}
+
+.updateBtn:active {
+  background: #aa0000;
+  border-color: #aa0000;
+}
+
+.updateBtn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.updateSuccessMsg {
+  margin-top: 10px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1a1a1a;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── Input error states ───────────────────────── */
+
+.numberInputError {
+  border-color: #cc0000;
+  box-shadow: 2px 2px 0 0 #cc0000;
+}
+
+.inputErrorMsg {
+  display: block;
+  margin-top: 4px;
+  color: #cc0000;
+  font-family: var(--font-admin-mono), monospace;
+  font-size: 10px;
+  line-height: 14px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
 /* ── Responsive ───────────────────────────────── */
 
 @media (max-width: 1024px) {
@@ -689,7 +755,8 @@
   .logoutBtn,
   .editBtn,
   .deleteBtn,
-  .addJudgeBtn {
+  .addJudgeBtn,
+  .updateBtn {
     min-height: 44px;
   }
 
@@ -885,7 +952,8 @@
   }
 
   .logoutBtn,
-  .addJudgeBtn {
+  .addJudgeBtn,
+  .updateBtn {
     width: 100%;
     justify-content: center;
     font-size: 14px;

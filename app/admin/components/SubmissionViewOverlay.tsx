@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { HACKX_TRACKS, type AdminSubmission, type SubmissionStatus } from "@/lib/types";
+import CustomSelect from "./CustomSelect";
 import editStyles from "./SubmissionEditOverlay.module.css";
 import styles from "./SubmissionViewOverlay.module.css";
 
@@ -137,12 +138,11 @@ export default function SubmissionViewOverlay({
                   type="button"
                   className={styles.headerClose}
                   onClick={onClose}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.88 }}
+                  whileTap={{ scale: 0.95 }}
                   transition={SPRING}
                   aria-label="Close details"
                 >
-                  ×
+                  [ X ]
                 </motion.button>
               </div>
 
@@ -235,34 +235,69 @@ export default function SubmissionViewOverlay({
                   submission.pitchDeckFileUrl || submission.videoDemoUrl) ? (
                   <>
                     <div className={styles.fieldGrid}>
-                      {submission.githubUrl ? (
+                                            {submission.githubUrl ? (
                         <div className={styles.fieldBlock}>
                           <span className={styles.fieldLabel}>GITHUB REPO URL</span>
-                          <span className={styles.fieldValue}>{submission.githubUrl}</span>
+                          <a
+                            href={submission.githubUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.fieldLink}
+                          >
+                            {submission.githubUrl}
+                          </a>
                         </div>
                       ) : null}
                       {submission.liveUrl ? (
                         <div className={styles.fieldBlock}>
                           <span className={styles.fieldLabel}>LIVE DEMO URL</span>
-                          <span className={styles.fieldValue}>{submission.liveUrl}</span>
+                          <a
+                            href={submission.liveUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.fieldLink}
+                          >
+                            {submission.liveUrl}
+                          </a>
                         </div>
                       ) : null}
                       {submission.pitchDeckUrl ? (
                         <div className={styles.fieldBlock}>
                           <span className={styles.fieldLabel}>PITCH DECK URL</span>
-                          <span className={styles.fieldValue}>{submission.pitchDeckUrl}</span>
+                          <a
+                            href={submission.pitchDeckUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.fieldLink}
+                          >
+                            {submission.pitchDeckUrl}
+                          </a>
                         </div>
                       ) : null}
                       {submission.pitchDeckFileUrl ? (
                         <div className={styles.fieldBlock}>
                           <span className={styles.fieldLabel}>PITCH DECK FILE</span>
-                          <span className={styles.fieldValue}>{submission.pitchDeckFileUrl}</span>
+                          <a
+                            href={submission.pitchDeckFileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.fieldLink}
+                          >
+                            {submission.pitchDeckFileUrl}
+                          </a>
                         </div>
                       ) : null}
                       {submission.videoDemoUrl ? (
                         <div className={styles.fieldBlock}>
                           <span className={styles.fieldLabel}>VIDEO DEMO URL</span>
-                          <span className={styles.fieldValue}>{submission.videoDemoUrl}</span>
+                          <a
+                            href={submission.videoDemoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.fieldLink}
+                          >
+                            {submission.videoDemoUrl}
+                          </a>
                         </div>
                       ) : null}
                     </div>
@@ -457,27 +492,25 @@ export default function SubmissionViewOverlay({
                 <div className={editStyles.row}>
                   <div className={editStyles.field}>
                     <label className={editStyles.label}>TRACK</label>
-                    <select
-                      className={editStyles.select}
+                    <CustomSelect
+                      variant="edit"
                       value={draft.track}
-                      onChange={(e) => setField("track", e.target.value)}
-                    >
-                      {HACKX_TRACKS.map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
+                      onChange={(v) => setField("track", v)}
+                      options={HACKX_TRACKS.map((t) => ({ value: t, label: t }))}
+                    />
                   </div>
                   <div className={editStyles.field}>
                     <label className={editStyles.label}>STATUS</label>
-                    <select
-                      className={editStyles.select}
+                    <CustomSelect
+                      variant="edit"
                       value={draft.status}
-                      onChange={(e) => setField("status", e.target.value as SubmissionStatus)}
-                    >
-                      <option value="pending">PENDING</option>
-                      <option value="approved">APPROVED</option>
-                      <option value="rejected">REJECTED</option>
-                    </select>
+                      onChange={(v) => setField("status", v as SubmissionStatus)}
+                      options={[
+                        { value: "pending", label: "PENDING" },
+                        { value: "approved", label: "APPROVED" },
+                        { value: "rejected", label: "REJECTED" },
+                      ]}
+                    />
                   </div>
                 </div>
 

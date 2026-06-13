@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase-browser";
+import CustomSelect from "../../components/CustomSelect";
 import styles from "./ActivityLogs.module.css";
 
 interface SubmissionLog {
@@ -16,8 +16,11 @@ interface SubmissionLog {
 
 type RtStatus = "connecting" | "live" | "error";
 
+const PAGE_SIZE = 25;
+
 const ACTION_FILTER_OPTIONS = [
   "APPROVED",
+  "CRITERIA_UPDATED",
   "JUDGE_CREATED",
   "JUDGE_DELETED",
   "LOGIN",
@@ -44,7 +47,7 @@ function actionToneClass(action: string): string {
   const a = action.toUpperCase();
   if (a === "APPROVED" || a === "SUBMITTED" || a === "JUDGE_CREATED") return styles.toneGreen;
   if (a === "REJECTED" || a === "JUDGE_DELETED" || a === "PROJECT_DELETED") return styles.toneRed;
-  if (a === "SCORED" || a === "PROJECT_EDITED") return styles.toneAmber;
+  if (a === "SCORED" || a === "PROJECT_EDITED" || a === "CRITERIA_UPDATED") return styles.toneAmber;
   return styles.toneNeutral;
 }
 
@@ -55,6 +58,9 @@ export default function ActivityLogsClient() {
   const [rtStatus, setRtStatus] = useState<RtStatus>("connecting");
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const filterRef = useRef<HTMLDivElement>(null);
 
   // Initial fetch via the scoped route handler (uses service-role key server-side)
   useEffect(() => {
@@ -95,6 +101,21 @@ export default function ActivityLogsClient() {
     return () => { void supabaseBrowser.removeChannel(channel); };
   }, []);
 
+  // Close custom filter dropdown on outside click
+  useEffect(() => {
+    if (!isFilterOpen) return;
+    function onOutsideClick(e: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setIsFilterOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onOutsideClick);
+    return () => { document.removeEventListener("mousedown", onOutsideClick); };
+  }, [isFilterOpen]);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [search, actionFilter]);
+
   // Compound filter: action → search (note + performed_by)
   const displayed = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -108,6 +129,12 @@ export default function ActivityLogsClient() {
       return true;
     });
   }, [logs, search, actionFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(displayed.length / PAGE_SIZE));
+  const paginatedLogs = useMemo(
+    () => displayed.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [displayed, page]
+  );
 
   const rtPillClass =
     rtStatus === "live"  ? styles.realtimePillLive :
@@ -124,7 +151,7 @@ export default function ActivityLogsClient() {
       <header className={styles.contentHeader}>
         <div className={styles.headerRow}>
           <div>
-            <h2>&gt; ACTIVITY_LOGS</h2>
+            <h2>&gt; SYSTEM_ACTIVITY_LOGS</h2>
             <p>
               {loading
                 ? "// LOADING..."
@@ -136,12 +163,6 @@ export default function ActivityLogsClient() {
           <span className={`${styles.realtimePill} ${rtPillClass}`}>
             <span className={styles.realtimeDot} />
             <span>{rtLabel}</span>
-          </span>
-        </div>
-        <div className={styles.tabStrip}>
-          <Link href="/admin/dashboard" className={styles.tab}>OVERVIEW</Link>
-          <span className={`${styles.tab} ${styles.tabActive}`} aria-current="page">
-            ACTIVITY LOGS
           </span>
         </div>
       </header>
@@ -159,16 +180,16 @@ export default function ActivityLogsClient() {
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search note or performed by..."
           />
-          <select
-            className={styles.filterSelect}
+          <CustomSelect
+            className={styles.filterDropdown}
+            variant="toolbar"
             value={actionFilter}
-            onChange={(e) => setActionFilter(e.target.value)}
-          >
-            <option value="">ALL ACTIONS</option>
-            {ACTION_FILTER_OPTIONS.map((a) => (
-              <option key={a} value={a}>{a}</option>
-            ))}
-          </select>
+            onChange={setActionFilter}
+            options={[
+              { value: "", label: "ALL ACTIONS" },
+              ...ACTION_FILTER_OPTIONS.map((a) => ({ value: a, label: a })),
+            ]}
+          />
         </div>
 
         <div className={styles.tableFrame}>
@@ -189,7 +210,7 @@ export default function ActivityLogsClient() {
                   : "[ NO RESULTS MATCH FILTERS ]"}
               </div>
             ) : (
-              displayed.map((log) => (
+              paginatedLogs.map((log) => (
                 <div className={styles.tableRow} key={log.id}>
                   <div className={styles.tableCell} data-label="ACTION">
                     <span className={`${styles.actionBadge} ${actionToneClass(log.action)}`}>
@@ -210,6 +231,33 @@ export default function ActivityLogsClient() {
             )}
           </div>
         </div>
+
+        {!loading && !fetchError && displayed.length > 0 && (
+          <div className={styles.paginationBar}>
+            <button
+              type="button"
+              className={styles.paginationBtn}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              [ &lt; PREV ]
+            </button>
+            <span className={styles.paginationInfo}>
+              PAGE {page} OF {totalPages}
+            </span>
+            <button
+              type="button"
+              className={styles.paginationBtn}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              [ NEXT &gt; ]
+            </button>
+            <span className={styles.paginationCount}>
+              // {displayed.length} EVENTS
+            </span>
+          </div>
+        )}
       </div>
     </>
   );

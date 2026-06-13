@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/route-guard";
 import { supabaseServer } from "@/lib/supabase-server";
+import { insertSubmissionLog } from "@/lib/server/activity-log";
 
 type SettingsRow = {
   id: number;
@@ -157,6 +158,23 @@ export async function PATCH(request: NextRequest) {
       { error: "Settings row missing at id=1. Seed the settings table first." },
       { status: 404 }
     );
+  }
+
+  const criteriaKeys: (keyof SettingsRow)[] = [
+    "technical_execution_value",
+    "problem_solution_fit_value",
+    "innovation_creativity_value",
+    "presentation_quality_value",
+  ];
+  const isCriteriaUpdate = criteriaKeys.some((k) => k in updatePayload);
+
+  if (isCriteriaUpdate) {
+    void insertSubmissionLog({
+      submissionId: null,
+      action: "CRITERIA_UPDATED",
+      performedBy: auth.session.username,
+      note: `Admin ${auth.session.username} updated judging criteria`,
+    }).catch(() => {});
   }
 
   return NextResponse.json({ settings: data });

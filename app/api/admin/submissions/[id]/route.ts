@@ -87,9 +87,11 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       performedBy: auth.session.username,
       note: nextStatus === "rejected"
         ? `Admin ${auth.session.username} rejected project ${projectName}`
-        : !nextStatus
-          ? `Admin ${auth.session.username} edited project ${projectName}`
-          : null,
+        : nextStatus === "approved"
+          ? `Admin ${auth.session.username} approved project ${projectName}`
+          : !nextStatus
+            ? `Admin ${auth.session.username} edited project ${projectName}`
+            : null,
     });
   } catch {
     // Intentionally ignore non-critical audit failures here to avoid breaking UX.
