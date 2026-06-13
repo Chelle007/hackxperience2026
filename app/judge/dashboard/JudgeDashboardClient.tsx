@@ -383,6 +383,7 @@ export default function JudgeDashboardClient() {
                   return (
                     <div key={p.id}>
                       <motion.div
+                        onClick={() => setExpandedId(isExpanded ? null : p.id)}
                         className="r-project-row"
                         whileHover={{ boxShadow: SHADOW_LG }}
                         transition={{ duration: 0.15 }}
@@ -413,7 +414,10 @@ export default function JudgeDashboardClient() {
                         {/* Actions — wrapped into a group so they move to next row on mobile */}
                         <div className="r-project-actions" style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
                           <motion.button
-                            onClick={() => setOverlayProject(p)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // prevents setExpandedId() from running
+                              setOverlayProject(p)
+                            }}
                             whileHover={{ scale: 1.04, borderColor: C.red }}
                             whileTap={{ scale: 0.96 }}
                             transition={SPRING}
