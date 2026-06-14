@@ -110,11 +110,11 @@ export function OverlayModal({ project, onClose }: { project: JudgeProject; onCl
           <Divider />
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
-            <FieldBlock label="GITHUB REPO"  value={project.githubUrl} />
-            {project.liveUrl          && <FieldBlock label="LIVE DEMO"  value={project.liveUrl} />}
-            <FieldBlock label="PITCH DECK"   value={project.pitchDeckUrl} />
-            {project.pitchDeckFileUrl && <FieldBlock label="DECK FILE"  value={project.pitchDeckFileUrl} />}
-            {project.videoDemoUrl     && <FieldBlock label="VIDEO DEMO" value={project.videoDemoUrl} />}
+            <FieldBlock label="GITHUB REPO"  value={project.githubUrl} href={project.githubUrl} />
+            {project.liveUrl          && <FieldBlock label="LIVE DEMO"  value={project.liveUrl} href={project.liveUrl} />}
+            <FieldBlock label="PITCH DECK"   value={project.pitchDeckUrl} href={project.pitchDeckUrl} />
+            {project.pitchDeckFileUrl && <FieldBlock label="DECK FILE"  value={project.pitchDeckFileUrl} href={project.pitchDeckFileUrl} />}
+            {project.videoDemoUrl     && <FieldBlock label="VIDEO DEMO" value={project.videoDemoUrl} href={project.videoDemoUrl} />}
           </div>
 
           <Divider />
