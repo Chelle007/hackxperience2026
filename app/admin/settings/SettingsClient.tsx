@@ -107,8 +107,7 @@ function SubmissionConfigPanel({
   deadline,
   onToggleSubmissionsOpen,
   onToggleResubmissions,
-  onMaxTeamSizeChange,
-  onMaxFileSizeChange,
+  onSaveConfig,
   onDeadlineSave,
 }: {
   submissionsOpen: boolean;
@@ -118,15 +117,18 @@ function SubmissionConfigPanel({
   deadline: string | null | undefined;
   onToggleSubmissionsOpen: () => void;
   onToggleResubmissions: () => void;
-  onMaxTeamSizeChange: (next: number) => void;
-  onMaxFileSizeChange: (next: number) => void;
+  onSaveConfig: (maxTeamSize: number, maxFileSizeMb: number) => void;
   onDeadlineSave: (isoString: string) => void;
 }) {
-  function parsePositiveInt(raw: string, max: number) {
-    const value = parseInt(raw, 10);
-    if (!Number.isNaN(value) && value > 0 && value <= max) return value;
-    return null;
-  }
+  const [teamSizeRaw, setTeamSizeRaw] = useState(String(maxTeamSize));
+  const [fileSizeRaw, setFileSizeRaw] = useState(String(maxFileSizeMb));
+
+  useEffect(() => { setTeamSizeRaw(String(maxTeamSize)); }, [maxTeamSize]);
+  useEffect(() => { setFileSizeRaw(String(maxFileSizeMb)); }, [maxFileSizeMb]);
+
+  const teamSizeError = teamSizeRaw === "" || parseInt(teamSizeRaw, 10) <= 0;
+  const fileSizeError = fileSizeRaw === "" || parseInt(fileSizeRaw, 10) <= 0;
+  const hasErrors = teamSizeError || fileSizeError;
 
   return (
     <section className={styles.panel}>
@@ -161,18 +163,17 @@ function SubmissionConfigPanel({
             MAX TEAM SIZE
             <span className={styles.configSub}>{"// MEMBERS PER SUBMISSION"}</span>
           </span>
-          <input
-            type="number"
-            className={styles.numberInput}
-            value={maxTeamSize}
-            min={1}
-            max={20}
-            onChange={(event) => {
-              const value = parsePositiveInt(event.target.value, 20);
-              if (value != null) onMaxTeamSizeChange(value);
-            }}
-            aria-label="Max team size"
-          />
+          <div>
+            <input
+              type="text"
+              inputMode="numeric"
+              className={`${styles.numberInput}${teamSizeError ? ` ${styles.numberInputError}` : ""}`}
+              value={teamSizeRaw}
+              onChange={(e) => { if (/^\d*$/.test(e.target.value)) setTeamSizeRaw(e.target.value); }}
+              aria-label="Max team size"
+            />
+            {teamSizeError && <span className={styles.inputErrorMsg}>&gt;&gt; [ERR: INTEGER_REQUIRED]</span>}
+          </div>
         </div>
 
         <div className={styles.divider} />
@@ -182,26 +183,38 @@ function SubmissionConfigPanel({
             MAX FILE SIZE
             <span className={styles.configSub}>{"// PER SUBMISSION UPLOAD"}</span>
           </span>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <input
-              type="number"
-              className={styles.numberInput}
-              value={maxFileSizeMb}
-              min={1}
-              max={500}
-              onChange={(event) => {
-                const value = parsePositiveInt(event.target.value, 500);
-                if (value != null) onMaxFileSizeChange(value);
-              }}
-              aria-label="Max file size in MB"
-            />
-            <span className={styles.inputUnit}>MB</span>
+          <div>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <input
+                type="text"
+                inputMode="numeric"
+                className={`${styles.numberInput}${fileSizeError ? ` ${styles.numberInputError}` : ""}`}
+                value={fileSizeRaw}
+                onChange={(e) => { if (/^\d*$/.test(e.target.value)) setFileSizeRaw(e.target.value); }}
+                aria-label="Max file size in MB"
+              />
+              <span className={styles.inputUnit}>MB</span>
+            </div>
+            {fileSizeError && <span className={styles.inputErrorMsg}>&gt;&gt; [ERR: INTEGER_REQUIRED]</span>}
           </div>
         </div>
 
         <div className={styles.divider} />
 
         <DeadlineRow deadline={deadline} onSave={onDeadlineSave} />
+      </div>
+      <div className={styles.panelFooter}>
+        <button
+          type="button"
+          className={styles.updateBtn}
+          disabled={hasErrors}
+          onClick={() => {
+            if (hasErrors) return;
+            onSaveConfig(parseInt(teamSizeRaw, 10), parseInt(fileSizeRaw, 10));
+          }}
+        >
+          [ UPDATE ]
+        </button>
       </div>
     </section>
   );
@@ -219,12 +232,57 @@ type Criterion = {
 
 function JudgingCriteriaPanel({
   criteria,
-  onChange,
+  onSave,
 }: {
   criteria: Criterion[];
-  onChange: (key: Criterion["key"], nextValue: number) => void;
+  onSave: (values: Record<Criterion["key"], number>) => Promise<void>;
 }) {
-  const total = useMemo(() => criteria.reduce((sum, item) => sum + item.maxPts, 0), [criteria]);
+  const [rawValues, setRawValues] = useState<Record<Criterion["key"], string>>(
+    () => Object.fromEntries(criteria.map((c) => [c.key, String(c.maxPts)])) as Record<Criterion["key"], string>
+  );
+  const [updateSuccess, setUpdateSuccess] = useState(false);
+
+  useEffect(() => {
+    setRawValues(
+      Object.fromEntries(criteria.map((c) => [c.key, String(c.maxPts)])) as Record<Criterion["key"], string>
+    );
+  }, [criteria]);
+
+  const errors = useMemo(
+    () =>
+      Object.fromEntries(
+        criteria.map((c) => {
+          const raw = rawValues[c.key] ?? "";
+          const parsed = parseInt(raw, 10);
+          return [c.key, raw === "" || Number.isNaN(parsed) || parsed <= 0];
+        })
+      ) as Record<Criterion["key"], boolean>,
+    [criteria, rawValues]
+  );
+
+  const hasErrors = Object.values(errors).some(Boolean);
+
+  const total = useMemo(
+    () =>
+      criteria.reduce((sum, c) => {
+        const parsed = parseInt(rawValues[c.key] ?? "0", 10);
+        return sum + (Number.isFinite(parsed) && parsed > 0 ? parsed : 0);
+      }, 0),
+    [criteria, rawValues]
+  );
+
+  function handleChange(key: Criterion["key"], value: string) {
+    if (/^\d*$/.test(value)) setRawValues((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function handleSave() {
+    if (hasErrors) return;
+    await onSave(
+      Object.fromEntries(criteria.map((c) => [c.key, parseInt(rawValues[c.key], 10)])) as Record<Criterion["key"], number>
+    );
+    setUpdateSuccess(true);
+    setTimeout(() => setUpdateSuccess(false), 3000);
+  }
 
   return (
     <section className={styles.panel}>
@@ -235,28 +293,40 @@ function JudgingCriteriaPanel({
         {criteria.map((criterion) => (
           <div key={criterion.key} className={styles.criteriaRow}>
             <span className={styles.criteriaLabel}>{criterion.label}</span>
-            <div className={styles.criteriaControls}>
-              <input
-                type="number"
-                className={styles.numberInput}
-                value={criterion.maxPts}
-                min={0}
-                max={100}
-                onChange={(event) => {
-                  const next = parseInt(event.target.value, 10);
-                  if (!Number.isNaN(next) && next >= 0 && next <= 100) {
-                    onChange(criterion.key, next);
-                  }
-                }}
-                aria-label={`${criterion.label} max points`}
-              />
-              <span className={styles.inputUnit}>pts</span>
+            <div>
+              <div className={styles.criteriaControls}>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className={`${styles.numberInput}${errors[criterion.key] ? ` ${styles.numberInputError}` : ""}`}
+                  value={rawValues[criterion.key] ?? ""}
+                  onChange={(e) => handleChange(criterion.key, e.target.value)}
+                  aria-label={`${criterion.label} max points`}
+                />
+                <span className={styles.inputUnit}>pts</span>
+              </div>
+              {errors[criterion.key] && (
+                <span className={styles.inputErrorMsg}>&gt;&gt; [ERR: INTEGER_REQUIRED]</span>
+              )}
             </div>
           </div>
         ))}
         <p className={styles.criteriaTotal}>
           TOTAL <strong>{total}</strong> pts
         </p>
+      </div>
+      <div className={styles.panelFooter}>
+        <button
+          type="button"
+          className={styles.updateBtn}
+          disabled={hasErrors}
+          onClick={() => void handleSave()}
+        >
+          [ UPDATE ]
+        </button>
+        {updateSuccess && (
+          <p className={styles.updateSuccessMsg}>&gt; UPDATE SUCCESSFUL!</p>
+        )}
       </div>
     </section>
   );
@@ -687,14 +757,13 @@ export default function SettingsClient() {
           maxTeamSize={settings?.max_team_size ?? 5}
           maxFileSizeMb={settings?.max_file_size ?? 10}
           deadline={settings?.deadline}
-          onMaxTeamSizeChange={(next) => void patchSettings({ max_team_size: next })}
-          onMaxFileSizeChange={(next) => void patchSettings({ max_file_size: next })}
+          onSaveConfig={(ts, fs) => void patchSettings({ max_team_size: ts, max_file_size: fs })}
           onDeadlineSave={(iso) => void patchSettings({ deadline: iso })}
         />
 
         <JudgingCriteriaPanel
           criteria={criteria}
-          onChange={(key, nextValue) => void patchSettings({ [key]: nextValue })}
+          onSave={(values) => patchSettings(values)}
         />
 
         <TracksPanel activeTracks={activeTracks} onToggleTrack={handleToggleTrack} />

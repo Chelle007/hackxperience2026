@@ -1,8 +1,10 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ChevronDown, Search, Trash2, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Search } from "lucide-react";
+import { createPortal } from "react-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import CustomSelect from "../components/CustomSelect";
 import { AdminShellConfig, type AdminMetric } from "../components/AdminShell";
 import SubmissionViewOverlay, { type EditDraft } from "../components/SubmissionViewOverlay";
 import type { AdminSubmission, SubmissionScore, SubmissionStatus } from "@/lib/types";
@@ -69,7 +71,7 @@ function StatusBadge({ status }: { status: SubmissionStatus }) {
   return <span className={cls}>{status.toUpperCase()}</span>;
 }
 
-function RowActions({
+function ActionCell({
   submission,
   onDeleteClick,
   onViewClick,
@@ -82,34 +84,104 @@ function RowActions({
   onApproveClick: (id: string) => void;
   onRejectClick: (id: string) => void;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setMenuPos({ top: rect.bottom + 2, right: window.innerWidth - rect.right });
+    }
+    function onOutside(e: MouseEvent) {
+      const target = e.target as Node;
+      const outsideMenu = !menuRef.current || !menuRef.current.contains(target);
+      const outsideTrigger = !triggerRef.current || !triggerRef.current.contains(target);
+      if (outsideMenu && outsideTrigger) setIsOpen(false);
+    }
+    function onScroll() { setIsOpen(false); }
+    document.addEventListener("mousedown", onOutside);
+    window.addEventListener("scroll", onScroll, { passive: true, capture: true });
+    return () => {
+      document.removeEventListener("mousedown", onOutside);
+      window.removeEventListener("scroll", onScroll, { capture: true });
+    };
+  }, [isOpen]);
+
+  function doAction(fn: () => void) {
+    setIsOpen(false);
+    fn();
+  }
+
+  const canApprove = submission.status === "pending";
+  const canReject = submission.status === "pending" || submission.status === "approved";
+
   return (
     <div className={styles.actions}>
-      {submission.status === "pending" && (
-        <button
-          type="button"
-          className={styles.approveAction}
-          aria-label="Approve submission"
-          onClick={() => onApproveClick(submission.id)}
-        >
-          <Check aria-hidden="true" />
-        </button>
-      )}
-      {(submission.status === "pending" || submission.status === "approved") && (
-        <button
-          type="button"
-          className={styles.rejectAction}
-          aria-label="Reject submission"
-          onClick={() => onRejectClick(submission.id)}
-        >
-          <X aria-hidden="true" />
-        </button>
-      )}
       <button type="button" className={styles.viewAction} onClick={() => onViewClick(submission)}>
         VIEW
       </button>
-      <button type="button" className={styles.deleteAction} aria-label="Delete submission" onClick={() => onDeleteClick(submission)}>
-        <Trash2 aria-hidden="true" />
+      <button
+        ref={triggerRef}
+        type="button"
+        className={`${styles.viewAction} ${styles.kebabTrigger}`}
+        onClick={() => setIsOpen((o) => !o)}
+        aria-label="More actions"
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+      >
+        [ ⋮ ]
       </button>
+      {isOpen && createPortal(
+        <ul
+          ref={menuRef}
+          className={`${styles.kebabMenu} font-mono text-[#1A1A1A]`}
+          style={{
+            top: menuPos.top,
+            right: menuPos.right,
+            ["--font-admin-mono" as any]: "var(--font-geist-mono)",
+          }}
+          role="menu"
+        >
+          {canApprove && (
+            <li role="none">
+              <button
+                type="button"
+                className={`${styles.kebabItem} font-mono`}
+                role="menuitem"
+                onClick={() => doAction(() => onApproveClick(submission.id))}
+              >
+                [&#x2713;]&nbsp;APPROVE
+              </button>
+            </li>
+          )}
+          {canReject && (
+            <li role="none">
+              <button
+                type="button"
+                className={`${styles.kebabItem} font-mono`}
+                role="menuitem"
+                onClick={() => doAction(() => onRejectClick(submission.id))}
+              >
+                [&#x2717;]&nbsp;REJECT
+              </button>
+            </li>
+          )}
+          <li role="none">
+            <button
+              type="button"
+              className={`${styles.kebabItem} ${styles.kebabItemDanger} font-mono`}
+              role="menuitem"
+              onClick={() => doAction(() => onDeleteClick(submission))}
+            >
+              [&#x232B;]&nbsp;DELETE
+            </button>
+          </li>
+        </ul>,
+        document.body,
+      )}
     </div>
   );
 }
@@ -175,46 +247,44 @@ function ScoreModal({ target, onClose }: { target: ScoreTarget; onClose: () => v
   const innoAvg    = avg(scored.map((s) => s.innovationCreativity));
   const presAvg    = avg(scored.map((s) => s.presentationQuality));
 
+  const criteria = [
+    { label: "TECH_EXECUTION",    value: techAvg },
+    { label: "PROB_SOLUTION_FIT", value: probAvg },
+    { label: "INNOVATION",        value: innoAvg },
+    { label: "PRESENTATION",      value: presAvg },
+  ];
+
   return (
     <div className={styles.scoreOverlay} onClick={onClose}>
       <div className={styles.scoreModal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.scoreModalHeader}>
-          <span className={styles.scoreModalTitle}>&gt; SCORE_BREAKDOWN</span>
+          <span className={styles.scoreModalHeaderLabel}>&gt; PROJECT_SCORECARD</span>
           <button type="button" className={styles.scoreModalClose} onClick={onClose}>[ X ]</button>
         </div>
-        <div className={styles.scoreModalProject}>// {target.projectName}</div>
-        {!hasScores ? (
-          <div className={styles.scoreNoData}>[ NO SCORES SUBMITTED ]</div>
-        ) : (
-          <>
-            <div className={styles.scoreOverallRow}>
-              <span className={styles.scoreOverallLabel}>OVERALL_AVG</span>
-              <span className={styles.scoreOverallValue}>{overallAvg?.toFixed(2) ?? "--"}</span>
-            </div>
-            <div className={styles.scoreSeparator} />
-            <div className={styles.scoreCriteriaList}>
-              <div className={styles.scoreCriteriaRow}>
-                <span className={styles.scoreCriteriaLabel}>TECH_EXECUTION</span>
-                <span className={styles.scoreCriteriaValue}>{techAvg?.toFixed(2) ?? "--"}</span>
+        <div className={styles.scoreModalBody}>
+          <h2 className={styles.scoreProjectTitle}>{target.projectName}</h2>
+          {!hasScores ? (
+            <p className={styles.scoreNoData}>[ NO_SCORES_FOUND ]</p>
+          ) : (
+            <>
+              <div className={styles.scoreOverallBlock}>
+                <div className={styles.scoreOverallNumber}>{overallAvg?.toFixed(2) ?? "--"}</div>
+                <div className={styles.scoreOverallSub}>OVERALL_AVERAGE_SCORE</div>
+                <div className={styles.scoreJudgeCount}>// {scored.length} JUDGE{scored.length === 1 ? "" : "S"}_SCORED</div>
               </div>
-              <div className={styles.scoreCriteriaRow}>
-                <span className={styles.scoreCriteriaLabel}>PROB_SOLUTION_FIT</span>
-                <span className={styles.scoreCriteriaValue}>{probAvg?.toFixed(2) ?? "--"}</span>
+              <div className={styles.scoreDivider} />
+              <div className={styles.scoreCriteriaSection}>
+                {criteria.map(({ label, value }) => (
+                  <div className={styles.scoreCriteriaRow} key={label}>
+                    <span className={styles.scoreCriteriaLabel}>&gt; {label}</span>
+                    <span className={styles.scoreCriteriaDots} aria-hidden="true" />
+                    <span className={styles.scoreCriteriaValue}>{value?.toFixed(2) ?? "--"}</span>
+                  </div>
+                ))}
               </div>
-              <div className={styles.scoreCriteriaRow}>
-                <span className={styles.scoreCriteriaLabel}>INNOVATION</span>
-                <span className={styles.scoreCriteriaValue}>{innoAvg?.toFixed(2) ?? "--"}</span>
-              </div>
-              <div className={styles.scoreCriteriaRow}>
-                <span className={styles.scoreCriteriaLabel}>PRESENTATION</span>
-                <span className={styles.scoreCriteriaValue}>{presAvg?.toFixed(2) ?? "--"}</span>
-              </div>
-            </div>
-            <div className={styles.scoreJudgeCount}>
-              // {scored.length} JUDGE{scored.length === 1 ? "" : "S"} SCORED
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -353,45 +423,34 @@ export default function SubmissionsClient({ filter }: { filter: SubmissionFilter
           />
         </label>
 
-        <label className={styles.selectField}>
-          <span className={styles.selectIconWrap}>
-            <ChevronDown className={styles.selectChevron} aria-hidden="true" />
-          </span>
-          <select
-            value={trackFilter}
-            onChange={(e) => setTrackFilter(e.target.value)}
-            aria-label="Track filter"
-          >
-            <option value="all">ALL TRACKS</option>
-            {trackOptions.map((t) => (
-              <option key={t} value={t}>
-                {t.toUpperCase()}
-              </option>
-            ))}
-          </select>
-        </label>
+        <CustomSelect
+          className={styles.selectField}
+          variant="controls"
+          value={trackFilter}
+          onChange={setTrackFilter}
+          options={[
+            { value: "all", label: "ALL TRACKS" },
+            ...trackOptions.map((t) => ({ value: t, label: t.toUpperCase() })),
+          ]}
+          aria-label="Track filter"
+        />
 
-        <label className={styles.selectField}>
-          <span className={styles.selectIconWrap}>
-            <ChevronDown className={styles.selectChevron} aria-hidden="true" />
-          </span>
-          {filter === "all" ? (
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as SubmissionStatus | "all")}
-              aria-label="Status filter"
-            >
-              <option value="all">ALL STATUSES</option>
-              <option value="pending">PENDING</option>
-              <option value="approved">APPROVED</option>
-              <option value="rejected">REJECTED</option>
-            </select>
-          ) : (
-            <select value={filter} aria-label="Status filter" disabled>
-              <option value={filter}>{filter.toUpperCase()}</option>
-            </select>
-          )}
-        </label>
+        <CustomSelect
+          className={styles.selectField}
+          variant="controls"
+          value={filter === "all" ? statusFilter : filter}
+          onChange={filter === "all"
+            ? (v) => setStatusFilter(v as SubmissionStatus | "all")
+            : () => {}}
+          options={filter === "all" ? [
+            { value: "all", label: "ALL STATUSES" },
+            { value: "pending", label: "PENDING" },
+            { value: "approved", label: "APPROVED" },
+            { value: "rejected", label: "REJECTED" },
+          ] : [{ value: filter, label: filter.toUpperCase() }]}
+          disabled={filter !== "all"}
+          aria-label="Status filter"
+        />
       </section>
 
       <section className={styles.tablePanel}>
@@ -430,7 +489,7 @@ export default function SubmissionsClient({ filter }: { filter: SubmissionFilter
                   </button>
                 </div>
                 <div className={styles.tableCell} data-label="ACTIONS">
-                  <RowActions
+                  <ActionCell
                     submission={s}
                     onDeleteClick={setPendingDelete}
                     onViewClick={(sub) => setViewingId(sub.id)}

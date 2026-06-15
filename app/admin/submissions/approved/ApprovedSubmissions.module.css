@@ -42,8 +42,7 @@
   min-width: 0;
 }
 
-.searchField input,
-.selectField select {
+.searchField input {
   width: 100%;
   min-height: 36px;
   border: 1px solid #1a1a1a;
@@ -64,14 +63,12 @@
   color: #888888;
 }
 
-.searchField input:hover:not(:focus),
-.selectField select:hover:not(:focus) {
+.searchField input:hover:not(:focus) {
   border-color: #cc0000;
   box-shadow: 2px 2px 0 0 #cc0000;
 }
 
-.searchField input:focus,
-.selectField select:focus {
+.searchField input:focus {
   outline: none;
   border-color: #cc0000;
   box-shadow: 2px 2px 0 0 #cc0000;
@@ -93,37 +90,6 @@
   color: #cc0000;
 }
 
-.selectField select {
-  appearance: none;
-  padding: 9px 34px 9px 12px;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.selectField select:disabled {
-  opacity: 1;
-  color: #888888;
-  cursor: default;
-}
-
-.selectIconWrap {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  width: 16px;
-  height: 16px;
-  transform: translateY(-50%);
-  pointer-events: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.selectChevron {
-  width: 12px;
-  height: 12px;
-  color: #888888;
-}
 
 /* ── Table ────────────────────────────────────── */
 
@@ -438,8 +404,7 @@
     grid-template-columns: 1fr;
   }
 
-  .searchField input,
-  .selectField select {
+  .searchField input {
     min-height: 44px;
   }
 
@@ -479,8 +444,7 @@
 }
 
 @media (max-width: 768px) {
-  .searchField input,
-  .selectField select {
+  .searchField input {
     font-size: 16px;
     line-height: 20px;
   }

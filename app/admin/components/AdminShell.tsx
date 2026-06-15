@@ -3,15 +3,12 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Check,
-  Circle,
   LayoutDashboard,
   List,
   LogOut,
   Menu,
   Settings2,
   Sigma,
-  X,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -201,37 +198,23 @@ export function AdminShellProvider({ children }: { children: ReactNode }) {
 
 const navGroups = [
   {
-    heading: "OVERVIEW",
+    heading: "MAIN",
     items: [
       { key: "dashboard", href: "/admin/dashboard", label: "DASHBOARD", icon: LayoutDashboard },
-    ],
-  },
-  {
-    heading: "SUBMISSIONS",
-    items: [
-      { key: "all", href: "/admin/submissions", label: "ALL", icon: List },
-      { key: "pending", href: "/admin/submissions/pending", label: "PENDING", icon: Circle },
-      { key: "approved", href: "/admin/submissions/approved", label: "APPROVED", icon: Check },
-      { key: "rejected", href: "/admin/submissions/rejected", label: "REJECTED", icon: X },
-    ],
-  },
-  {
-    heading: "RESULTS",
-    items: [
+      { key: "submissions", href: "/admin/submissions", label: "SUBMISSIONS", icon: List },
       { key: "results", href: "/admin/results", label: "AGGREGATE SCORES", icon: Sigma },
     ],
   },
   {
     heading: "SYSTEM",
-    items: [{ key: "settings", href: "/admin/settings", label: "SETTINGS", icon: Settings2 }],
+    items: [
+      { key: "settings", href: "/admin/settings", label: "SETTINGS", icon: Settings2 },
+    ],
   },
 ] as const;
 
 function getActiveNav(pathname: string) {
-  if (pathname.startsWith("/admin/submissions/approved")) return "approved";
-  if (pathname.startsWith("/admin/submissions/pending")) return "pending";
-  if (pathname.startsWith("/admin/submissions/rejected")) return "rejected";
-  if (pathname.startsWith("/admin/submissions")) return "all";
+  if (pathname.startsWith("/admin/submissions")) return "submissions";
   if (pathname.startsWith("/admin/results")) return "results";
   if (pathname.startsWith("/admin/settings")) return "settings";
   return "dashboard";
@@ -386,7 +369,7 @@ export function AdminShellFrame({ children }: { children: ReactNode }) {
 
   return (
     <div className={styles.root}>
-      <header className={styles.topbar}>
+      <header className={`${styles.topbar} lg:ml-64`}>
         <div className={styles.topbarInner}>
           <Link href="/admin/dashboard" className={styles.brandLink} aria-label="HackX Admin home">
             <span className={styles.brandMark}>
@@ -420,7 +403,7 @@ export function AdminShellFrame({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <section className={styles.hero}>
+      <section className={`${styles.hero} lg:ml-64`}>
         <div className={styles.heroInner}>
           <h1 className={`${styles.heroTitle} ${styles.displayFont}`}>
             PROJECT <span className={styles.brandAccent}>SUBMISSION</span> PORTAL
@@ -443,7 +426,7 @@ export function AdminShellFrame({ children }: { children: ReactNode }) {
         </div>
       </section>
 
-      <section className={styles.metrics} aria-label="Portal metrics">
+      <section className={`${styles.metrics} lg:ml-64`} aria-label="Portal metrics">
         {metrics.map((metric) =>
           metric.key === "deadline_countdown" || metric.key === "deadline"
             ? <CountdownMetricCard key={metric.key} metric={metric} />
@@ -452,29 +435,45 @@ export function AdminShellFrame({ children }: { children: ReactNode }) {
       </section>
 
       <div className={styles.body}>
-        <aside className={styles.sidebar} aria-label="Admin navigation">
-          {navGroups.map((group) => (
-            <section key={group.heading} className={styles.sidebarGroup}>
-              <h2 className={styles.sidebarHeading}>{group.heading}</h2>
-              <nav className={styles.navList}>
-                {group.items.map((item) => {
-                  const isActive = activeNav === item.key;
-                  return (
-                    <SidebarItem
-                      key={item.key}
-                      href={item.href}
-                      label={item.label}
-                      icon={item.icon}
-                      active={isActive}
-                    />
-                  );
-                })}
-              </nav>
-            </section>
-          ))}
+        <aside className={`${styles.sidebar} fixed top-0 left-0 h-screen overflow-hidden w-64 z-20`} aria-label="Admin navigation">
+          <div className={styles.sidebarNav}>
+            {navGroups.map((group) => (
+              <section key={group.heading} className={styles.sidebarGroup}>
+                <h2 className={styles.sidebarHeading}>// {group.heading}</h2>
+                <nav className={styles.navList}>
+                  {group.items.map((item) => {
+                    const isActive = activeNav === item.key;
+                    return (
+                      <SidebarItem
+                        key={item.key}
+                        href={item.href}
+                        label={item.label}
+                        icon={item.icon}
+                        active={isActive}
+                      />
+                    );
+                  })}
+                </nav>
+              </section>
+            ))}
+          </div>
+          <div className={styles.sidebarProfile}>
+            <div className={styles.sidebarProfileInfo}>
+              <span className={styles.sidebarProfileName}>&gt; {sessionUser}</span>
+              <span className={styles.sidebarProfileRole}>// ADMIN</span>
+            </div>
+            <button
+              type="button"
+              className={styles.sidebarLogoutBtn}
+              onClick={handleLogout}
+              aria-label="Logout"
+            >
+              <LogOut className={styles.buttonIcon} aria-hidden="true" />
+            </button>
+          </div>
         </aside>
 
-        <main className={styles.main}>{children}</main>
+        <main className={`${styles.main} lg:ml-64`}>{children}</main>
       </div>
 
       {/* ── Mobile drawer backdrop ── */}
@@ -511,7 +510,7 @@ export function AdminShellFrame({ children }: { children: ReactNode }) {
         <div className={styles.mobileDrawerNav}>
           {navGroups.map((group) => (
             <section key={group.heading} className={styles.sidebarGroup}>
-              <h2 className={styles.sidebarHeading}>{group.heading}</h2>
+              <h2 className={styles.sidebarHeading}>// {group.heading}</h2>
               <nav className={styles.navList}>
                 {group.items.map((item) => {
                   const isActive = activeNav === item.key;

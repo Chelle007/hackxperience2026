@@ -1,8 +1,9 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Search, Trash2, X } from "lucide-react";
+import { Search, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import CustomSelect from "../../components/CustomSelect";
 import { AdminShellConfig, type AdminMetric } from "../../components/AdminShell";
 import SubmissionViewOverlay, { type EditDraft } from "../../components/SubmissionViewOverlay";
 import type { AdminSubmission } from "@/lib/types";
@@ -291,32 +292,27 @@ export default function ApprovedSubmissionsClient() {
           />
         </label>
 
-        <label className={styles.selectField}>
-          <span className={styles.selectIconWrap}>
-            <ChevronDown className={styles.selectChevron} aria-hidden="true" />
-          </span>
-          <select
-            value={trackFilter}
-            onChange={(event) => setTrackFilter(event.target.value)}
-            aria-label="Track filter"
-          >
-            <option value="all">ALL TRACKS</option>
-            {trackOptions.map((track) => (
-              <option key={track} value={track}>
-                {track.toUpperCase()}
-              </option>
-            ))}
-          </select>
-        </label>
+        <CustomSelect
+          className={styles.selectField}
+          variant="controls"
+          value={trackFilter}
+          onChange={setTrackFilter}
+          options={[
+            { value: "all", label: "ALL TRACKS" },
+            ...trackOptions.map((track) => ({ value: track, label: track.toUpperCase() })),
+          ]}
+          aria-label="Track filter"
+        />
 
-        <label className={styles.selectField}>
-          <span className={styles.selectIconWrap}>
-            <ChevronDown className={styles.selectChevron} aria-hidden="true" />
-          </span>
-          <select value="approved" aria-label="Status filter" disabled>
-            <option value="approved">APPROVED</option>
-          </select>
-        </label>
+        <CustomSelect
+          className={styles.selectField}
+          variant="controls"
+          value="approved"
+          onChange={() => {}}
+          options={[{ value: "approved", label: "APPROVED" }]}
+          disabled
+          aria-label="Status filter"
+        />
       </section>
 
       <section className={styles.tablePanel}>
