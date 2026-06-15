@@ -27,6 +27,111 @@ const WHITE = "#ffffff";
 
 const ITEMS_PER_PAGE = 6;
 
+// Static 2025 showcase — the projects teams shipped at HackXperience 2025.
+// These are always shown in the gallery (merged with any DB rows below).
+const SHOWCASE_2025: Project[] = [
+  {
+    id: 's1',
+    title: 'Kitchen CoPilot: Dine & Dash',
+    teamName: 'CodeWave',
+    description:
+      'A highly interactive, gamified version of the Kitchen CoPilot app designed to make cooking feel like a game rather than a chore.',
+    longDescription:
+      'A highly interactive, gamified version of the Kitchen CoPilot app designed to make cooking feel like a game rather than a chore.\n\nKey Features: Players complete fun challenges and mini-games to unlock real-life recipes. As users progress, they level up their cooking skills and discover new cuisines accompanied by step-by-step guides. The app is built to promote home-cooked meals, encourage healthier eating habits through curated recipes, and support specific dietary goals like weight loss or low-sodium diets.',
+    image:
+      'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&q=80&w=1200',
+    year: '2025',
+    tags: ['React Native', 'Firebase', 'TypeScript'],
+    features: [
+      'Complete fun challenges and mini-games to unlock real-life recipes',
+      'Level up cooking skills and discover new cuisines with step-by-step guides',
+      'Promotes home-cooked meals and healthier eating via curated recipes',
+      'Supports dietary goals like weight loss or low-sodium diets',
+    ],
+    createdAt: '2025-05-22T10:00:00Z',
+  },
+  {
+    id: 's2',
+    title: 'Smart Gifter',
+    teamName: 'HackerX',
+    description:
+      'An AI-powered platform designed to take the guesswork and stress out of gift-giving.',
+    longDescription:
+      'An AI-powered platform designed to take the guesswork and stress out of gift-giving.\n\nKey Features: Smart Gifter introduces collaborative gifting pools where groups can chat and decide on gifts together. It features an auto-deducting digital wallet system for recurring events and a community media feed where givers can post videos and track real-time unboxing excitement. The platform utilizes AI to scan retailers for the best deals, analyze user profiles for personalized gift suggestions, and even act as an "Agentic Support" to moderate group discussions and propose gift compromises.',
+    image:
+      'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&q=80&w=1200',
+    year: '2025',
+    tags: ['Next.js', 'OpenAI API', 'Stripe', 'Tailwind'],
+    features: [
+      'Collaborative gifting pools where groups chat and decide together',
+      'Auto-deducting digital wallet for recurring events',
+      'Community media feed to post videos and track real-time unboxing',
+      'AI scans retailers for the best deals and personalizes suggestions',
+      '“Agentic Support” moderates group chats and proposes gift compromises',
+    ],
+    createdAt: '2025-05-22T11:00:00Z',
+  },
+  {
+    id: 's3',
+    title: 'KitchenKonnet',
+    teamName: 'Lucky7',
+    description:
+      'A social networking and utility app built to help people share recipes, track their health, and build a vibrant cooking community.',
+    longDescription:
+      'A social networking and utility app built to help people share recipes, track their health, and build a vibrant cooking community.\n\nKey Features: Users can join communities, post recipes with photos, and interact by liking and saving other people’s posts. The app includes gamified elements like All-Time and Weekly Leaderboards. On the utility side, it features an automatic shopping list generator and robust health-conscious tools, including an AI feature that generates nutritional ratings and tracks calories simply by having the user upload a photo of their meal.',
+    image:
+      'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=1200',
+    year: '2025',
+    tags: ['React', 'Supabase', 'TensorFlow'],
+    features: [
+      'Join communities and post recipes with photos',
+      'Like and save other people’s posts',
+      'Gamified All-Time and Weekly leaderboards',
+      'Automatic shopping list generator',
+      'AI nutritional ratings & calorie tracking from a meal photo',
+    ],
+    createdAt: '2025-05-22T12:00:00Z',
+  },
+  {
+    id: 's4',
+    title: 'Kitchen Copilot: Final Boss',
+    teamName: 'Powerpuff Girls',
+    description:
+      'An engaging, feature-rich expansion to the Kitchen Copilot ecosystem that introduces travel-based gamification, strict dietary personalization, and social rating systems.',
+    longDescription:
+      'An engaging, feature-rich expansion to the Kitchen Copilot ecosystem that introduces travel-based gamification, strict dietary personalization, and social rating systems.\n\nKey Features: The "World Journey" feature allows users to earn points by completing daily health challenges (like drinking water) to unlock new cities—such as Tokyo or Rome—and their local recipes. It includes a smart AI Chatbot backed by the Health Promotion Board’s data to answer nutritional questions and provide portion guidance. Finally, the "Cook To Impress" social feed lets users upload homemade meals so friends can rate their dishes from 1 to 5 stars, adding a fun competitive element.',
+    image:
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=1200',
+    year: '2025',
+    tags: ['Flutter', 'Node.js', 'OpenAI API'],
+    features: [
+      '“World Journey”: earn points from daily health challenges to unlock cities & local recipes',
+      'Smart AI chatbot backed by Health Promotion Board data for nutrition guidance',
+      '“Cook To Impress” social feed with 1–5 star dish ratings',
+    ],
+    createdAt: '2025-05-22T13:00:00Z',
+  },
+  {
+    id: 's5',
+    title: 'Smart Kitchen Hub',
+    teamName: 'Group 8888',
+    description:
+      'A utility and engagement add-on aimed at boosting app adoption by making the kitchen more interactive and organized.',
+    longDescription:
+      'A utility and engagement add-on aimed at boosting app adoption by making the kitchen more interactive and organized.\n\nKey Features: Introduces a "Smart Fridge Inventory & Alarm" system that allows users to easily track their ingredients and receive expiry alerts, promoting organized and healthy cooking. To boost engagement, it incorporates gamification via a "Blind Box" feature, a community feed, a built-in timer, and a calorie counter for health-conscious users.',
+    image:
+      'https://images.unsplash.com/photo-1466637574441-749b8f19452f?auto=format&fit=crop&q=80&w=1200',
+    year: '2025',
+    tags: ['React', 'Tailwind', 'Node.js'],
+    features: [
+      '“Smart Fridge Inventory & Alarm” with ingredient tracking and expiry alerts',
+      'Gamified “Blind Box” feature to boost engagement',
+      'Community feed, built-in timer, and calorie counter',
+    ],
+    createdAt: '2025-05-22T14:00:00Z',
+  },
+];
+
 const RankBadge = ({ rank, size = 'sm' }: { rank: Project['rank'], size?: 'sm' | 'lg' }) => {
   if (!rank) return null;
 
@@ -66,10 +171,19 @@ const RankBadge = ({ rank, size = 'sm' }: { rank: Project['rank'], size?: 'sm' |
 export default function GalleryPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeYear, setActiveYear] = useState<'ALL' | '2025' | '2024'>('ALL');
+  const [activeYear, setActiveYear] = useState<'ALL' | '2025' | '2026'>('ALL');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Honour a ?year= deep link (e.g. the "View Projects" button on the landing
+  // page links to /gallery?year=2025 to open straight on that tab).
+  useEffect(() => {
+    const param = new URLSearchParams(window.location.search).get('year');
+    if (param === '2025' || param === '2026') {
+      setActiveYear(param);
+    }
+  }, []);
 
   // Fetch Projects from Supabase
   useEffect(() => {
@@ -101,14 +215,14 @@ export default function GalleryPage() {
             rank: item.rank || null,
             createdAt: item.submitted_at
           }));
-          setProjects(mappedProjects);
+          setProjects([...SHOWCASE_2025, ...mappedProjects]);
         } else {
-          // If no data in DB, set projects to empty array
-          setProjects([]);
+          // No DB rows yet — still show the static 2025 showcase.
+          setProjects(SHOWCASE_2025);
         }
       } catch (err) {
         console.error('Error fetching projects:', err);
-        setProjects([]); // Fallback to empty on error
+        setProjects(SHOWCASE_2025); // Fallback to the static showcase on error
       } finally {
         setLoading(false);
       }
@@ -194,19 +308,23 @@ export default function GalleryPage() {
 
           {/* Bottom Controls: Year Filters */}
           <div className="flex flex-wrap gap-3 items-center justify-center lg:justify-start">
-            {(['ALL', '2025', '2024'] as const).map((year) => (
+            {(['ALL', '2025', '2026'] as const).map((year) => (
               <button
                 key={year}
                 onClick={() => setActiveYear(year)}
                 className="px-6 py-2 font-mono text-[10px] sm:text-xs uppercase font-bold border-2 transition-all active:translate-y-1 rounded-full"
-                style={{ 
+                style={{
                   borderColor: DARK_TEXT,
                   backgroundColor: activeYear === year ? RED : WHITE,
                   color: activeYear === year ? WHITE : DARK_TEXT,
                   boxShadow: activeYear === year ? `0px 0px 0px ${DARK_TEXT}` : `3px 3px 0px ${DARK_TEXT}`
                 }}
               >
-                {year === 'ALL' ? 'ALL_RECORDS' : `YEAR_${year}`}
+                {year === 'ALL'
+                  ? 'ALL_RECORDS'
+                  : year === '2026'
+                    ? 'YEAR_2026 (COMING SOON)'
+                    : `YEAR_${year}`}
               </button>
             ))}
             
@@ -304,11 +422,22 @@ export default function GalleryPage() {
         ) : (
           <div className="flex flex-col items-center justify-center py-20 border-4 border-dashed border-[#1d1c17]/20">
             <Search className="w-12 h-12 text-[#1d1c17]/20 mb-4" />
-            <h3 className="text-xl font-black uppercase text-[#1d1c17]/40">
-              {projects.length === 0 ? 'NO_PROJECTS_HAVE_BEEN_ADDED_YET' : 'NO_MATCHING_RECORDS_FOUND'}
-            </h3>
-            {projects.length > 0 && (
-              <button 
+            {activeYear === '2026' && !searchQuery ? (
+              <>
+                <h3 className="text-xl font-black uppercase text-[#1d1c17]/40 text-center">
+                  HACKXPERIENCE_2026 // COMING_SOON
+                </h3>
+                <p className="mt-3 font-mono text-xs font-bold text-[#1d1c17]/40 uppercase text-center max-w-md">
+                  Projects from this year&apos;s build will land here once submissions close.
+                </p>
+              </>
+            ) : (
+              <h3 className="text-xl font-black uppercase text-[#1d1c17]/40">
+                {projects.length === 0 ? 'NO_PROJECTS_HAVE_BEEN_ADDED_YET' : 'NO_MATCHING_RECORDS_FOUND'}
+              </h3>
+            )}
+            {projects.length > 0 && activeYear !== '2026' && (
+              <button
                 onClick={() => {setSearchQuery(''); setActiveYear('ALL');}}
                 className="mt-4 text-[#c00000] font-mono text-xs font-bold underline underline-offset-4"
               >
@@ -386,74 +515,92 @@ export default function GalleryPage() {
                 </svg>
               </button>
 
-              {/* Modal Content - Image Side */}
-              <div className="w-full md:w-1/2 border-b-4 md:border-b-0 md:border-r-4 border-[#1d1c17] bg-[#1d1c17]">
-                <img 
-                  src={selectedProject.image} 
+              {/* Modal Content - Image Side (16:9 presentation screenshot, never cropped) */}
+              <div className="w-full md:w-1/2 shrink-0 flex items-center justify-center border-b-4 md:border-b-0 md:border-r-4 border-[#1d1c17] bg-[#1d1c17] aspect-video md:aspect-auto">
+                <img
+                  src={selectedProject.image}
                   alt={selectedProject.title}
-                  className="w-full h-full object-cover opacity-90"
+                  className="w-full h-full object-contain"
                 />
               </div>
 
               {/* Modal Content - Info Side */}
-              <div className="w-full md:w-1/2 p-8 overflow-y-auto">
-                <div className="mb-6">
-                  {/* Rank Badge Large */}
-                  <RankBadge rank={selectedProject.rank} size="lg" />
+              <div className="w-full md:w-1/2 flex flex-col p-5 sm:p-6 overflow-y-auto">
+                {/* Rank Badge Large */}
+                <RankBadge rank={selectedProject.rank} size="lg" />
 
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="px-3 py-1 font-mono text-xs font-black bg-[#c00000] text-white">
-                      YEAR_{selectedProject.year}
-                    </span>
-                    <span className="font-mono text-xs font-bold text-[#1d1c17]/40 uppercase">
-                      ID: {selectedProject.id.padStart(3, '0')}
-                    </span>
-                  </div>
-                  
-                  <h2 className="text-4xl font-black uppercase tracking-tighter leading-none mb-2">
-                    {selectedProject.title}
-                  </h2>
-                  <p className="font-mono text-sm font-bold text-[#c00000] uppercase mb-6">
-                    TEAM: {selectedProject.teamName}
-                  </p>
-
-                  <div className="space-y-4">
-                    <p className="text-lg leading-relaxed font-medium">
-                      {selectedProject.longDescription || selectedProject.description}
-                    </p>
-
-                    {selectedProject.achievements && (
-                      <div className="pt-4">
-                        <h4 className="font-mono text-xs font-black uppercase mb-3 border-b-2 border-[#1d1c17] inline-block">
-                          ACCOLADES
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedProject.achievements.map(achievement => (
-                            <div key={achievement} className="flex items-center gap-2 bg-[#f2ede5] px-3 py-1 border border-[#1d1c17]">
-                              <span className="w-2 h-2 bg-[#c00000]" />
-                              <span className="text-xs font-bold uppercase">{achievement}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="pt-4">
-                      <h4 className="font-mono text-xs font-black uppercase mb-3 border-b-2 border-[#1d1c17] inline-block">
-                        TECH_STACK
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedProject.tags.map(tag => (
-                          <span key={tag} className="px-3 py-1 bg-white border-2 border-[#1d1c17] text-xs font-bold uppercase">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2.5 py-0.5 font-mono text-[10px] font-black bg-[#c00000] text-white">
+                    YEAR_{selectedProject.year}
+                  </span>
+                  <span className="font-mono text-[10px] font-bold text-[#1d1c17]/40 uppercase">
+                    ID: {selectedProject.id.padStart(3, '0')}
+                  </span>
                 </div>
 
-                <div className="flex gap-4 pt-6 mt-auto">
+                <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter leading-none mb-1">
+                  {selectedProject.title}
+                </h2>
+                <p className="font-mono text-xs font-bold text-[#c00000] uppercase mb-3">
+                  TEAM: {selectedProject.teamName}
+                </p>
+
+                {/* Overview + scannable Key Features */}
+                {selectedProject.features && selectedProject.features.length > 0 ? (
+                  <>
+                    <p className="text-sm leading-relaxed mb-3">
+                      {selectedProject.description}
+                    </p>
+                    <h4 className="font-mono text-[11px] font-black uppercase mb-2 border-b-2 border-[#1d1c17] inline-block self-start">
+                      KEY_FEATURES
+                    </h4>
+                    <ul className="list-disc list-outside pl-5 space-y-1 text-sm leading-snug marker:text-[#c00000] mb-3">
+                      {selectedProject.features.map((feature) => (
+                        <li key={feature}>{feature}</li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <p className="text-sm leading-relaxed mb-3 whitespace-pre-line">
+                    {selectedProject.longDescription || selectedProject.description}
+                  </p>
+                )}
+
+                {selectedProject.achievements && (
+                  <div className="mb-3">
+                    <h4 className="font-mono text-[11px] font-black uppercase mb-2 border-b-2 border-[#1d1c17] inline-block">
+                      ACCOLADES
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedProject.achievements.map(achievement => (
+                        <div key={achievement} className="flex items-center gap-2 bg-[#f2ede5] px-2.5 py-0.5 border border-[#1d1c17]">
+                          <span className="w-2 h-2 bg-[#c00000]" />
+                          <span className="text-[11px] font-bold uppercase">{achievement}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Tech stack — actual technologies, with empty-state fallback */}
+                <div className="mb-3">
+                  <h4 className="font-mono text-[11px] font-black uppercase mb-2 border-b-2 border-[#1d1c17] inline-block">
+                    TECH_STACK
+                  </h4>
+                  {selectedProject.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedProject.tags.map(tag => (
+                        <span key={tag} className="px-2.5 py-0.5 bg-white border-2 border-[#1d1c17] text-[11px] font-bold uppercase">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-sm text-gray-500">Tech Stack: None mentioned</span>
+                  )}
+                </div>
+
+                <div className="flex gap-3 pt-3 mt-auto">
                   {selectedProject.links?.github && (
                     <a 
                       href={selectedProject.links.github} 

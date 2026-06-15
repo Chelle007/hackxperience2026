@@ -9,13 +9,15 @@ const ibmPlexMono = IBM_Plex_Mono({
   weight: ["400", "500", "600", "700"],
 });
 
+// Homepage section jump links, in page order. The logo (left) is "MAIN".
 const NAV_ITEMS = [
-  { label: "SYSTEM", target: "system" },
-  { label: "SCHEDULE", target: "schedule" },
-  { label: "INTEL", target: "intel" },
-  { label: "GALLERY", target: "", href: "/gallery" },
-  { label: "REGISTRY", target: "registry" },
-  { label: "SUBMIT", target: "", href: "/submit" },
+  { label: "OVERVIEW", target: "overview" },                 // About
+  { label: "PAST-EVENTS", target: "past-events" },           // Past Events
+  { label: "PRE-EVENTS", target: "pre-events" },             // Pre-events
+  { label: "TIMELINE", target: "timeline" },                 // Timeline
+  { label: "FAQ", target: "faq" },                           // FAQ
+  { label: "ORGANISE_MEMBERS", target: "organise-members" }, // Committee
+  { label: "JOIN_US!", target: "join-us" },                  // Final CTA
 ];
 
 export default function Navbar() {
@@ -37,14 +39,10 @@ export default function Navbar() {
     }
   };
 
-  const handleNavClick = (item: { label: string; target: string; href?: string }) => {
-    if (item.href) {
-      if (pathname === item.href) {
-        window.location.assign(item.href);
-      } else {
-        router.push(item.href);
-      }
-    } else if (pathname !== "/") {
+  const handleNavClick = (item: { label: string; target: string }) => {
+    // Every item is an in-page section anchor. If we're on another route,
+    // route home with the hash; otherwise smooth-scroll in place.
+    if (pathname !== "/") {
       router.push(`/#${item.target}`);
     } else {
       scrollTo(item.target);
@@ -77,20 +75,15 @@ export default function Navbar() {
 
       {/* Center — Nav links */}
       <div className="hidden md:flex items-center gap-1">
-        {NAV_ITEMS.map((item) => {
-          const isActive = item.href ? pathname === item.href : false;
-          return (
-            <button
-              key={item.label}
-              onClick={() => handleNavClick(item)}
-              className={`text-[12px] font-medium tracking-[0.08em] cursor-pointer px-2.5 py-1 transition-colors duration-150 whitespace-nowrap ${
-                isActive ? "text-white" : "text-white/70 hover:text-white"
-              }`}
-            >
-              [{item.label}]
-            </button>
-          );
-        })}
+        {NAV_ITEMS.map((item) => (
+          <button
+            key={item.label}
+            onClick={() => handleNavClick(item)}
+            className="text-[12px] font-medium tracking-[0.08em] cursor-pointer px-2.5 py-1 transition-colors duration-150 whitespace-nowrap text-white/70 hover:text-white"
+          >
+            [{item.label}]
+          </button>
+        ))}
       </div>
 
       {/* Right — Login button + mobile menu toggle */}
@@ -130,20 +123,15 @@ export default function Navbar() {
           className="md:hidden absolute top-11 left-0 right-0 flex flex-col border-t border-white/10"
           style={{ backgroundColor: "#1d1c17" }}
         >
-          {NAV_ITEMS.map((item) => {
-            const isActive = item.href ? pathname === item.href : false;
-            return (
-              <button
-                key={item.label}
-                onClick={() => { handleNavClick(item); setMenuOpen(false); }}
-                className={`text-left text-[12px] font-medium tracking-[0.08em] px-4 sm:px-6 py-3 border-b border-white/5 transition-colors duration-150 ${
-                  isActive ? "text-white" : "text-white/70 hover:text-white"
-                }`}
-              >
-                [{item.label}]
-              </button>
-            );
-          })}
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => { handleNavClick(item); setMenuOpen(false); }}
+              className="text-left text-[12px] font-medium tracking-[0.08em] px-4 sm:px-6 py-3 border-b border-white/5 transition-colors duration-150 text-white/70 hover:text-white"
+            >
+              [{item.label}]
+            </button>
+          ))}
         </div>
       )}
     </nav>
