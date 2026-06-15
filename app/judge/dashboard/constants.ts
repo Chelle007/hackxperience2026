@@ -69,9 +69,9 @@ export const RESPONSIVE_CSS = `
   }
 
   /* Filter bar */
+  .r-track-list::-webkit-scrollbar { display: none; }
   @media (max-width: 520px) {
     .r-filter-bar  { gap: 6px !important; flex-wrap: wrap !important; }
-    .r-filter-count { display: none !important; }
   }
 
   /* Scoring panel */

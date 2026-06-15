@@ -130,124 +130,108 @@
           onClick={e => { if (e.target === e.currentTarget) onClose(); }}                                                                                       
         >                                                                                                                                                       
           <style>{`                                                                                                                                             
-            .modal-top-grid { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }                                                                     
-            .modal-bottom-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 20px; }                                           
+            .modal-top-grid { display: grid; grid-template-columns: 360px 1fr; gap: 20px; }                                                                     
             @media (max-width: 1100px) {                                                                                                                        
               .modal-top-grid { grid-template-columns: 1fr; }                                                                                                   
-              .modal-bottom-grid { grid-template-columns: repeat(2, 1fr); }                                                                                     
-            }                                                                                                                                                   
-            @media (max-width: 640px) {                                                                                                                         
-              .modal-bottom-grid { grid-template-columns: 1fr; }                                                                                                
-            }                                                                                                                                                   
-          `}</style>                                                                                                                                            
+            }
+          `}</style>
                                                                                                                                                                 
-          <motion.div                                                                                                                                           
-            initial={{ opacity: 0, scale: 0.97, y: 12 }}                                                                                                        
-            animate={{ opacity: 1, scale: 1,    y: 0  }}                                                                                                        
-            exit={{ opacity: 0,    scale: 0.97, y: 12 }}                                                                                                        
-            transition={{ duration: 0.22, ease: "easeOut" }}                                                                                                    
-            onClick={e => e.stopPropagation()}                                                                                                                  
-            className="r-overlay-panel"                                                                                                                         
-            style={{                                                                                                                                            
-              width: "min(1200px, 100%)", maxHeight: "calc(100vh - 40px)",                                                                                      
-              display: "flex", flexDirection: "column",                                                                                                         
-              background: C.bgPrimary,                                                                                                                            
-              borderRadius: 12,                                                                                                                                 
-              boxShadow: "0 10px 40px rgba(0,0,0,0.2)",                                                                                                         
-              overflow: "hidden"                                                                                                                                
-            }}                                                                                                                                                  
-          >                                                                                                                                                     
-            {/* Header */}                                                                                                                                      
-            <div style={{ background: C.bgPrimary, borderBottom: `1px solid ${C.borderLight}`, flexShrink: 0 }}>                                                           
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px" }}>                                    
-                <div style={{ display: "flex", gap: 10, alignItems: "center", fontFamily: FM, fontSize: 16, fontWeight: 700, color: C.textPrimary }}>               
-                  <span style={{ color: C.primary }}>&lt;/&gt;</span>                                                                                               
-                  {project.name} // {project.teamName}                                                                                                          
-                </div>                                                                                                                                          
-                <div style={{ display: "flex", gap: 16, alignItems: "center" }}>                                                                                
-                  <span style={{ border: `1px solid ${C.borderSuccess}`, color: C.textSuccess, padding: "4px 10px", borderRadius: 999, fontSize: 10, fontWeight: 700,          
-  fontFamily: FM }}>                                                                                                                                            
-                    SUBMITTED                                                                                                                                   
-                  </span>                                                                                                                                       
-                  <button                                                                                                                                       
-                    onClick={onClose}                                                                                                                           
-                    style={{ background: "transparent", border: "none", cursor: "pointer", color: C.textMuted, display: "flex", padding: 4 }}                        
-                  >                                                                                                                                             
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"                     
-  strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>                                                       
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97, y: 12 }}
+            animate={{ opacity: 1, scale: 1,    y: 0  }}
+            exit={{ opacity: 0,    scale: 0.97, y: 12 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            onClick={e => e.stopPropagation()}
+            className="r-overlay-panel"
+            style={{ width: "min(1200px, 100%)", maxHeight: "calc(100vh - 40px)", display: "flex", flexDirection: "column", background: C.bgPrimary, borderRadius: 12, boxShadow: "0 10px 40px rgba(0,0,0,0.2)", overflow: "hidden" }}
+          >
+            {/* Header */}
+            <div style={{ background: C.bgPrimary, borderBottom: `1px solid ${C.borderLight}`, flexShrink: 0 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px" }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "center", fontFamily: FM, fontSize: 16, fontWeight: 700, color: C.textPrimary }}>
+                  <span style={{ color: C.primary }}>&lt;/&gt;</span>
+                  {project.name} // {project.teamName}
+                </div>
+                <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                  <span style={{ border: `1px solid ${C.borderSuccess}`, color: C.textSuccess, padding: "4px 10px", borderRadius: 999, fontSize: 10, fontWeight: 700, fontFamily: FM }}>
+                    SUBMITTED
+                  </span>
+                  <button
+                    onClick={onClose}
+                    style={{ background: "transparent", border: "none", cursor: "pointer", color: C.textMuted, display: "flex", padding: 4 }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"/>
+                      <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
                   </button>
                 </div>
-              </div>                                                                                                                                           
-            </div>                                                                                                                                              
+              </div>
+            </div>
                                                                                                                                                                 
-            {/* Scrollable body */}                                                                                                                             
-            <div                                                                                                                                                
-              className="r-overlay-body"                                                                                                                        
-              style={{ flex: 1, overflowY: "auto", padding: "24px", background: C.bgPrimary, display: "flex", flexDirection: "column" }}                          
-            >                                                                                                                                                   
-              <div className="modal-top-grid">                                                                                                                  
-                {/* Thumbnail */}                                                                                                                             
-                <div style={{ width: "100%", aspectRatio: "16/9", background: C.bgPrimary, border: `1px solid ${C.borderLight}`, borderRadius: 8, position: "relative",  
-  overflow: "hidden", flexShrink: 0 }}>                                                                                                                         
-                  {project.thumbnailUrl ? (                                                                                                                   
-                    <img src={project.thumbnailUrl} alt={`${project.name} thumbnail`} style={{ width: "100%", height: "100%", objectFit: "cover", display:    
-  "block" }} />                                                                                                                                                 
-                  ) : (                                                                                                                                       
-                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>                         
-                      <span style={{ fontFamily: FM, fontSize: 11, color: C.textMuted, letterSpacing: "0.1em" }}>[ NO THUMBNAIL ]</span>                           
-                    </div>                                                                                                                                    
-                  )}                                                                                                                                          
-                </div>                                                                                                                                        
+            {/* Scrollable body */}
+            <div
+              className="r-overlay-body"
+              style={{ flex: 1, overflowY: "auto", padding: "24px", background: C.bgPrimary, display: "flex", flexDirection: "column" }}
+            >
+              <div className="modal-top-grid">
+                {/* Thumbnail */}
+                <div style={{ width: "100%", aspectRatio: "16/9", background: C.bgPrimary, border: `1px solid ${C.borderLight}`, borderRadius: 8, position: "relative", overflow: "hidden", flexShrink: 0 }}>
+                  {project.thumbnailUrl ? (
+                    <img src={project.thumbnailUrl} alt={`${project.name} thumbnail`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  ) : (
+                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontFamily: FM, fontSize: 11, color: C.textMuted, letterSpacing: "0.1em" }}>[ NO THUMBNAIL ]</span>
+                    </div>
+                  )}
+                </div>
                                                                                                                                                                 
-                {/* Project Summary */}                                                                                                                       
-                <Card title="PROJECT SUMMARY">                                                                                                                
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>                                                                          
-                    <SummaryRow icon={Icons.folder} label="Project Name" value={project.name} />                                                              
-                    <SummaryRow icon={Icons.users} label="Team ID" value={project.teamId} />                                                                  
-                    <SummaryRow icon={Icons.tag} label="Track" value={project.track} />                                                                       
-                    <SummaryRow icon={Icons.clock} label="Submitted At" value={fmtDate(project.submittedAt)} />                                               
-                    <SummaryRow icon={Icons.clock} label="Last Updated" value={fmtDate(project.updatedAt)} />                                                 
-                    <SummaryRow icon={Icons.checkCircle} label="Status" badge={<span style={{ border: `1px solid ${C.borderSuccess}`, color: C.textSuccess, padding: "2px 8px", borderRadius: 4, fontSize: 9, textTransform: "uppercase" }}>SUBMITTED</span>} />                                                                        
-                  </div>                                                                                                                                      
-                </Card>                                                                                                                                       
+                {/* Project Summary */}
+                <Card title="PROJECT SUMMARY">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    <SummaryRow icon={Icons.folder} label="Project Name" value={project.name} />
+                    <SummaryRow icon={Icons.users} label="Team ID" value={project.teamId} />
+                    <SummaryRow icon={Icons.tag} label="Track" value={project.track} />
+                    <SummaryRow icon={Icons.clock} label="Submitted At" value={fmtDate(project.submittedAt)} />
+                    <SummaryRow icon={Icons.clock} label="Last Updated" value={fmtDate(project.updatedAt)} />
+                    <SummaryRow icon={Icons.checkCircle} label="Status" badge={<span style={{ border: `1px solid ${C.borderSuccess}`, color: C.textSuccess, padding: "2px 8px", borderRadius: 4, fontSize: 9, textTransform: "uppercase" }}>SUBMITTED</span>} />
+                  </div>
+                </Card>
                                                                                                                                                                 
                 {/* Description */}
                 <Card title="DESCRIPTION" icon={Icons.alignLeft}>
                   {project.description || <span style={{ color: C.textMuted }}>No description provided.</span>}
-                </Card>                                                                                                                                       
-                                                                                                                                                                
+                </Card>
+
                 {/* Short Pitch */}
                 <Card title="SHORT PITCH" icon={Icons.lightning}>
                   {project.pitch || <span style={{ color: C.textMuted }}>No pitch provided.</span>}
-                </Card>                                                                                                                                       
-              </div>                                                                                                                                            
+                </Card>
+
+                {/* Tech Stack */}
+                <Card title="TECH STACK" icon={Icons.layers}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {project.techStack.length > 0 ? project.techStack.map(t => (
+                      <span key={t} style={{ padding: "6px 10px", background: C.bgPrimary, border: `1px solid ${C.primary}`, borderRadius: 4, fontFamily: FM, fontSize: 10, color: C.primary }}>
+                        {t}
+                      </span>
+                    )) : <span style={{ color: C.textMuted }}>None specified</span>}
+                  </div>
+                </Card>
                                                                                                                                                                 
-              <div className="modal-bottom-grid">                                                                                                               
-                {/* Tech Stack */}                                                                                                                              
-                <Card title="TECH STACK" icon={Icons.layers}>                                                                                                   
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>                                                                                   
-                    {project.techStack.length > 0 ? project.techStack.map(t => (                                                                                
-                      <span key={t} style={{ padding: "6px 10px", background: C.bgPrimary, border: `1px solid ${C.primary}`, borderRadius: 4, fontFamily: FM,         
-  fontSize: 10, color: C.primary }}>                                                                                                                                
-                        {t}                                                                                                                                     
-                      </span>                                                                                                                                   
-                    )) : <span style={{ color: C.textMuted }}>None specified</span>}                                                                                 
-                  </div>                                                                                                                                        
-                </Card>                                                                                                                                         
-                                                                                                                                                                
-                {/* Key Links */}                                                                                                                               
-                <Card title="KEY LINKS & ASSETS" icon={Icons.link}>                                                                                             
-                  <div style={{ display: "flex", flexDirection: "column" }}>                                                                                    
-                    <LinkRow label="GitHub Repo" url={project.githubUrl} />                                                                                     
-                    <LinkRow label="Live Demo" url={project.liveUrl} />                                                                                         
-                    <LinkRow label="Pitch Deck" url={project.pitchDeckUrl} />                                                                                   
-                    <LinkRow label="Deck File" url={project.pitchDeckFileUrl} />                                                                                
-                    <LinkRow label="Video Demo" url={project.videoDemoUrl} />                                                                                   
-                    {!project.githubUrl && !project.liveUrl && !project.pitchDeckUrl && !project.pitchDeckFileUrl && !project.videoDemoUrl && (                 
-                       <span style={{ color: C.textMuted, padding: "6px 0" }}>No links provided.</span>                                                              
-                    )}                                                                                                                                          
-                  </div>                                                                                                                                        
-                </Card>                                                                                                                                         
+                {/* Key Links */}
+                <Card title="KEY LINKS & ASSETS" icon={Icons.link}>
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    <LinkRow label="GitHub Repo" url={project.githubUrl} />
+                    <LinkRow label="Live Demo" url={project.liveUrl} />
+                    <LinkRow label="Pitch Deck" url={project.pitchDeckUrl} />
+                    <LinkRow label="Deck File" url={project.pitchDeckFileUrl} />
+                    <LinkRow label="Video Demo" url={project.videoDemoUrl} />
+                    {!project.githubUrl && !project.liveUrl && !project.pitchDeckUrl && !project.pitchDeckFileUrl && !project.videoDemoUrl && (
+                       <span style={{ color: C.textMuted, padding: "6px 0" }}>No links provided.</span>
+                    )}
+                  </div>
+                </Card>
                                                                                                                                                                 
                 {/* Team Members */}
                 <Card title={`TEAM MEMBERS (${project.members.length})`} icon={Icons.users}>
@@ -269,33 +253,27 @@
                       </div>
                     ))}
                   </div>
-                </Card>                                                                                                                                         
+                </Card>
                                                                                                                                                                 
-                {/* Additional Notes */}                                                                                                                        
-                <Card title="ADDITIONAL NOTES" icon={Icons.document}>                                                                                           
-                  {project.notes || <span style={{ color: C.textMuted }}>No additional notes.</span>}                                                                
-                </Card>                                                                                                                                         
-              </div>                                                                                                                                            
-            </div>                                                                                                                                              
+                {/* Additional Notes */}
+                <Card title="ADDITIONAL NOTES" icon={Icons.document}>
+                  {project.notes || <span style={{ color: C.textMuted }}>No additional notes.</span>}
+                </Card>
+              </div>
+            </div>
                                                                                                                                                                 
-            {/* Footer */}                                                                                                                                      
-            <div style={{ background: C.bgPrimary, borderTop: `1px solid ${C.borderLight}`, padding: "16px 24px", display: "flex", justifyContent: "space-between",        
-  alignItems: "center", flexShrink: 0 }}>                                                                                                                       
-              <button style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", background: C.bgPrimary, border: `1px solid ${C.borderMedium}`,         
-  borderRadius: 6, fontFamily: FM, fontSize: 11, fontWeight: 700, color: C.textPrimary, cursor: "pointer" }}>                                                       
-                <span style={{ color: C.textMuted }}>{Icons.link}</span> COPY PROJECT LINK                                                                           
-              </button>                                                                                                                                         
-              <div style={{ display: "flex", gap: 12 }}>                                                                                                        
-                <button                                                                                                                                         
-                  onClick={onClose}                                                                                                                             
-                  style={{ padding: "10px 24px", background: C.bgPrimary, border: `1px solid ${C.borderMedium}`, borderRadius: 6, fontFamily: FM, fontSize: 11, fontWeight: 
-  700, color: C.textPrimary, cursor: "pointer" }}                                                                                                                   
-                >                                                                                                                                               
-                  CLOSE                                                                                                                                         
-                </button>                                                                                                                                     
-              </div>                                                                                                                                            
-            </div>                                                                                                                                              
-          </motion.div>                                                                                                                                         
-        </motion.div>                                                                                                                                           
-      );                                                                                                                                                        
-    }  
+            {/* Footer */}
+            <div style={{ background: C.bgPrimary, borderTop: `1px solid ${C.borderLight}`, padding: "16px 24px", display: "flex", justifyContent: "flex-end", alignItems: "center", flexShrink: 0 }}>                                                                                                                                       
+              <div style={{ display: "flex", gap: 12 }}>
+                <button
+                  onClick={onClose}
+                  style={{ padding: "10px 24px", background: C.bgPrimary, border: `1px solid ${C.borderMedium}`, borderRadius: 6, fontFamily: FM, fontSize: 11, fontWeight: 700, color: C.textPrimary, cursor: "pointer" }}                                                                                                                   
+                >
+                  CLOSE
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      );
+    }

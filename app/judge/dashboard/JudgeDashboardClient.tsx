@@ -472,7 +472,7 @@ export default function JudgeDashboardClient() {
             </div>
 
             {/* Search + filter bar */}
-            <div className="r-filter-bar" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "nowrap" as const }}>
+            <div className="r-filter-bar" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
               {/* Search input */}
               <div style={{ position: "relative", flexShrink: 0 }}>
                 <svg
@@ -498,8 +498,16 @@ export default function JudgeDashboardClient() {
               </div>
 
               {/* Track pills */}
-              {TRACKS.map(track => (
-                <motion.button
+              <div 
+                className="r-track-list"
+                style={{ 
+                  display: "flex", alignItems: "center", gap: 8, 
+                  overflowX: "auto", scrollbarWidth: "none", flexWrap: "nowrap", minWidth: 0,
+                  padding: "4px 8px", margin: "-4px 0"
+                }}
+              >
+                {TRACKS.map(track => (
+                  <motion.button
                   key={track}
                   onClick={() => { setActiveTrack(track); setExpandedId(null); }}
                   whileTap={{ y: 1 }}
@@ -520,7 +528,8 @@ export default function JudgeDashboardClient() {
                 >
                   {track === "ALL" ? "ALL TRACKS" : track}
                 </motion.button>
-              ))}
+                ))}
+              </div>
             </div>
 
             {/* ── Horizontal card carousel ── */}
@@ -619,16 +628,6 @@ export default function JudgeDashboardClient() {
                     </motion.div>
                   );
                 })}
-
-                {/* Chevron hint if overflow */}
-                <div style={{
-                  width: 32, minWidth: 32, flexShrink: 0,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <svg width="8" height="16" viewBox="0 0 8 16" fill="none">
-                    <path d="M2 2l4 6-4 6" stroke={C.textMuted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
               </div>
             )}
           </div>
