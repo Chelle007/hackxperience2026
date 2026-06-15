@@ -28,6 +28,7 @@ export function PlaceholderThumb({ url, alt }: { url?: string | null; alt?: stri
   );
 }
 
+<<<<<<< HEAD
 export function FieldBlock({ label, value, muted = false, isUrl = false }: { label: string; value: string; muted?: boolean; isUrl?: boolean }) {
   const content = isUrl ? (
     <a
@@ -56,6 +57,27 @@ export function FieldBlock({ label, value, muted = false, isUrl = false }: { lab
     <div style={{ minWidth: 160, flex: 1 }}>
       <div style={{ fontFamily: FM, fontSize: 11, color: C.red, letterSpacing: "0.08em", marginBottom: 5 }}>{label}</div>
       {content}
+=======
+export function FieldBlock({ label, value, href, muted = false }: { label: string; value: string; href?: string; muted?: boolean }) {
+  return (
+    <div style={{ minWidth: 160, flex: 1 }}>
+      <div style={{ fontFamily: FM, fontSize: 14, color: C.red, letterSpacing: "0.08em", marginBottom: 5 }}>{label}</div>
+      {href ? (
+        <a 
+          href={href}
+          target="_blank" // Opens link in new tab
+          rel="noopener noreferrer"
+          style={{ fontFamily: FM, fontSize: 15, color: C.offWhite, textDecoration: "underline", cursor: "pointer", lineHeight: "18px", wordBreak: "break-word" }}
+        >
+          {value}
+        </a>
+      ) : (
+        <div style={{ fontFamily: FM, fontSize: 15, color: muted ? C.muted2 : C.offWhite, lineHeight: "18px", wordBreak: "break-word" }}
+        >
+          {value}
+        </div>
+      )}
+>>>>>>> judge_page_update1
     </div>
   );
 }
