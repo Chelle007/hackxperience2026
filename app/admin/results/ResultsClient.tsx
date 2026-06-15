@@ -3,14 +3,40 @@
 import { Download } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminShellConfig, type AdminMetric } from "../components/AdminShell";
-import type { AdminSubmission } from "@/lib/types";
-import { fetchAdminSubmissions } from "@/lib/client/admin-api";
+import type { AdminSubmission, SubmissionScore } from "@/lib/types";
+import { fetchAdminSubmissions, fetchAdminSettings } from "@/lib/client/admin-api";
 import styles from "./Results.module.css";
 
 type JudgeBreakdown = {
   judgeId: string;
-  normalizedPct: number;
+  technicalExecution: number | null;
+  problemSolutionFit: number | null;
+  innovationCreativity: number | null;
+  presentationQuality: number | null;
+  overall: number;
 };
+
+// Per-criterion max points, from settings (e.g. 30/25/25/20, overall 100).
+type ScoreMaxima = {
+  technical: number;
+  problem: number;
+  innovation: number;
+  presentation: number;
+  overall: number;
+};
+
+const DEFAULT_MAXIMA: ScoreMaxima = {
+  technical: 30,
+  problem: 25,
+  innovation: 25,
+  presentation: 20,
+  overall: 100,
+};
+
+/** "given/max" — e.g. 22/30; shows "—/30" when the criterion wasn't scored. */
+function fmtScore(value: number | null, max: number): string {
+  return `${typeof value === "number" ? value : "—"}/${max}`;
+}
 
 type ProjectRow = {
   id: string;
@@ -39,13 +65,15 @@ function buildProjectRows(submissions: AdminSubmission[]): ProjectRow[] {
 
   for (const submission of submissions) {
     const scored = submission.scores.filter(
-      (s): s is { judgeId: string; score: number } =>
+      (s): s is SubmissionScore & { score: number } =>
         typeof s.score === "number" && Number.isFinite(s.score),
     );
     if (scored.length === 0) continue;
 
     const totalRaw = scored.reduce((sum, s) => sum + s.score, 0);
-    const aveScore = Math.round((totalRaw / scored.length) * 10000) / 100;
+    // Judge totals are already on a 0–100 scale (criteria capped at weights),
+    // so the average is the final score — just round to 2 decimals.
+    const aveScore = Math.round((totalRaw / scored.length) * 100) / 100;
 
     rows.push({
       id: submission.id,
@@ -54,7 +82,11 @@ function buildProjectRows(submissions: AdminSubmission[]): ProjectRow[] {
       aveScore,
       breakdowns: scored.map((s) => ({
         judgeId: s.judgeId,
-        normalizedPct: Math.round(s.score * 10000) / 100,
+        technicalExecution: s.technicalExecution ?? null,
+        problemSolutionFit: s.problemSolutionFit ?? null,
+        innovationCreativity: s.innovationCreativity ?? null,
+        presentationQuality: s.presentationQuality ?? null,
+        overall: Math.round(s.score * 100) / 100,
       })),
     });
   }
@@ -68,6 +100,7 @@ export default function ResultsClient() {
   const [error,            setError]            = useState("");
   const [exportState, setExportState] = useState("");
   const [expanded,    setExpanded]    = useState<Set<string>>(new Set());
+  const [maxima,      setMaxima]      = useState<ScoreMaxima>(DEFAULT_MAXIMA);
 
   const shellMetrics = useMemo(() => buildMetrics(data), [data]);
   const projectRows  = useMemo(() => buildProjectRows(data), [data]);
@@ -76,8 +109,26 @@ export default function ResultsClient() {
     setLoading(true);
     setError("");
     try {
-      const payload = await fetchAdminSubmissions();
+      const [payload, settingsResult] = await Promise.all([
+        fetchAdminSubmissions(),
+        fetchAdminSettings().catch(() => null),
+      ]);
       setData(payload.submissions);
+
+      const s = settingsResult?.settings;
+      if (s) {
+        setMaxima({
+          technical: s.technical_execution_value,
+          problem: s.problem_solution_fit_value,
+          innovation: s.innovation_creativity_value,
+          presentation: s.presentation_quality_value,
+          overall:
+            s.technical_execution_value +
+            s.problem_solution_fit_value +
+            s.innovation_creativity_value +
+            s.presentation_quality_value,
+        });
+      }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Unable to load aggregate scores.");
     } finally {
@@ -95,10 +146,19 @@ export default function ResultsClient() {
     });
   }
 
-  async function exportScoresXlsx() {
-    const { exportScoresXlsx: doExport } = await import("@/lib/client/export-xlsx");
-    await doExport(data, "hackxperience-aggregate-scores.xlsx");
-    setExportState("SCORES XLSX READY");
+  async function handleExportXlsx() {
+    if (data.length === 0) {
+      setExportState("NO DATA TO EXPORT");
+      return;
+    }
+    setExportState("GENERATING XLSX...");
+    try {
+      const { exportResultsXlsx } = await import("@/lib/client/export-xlsx");
+      await exportResultsXlsx(data, "hackxperience-results.xlsx");
+      setExportState("RESULTS XLSX READY");
+    } catch {
+      setExportState("EXPORT FAILED, TRY AGAIN");
+    }
   }
 
   return (
@@ -116,9 +176,9 @@ export default function ResultsClient() {
               : "// AVE_SCORE = SUM_OF_SCORES / JUDGE_COUNT"}
           </p>
         </div>
-        <button type="button" className={styles.exportButton} onClick={exportScoresXlsx}>
+        <button type="button" className={styles.exportButton} onClick={handleExportXlsx}>
           <Download aria-hidden="true" />
-          <span>[ EXPORT SCORES XLSX ]</span>
+          <span>[ EXPORT RESULTS XLSX ]</span>
         </button>
       </header>
 
@@ -175,20 +235,30 @@ export default function ResultsClient() {
                   {/* Expanded judge breakdown */}
                   {isOpen && (
                     <div className={styles.breakdownWrap}>
-                      <div className={styles.breakdownHeader}>
-                        <span>// JUDGE_ID</span>
-                        <span>SCORE</span>
-                      </div>
-                      {row.breakdowns.map((bd) => (
-                        <div className={styles.breakdownRow} key={bd.judgeId}>
-                          <span className={styles.breakdownJudge}>
-                            {bd.judgeId.toUpperCase()}
-                          </span>
-                          <span className={styles.breakdownScore}>
-                            {bd.normalizedPct.toFixed(2)}
-                          </span>
+                      <div className={styles.breakdownGrid}>
+                        <div className={styles.breakdownHeader}>
+                          <span>// JUDGE_ID</span>
+                          <span className={styles.breakdownNum}>TECHNICAL</span>
+                          <span className={styles.breakdownNum}>PROBLEM_FIT</span>
+                          <span className={styles.breakdownNum}>INNOVATION</span>
+                          <span className={styles.breakdownNum}>PRESENTATION</span>
+                          <span className={styles.breakdownNum}>OVERALL</span>
                         </div>
-                      ))}
+                        {row.breakdowns.map((bd) => (
+                          <div className={styles.breakdownRow} key={bd.judgeId}>
+                            <span className={styles.breakdownJudge}>
+                              {bd.judgeId.toUpperCase()}
+                            </span>
+                            <span className={styles.breakdownNum}>{fmtScore(bd.technicalExecution, maxima.technical)}</span>
+                            <span className={styles.breakdownNum}>{fmtScore(bd.problemSolutionFit, maxima.problem)}</span>
+                            <span className={styles.breakdownNum}>{fmtScore(bd.innovationCreativity, maxima.innovation)}</span>
+                            <span className={styles.breakdownNum}>{fmtScore(bd.presentationQuality, maxima.presentation)}</span>
+                            <span className={`${styles.breakdownNum} ${styles.breakdownScore}`}>
+                              {bd.overall}/{maxima.overall}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 

@@ -51,7 +51,7 @@ function actionToneClass(action: string): string {
   return styles.toneNeutral;
 }
 
-export default function ActivityLogsClient() {
+export default function ActivityLogsClient({ embedded = false }: { embedded?: boolean } = {}) {
   const [logs, setLogs] = useState<SubmissionLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -148,7 +148,7 @@ export default function ActivityLogsClient() {
 
   return (
     <>
-      <header className={styles.contentHeader}>
+      <header className={`${styles.contentHeader}${embedded ? ` ${styles.contentHeaderEmbedded}` : ""}`}>
         <div className={styles.headerRow}>
           <div>
             <h2>&gt; SYSTEM_ACTIVITY_LOGS</h2>

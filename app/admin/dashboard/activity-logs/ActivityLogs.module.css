@@ -8,6 +8,12 @@
   border-bottom: 1px solid #3a0808;
 }
 
+/* When the logs are embedded under the dashboard grid, the header must sit
+   BELOW the panels (positive top margin) instead of bleeding to the page top. */
+.contentHeaderEmbedded {
+  margin-top: 28px;
+}
+
 .headerRow {
   display: flex;
   align-items: flex-start;
@@ -397,6 +403,10 @@
   .contentHeader {
     margin: -20px -16px 18px;
     padding: 22px 16px 0;
+  }
+
+  .contentHeaderEmbedded {
+    margin-top: 20px;
   }
 
   .headerRow {

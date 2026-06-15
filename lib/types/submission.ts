@@ -154,4 +154,5 @@ export type AdminSubmission = {
   videoDemoUrl?: string | null;
   members?: TeamMember[];
   additionalNotes?: string | null;
+  leadEmail?: string | null;
 };

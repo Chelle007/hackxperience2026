@@ -155,6 +155,7 @@ export function mapSubmissionToAdminView(
     videoDemoUrl: row.demo_video_url,
     members,
     additionalNotes: row.notes,
+    leadEmail: row.lead_email ?? null,
     scores,
   };
 }

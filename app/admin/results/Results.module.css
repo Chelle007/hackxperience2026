@@ -185,11 +185,18 @@
   background: #f5f0e8;
   border-top: 1px dashed #cc0000;
   padding: 10px 18px 12px 32px;
+  overflow-x: auto; /* let the 6-column breakdown scroll on narrow screens */
+}
+
+/* Holds the header + rows; keeps a min width so columns stay readable. */
+.breakdownGrid {
+  min-width: 540px;
 }
 
 .breakdownHeader {
   display: grid;
-  grid-template-columns: 1fr 100px;
+  grid-template-columns: minmax(90px, 1.4fr) repeat(5, minmax(64px, 1fr));
+  gap: 10px;
   padding-bottom: 6px;
   margin-bottom: 2px;
   border-bottom: 1px solid #ddd8ce;
@@ -201,7 +208,8 @@
 
 .breakdownRow {
   display: grid;
-  grid-template-columns: 1fr 100px;
+  grid-template-columns: minmax(90px, 1.4fr) repeat(5, minmax(64px, 1fr));
+  gap: 10px;
   padding: 5px 0;
   border-bottom: 1px solid #ece7de;
   font-size: 10px;
@@ -217,8 +225,14 @@
   color: #1a1a1a;
 }
 
+/* Numeric criterion + overall columns — right-aligned for easy comparison. */
+.breakdownNum {
+  text-align: right;
+}
+
 .breakdownScore {
   color: #cc0000;
+  font-weight: 700;
 }
 
 /* ── Empty / loading state ───────────────────────────────── */
