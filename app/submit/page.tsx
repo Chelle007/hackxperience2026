@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-no-comment-textnodes */
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Montserrat, IBM_Plex_Mono } from "next/font/google";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -43,7 +43,7 @@ const STEP_NAMES = ["IDENTITY", "ASSETS", "MANIFEST", "REVIEW"];
 interface Member {
   id: string;
   name: string;
-  studentId: string;
+  university: string;
   role: string;
   email: string;
 }
@@ -65,7 +65,6 @@ interface FormState {
   thumbnailFile: File | null;
   thumbnailUrl: string | null;     // URL from Storage (populated from DB)
   members: Member[];
-  notes: string;
 }
 
 interface Tick { d: number; h: number; m: number; s: number }
@@ -104,6 +103,13 @@ function deserializeForm(stored: SerializableForm): FormState {
     pitchDeckUploadUrl: (s.pitchDeckUploadUrl  ?? s.pitchDeckFileUrl ?? null) as string | null,
     demoVideoUrl:       (s.demoVideoUrl        ?? "") as string,
     otherTechStack:     (s.otherTechStack      ?? "") as string,
+    members: ((stored.members ?? []) as Member[]).map((m) => ({
+      id:         m.id         ?? Date.now().toString(),
+      name:       m.name       ?? "",
+      university: m.university ?? "",
+      role:       m.role       ?? "",
+      email:      m.email      ?? "",
+    })),
     pitchDeckFile: null,
     thumbnailFile: null,
   };
@@ -119,8 +125,7 @@ function hasAnyDraftInput(form: FormState) {
     form.githubRepoUrl.trim() ||
     form.liveDemoUrl.trim() ||
     form.pitchDeckShareUrl.trim() ||
-    form.demoVideoUrl.trim() ||
-    form.notes.trim()
+    form.demoVideoUrl.trim()
   ) {
     return true;
   }
@@ -131,10 +136,10 @@ function hasAnyDraftInput(form: FormState) {
 
   return form.members.some(
     (member) =>
-      member.name.trim() ||
-      member.studentId.trim() ||
-      member.role.trim() ||
-      member.email.trim(),
+      member.name?.trim() ||
+      member.university?.trim() ||
+      member.role?.trim() ||
+      member.email?.trim(),
   );
 }
 
@@ -172,9 +177,28 @@ function isValidUrl(url: string): boolean {
 
 function validateStep(step: number, form: FormState, maxTeamSize: number): boolean {
   switch (step) {
-    case 0: return !!(form.projectName.trim() && form.teamId.trim() && form.track && form.description.trim() && form.pitch.trim());
-    case 1: return isValidUrl(form.githubRepoUrl) && isValidUrl(form.pitchDeckShareUrl) && (form.liveDemoUrl === "" || isValidUrl(form.liveDemoUrl)) && (form.demoVideoUrl === "" || isValidUrl(form.demoVideoUrl));
-    case 2: return form.members.length > 0 && form.members.length <= maxTeamSize && form.members.every(m => m.name.trim() && m.studentId.trim() && m.role.trim() && m.email.trim());
+    case 0: {
+      const descWords = form.description.trim() ? form.description.trim().split(/\s+/).length : 0;
+      const pitchWords = form.pitch.trim() ? form.pitch.trim().split(/\s+/).length : 0;
+      const otherTechValid = !form.techStack.includes("OTHER") || !!form.otherTechStack.trim();
+      return !!(
+        form.projectName.trim() && 
+        form.teamId.trim() && 
+        form.track && 
+        form.description.trim() && 
+        descWords <= 6 &&
+        form.pitch.trim() &&
+        pitchWords <= 150 &&
+        form.techStack.length > 0 &&
+        otherTechValid &&
+        (form.thumbnailFile || form.thumbnailUrl)
+      );
+    }
+    case 1: return isValidUrl(form.githubRepoUrl) && 
+                   isValidUrl(form.pitchDeckShareUrl) && 
+                   isValidUrl(form.liveDemoUrl) && 
+                   isValidUrl(form.demoVideoUrl);
+    case 2: return form.members.length > 0 && form.members.length <= maxTeamSize && form.members.every(m => m.name?.trim() && m.university?.trim() && m.role?.trim() && m.email?.trim());
     default: return true;
   }
 }
@@ -234,8 +258,8 @@ function FieldLabel({ children, hint, required }: { children: React.ReactNode; h
   );
 }
 
-function SInput({ value, onChange, onBlur, placeholder, suffix, h = 44 }: {
-  value: string; onChange?: (v: string) => void; onBlur?: () => void; placeholder?: string; suffix?: string; h?: number;
+function SInput({ value, onChange, onBlur, placeholder, suffix, h = 44, hasError }: {
+  value: string; onChange?: (v: string) => void; onBlur?: () => void; placeholder?: string; suffix?: string; h?: number; hasError?: boolean;
 }) {
   return (
     <div style={{ position: "relative", boxShadow: SHADOW_SM }}>
@@ -245,13 +269,13 @@ function SInput({ value, onChange, onBlur, placeholder, suffix, h = 44 }: {
         onBlur={onBlur}
         placeholder={placeholder}
         style={{
-          width: "100%", height: h, background: "#fff", border: `1.5px solid ${DARK_BG}`,
+          width: "100%", height: h, background: "#fff", border: `1.5px solid ${hasError ? RED : DARK_BG}`,
           padding: `0 ${suffix ? 60 : 14}px 0 14px`, fontFamily: FM, fontSize: 13,
           color: DARK_BG, outline: "none", boxSizing: "border-box",
         }}
       />
       {suffix && (
-        <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontFamily: FM, fontSize: 10, color: MUTED, pointerEvents: "none" }}>
+        <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontFamily: FM, fontSize: 10, color: hasError ? RED : MUTED, pointerEvents: "none" }}>
           {suffix}
         </span>
       )}
@@ -259,8 +283,8 @@ function SInput({ value, onChange, onBlur, placeholder, suffix, h = 44 }: {
   );
 }
 
-function STextarea({ value, onChange, placeholder, suffix, h = 90 }: {
-  value: string; onChange?: (v: string) => void; placeholder?: string; suffix?: string; h?: number;
+function STextarea({ value, onChange, placeholder, suffix, h = 90, hasError }: {
+  value: string; onChange?: (v: string) => void; placeholder?: string; suffix?: string; h?: number; hasError?: boolean;
 }) {
   return (
     <div style={{ position: "relative", boxShadow: SHADOW_SM }}>
@@ -269,13 +293,13 @@ function STextarea({ value, onChange, placeholder, suffix, h = 90 }: {
         onChange={(e) => onChange?.(e.target.value)}
         placeholder={placeholder}
         style={{
-          width: "100%", height: h, background: "#fff", border: `1.5px solid ${DARK_BG}`,
+          width: "100%", height: h, background: "#fff", border: `1.5px solid ${hasError ? RED : DARK_BG}`,
           padding: "12px 14px", fontFamily: FM, fontSize: 13, color: DARK_BG, outline: "none",
           resize: "none", lineHeight: 1.5, boxSizing: "border-box", paddingBottom: suffix ? 28 : 12,
         }}
       />
       {suffix && (
-        <span style={{ position: "absolute", right: 10, bottom: 10, fontFamily: FM, fontSize: 10, color: MUTED, pointerEvents: "none" }}>
+        <span style={{ position: "absolute", right: 10, bottom: 10, fontFamily: FM, fontSize: 10, color: hasError ? RED : MUTED, pointerEvents: "none" }}>
           {suffix}
         </span>
       )}
@@ -338,11 +362,11 @@ function STag({ children, active, onClick }: { children: string; active: boolean
   );
 }
 
-function Card({ children, padding = 22, style, dark }: {
-  children: React.ReactNode; padding?: number; style?: React.CSSProperties; dark?: boolean;
+function Card({ children, padding = 22, style, dark, className }: {
+  children: React.ReactNode; padding?: number; style?: React.CSSProperties; dark?: boolean; className?: string;
 }) {
   return (
-    <div style={{ background: dark ? DARK_BG : "#fff", border: `1.5px solid ${DARK_BG}`, boxShadow: SHADOW, padding, position: "relative", ...style }}>
+    <div className={className} style={{ background: dark ? DARK_BG : "#fff", border: `1.5px solid ${DARK_BG}`, boxShadow: SHADOW, padding, position: "relative", ...style }}>
       <div style={{ position: "absolute", top: -1.5, left: -1.5, right: -1.5, height: 4, background: RED }} />
       {children}
     </div>
@@ -409,7 +433,7 @@ function ConfirmModal({ form, onCancel, onConfirm, isEditing }: {
 function PageHero({ tick, deadline }: { tick: Tick; deadline: Date | null }) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
-    <div style={{ padding: "36px 48px 28px", display: "flex", alignItems: "flex-end", gap: 32, justifyContent: "space-between", flexWrap: "wrap" }}>
+    <div className="submit-page-hero" style={{ padding: "36px 48px 28px", display: "flex", alignItems: "flex-end", gap: 32, justifyContent: "space-between", flexWrap: "wrap" }}>
       <div style={{ flex: 1, minWidth: 280 }}>
         <span style={{ display: "inline-flex", alignItems: "center", height: 26, padding: "0 12px", background: RED, color: "#fff", fontFamily: FM, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em" }}>
           // MODULE_01 · PROJECT_REGISTRY
@@ -470,6 +494,7 @@ function StepRail({ active, onStepClick, maxReached, maxTeamSize, lastSaved }: {
         return (
           <motion.div
             key={i}
+            className="submit-step-rail-item"
             animate={{
               background: isA ? DARK_BG : "#fff",
               x: isA ? -4 : 0,
@@ -506,7 +531,7 @@ function StepRail({ active, onStepClick, maxReached, maxTeamSize, lastSaved }: {
           </motion.div>
         );
       })}
-      <div style={{ padding: "10px 18px", border: `1.5px solid ${DARK_BG}`, borderTop: "none", background: "#fff" }}>
+      <div className="submit-step-rail-saved" style={{ padding: "10px 18px", border: `1.5px solid ${DARK_BG}`, borderTop: "none", background: "#fff" }}>
         {lastSaved ? (
           <div style={{ fontFamily: FM, fontSize: 10, color: MUTED, letterSpacing: "0.04em", textTransform: "uppercase", lineHeight: 1.5 }}>
             // Saved · [{STEP_NAMES[lastSaved.step]}]<br />
@@ -601,10 +626,28 @@ function FormFooter({ onNext, onBack, nextLabel, showBack = true, disabled }: {
   );
 }
 
+// ─── Duplicate-check helpers ──────────────────────────────────
+
+type CheckStatus = "idle" | "checking" | "taken" | "available";
+
+function CheckMsg({ status, takenMsg }: { status: CheckStatus | undefined; takenMsg: string }) {
+  if (!status || status === "idle") return null;
+  if (status === "checking") return (
+    <Mono color={MUTED} size={11} style={{ marginTop: 5 }}>// CHECKING…</Mono>
+  );
+  if (status === "taken") return (
+    <Mono color={RED} size={11} weight={800} style={{ marginTop: 5 }}>&gt;&gt; [ERR: {takenMsg}]</Mono>
+  );
+  return (
+    <Mono color="#3a9e6a" size={11} weight={700} style={{ marginTop: 5 }}>&gt; [OK: AVAILABLE]</Mono>
+  );
+}
+
 // ─── Step 01: Identity ────────────────────────────────────────
 
 const TECH_TAGS = ["REACT", "NEXT.JS", "TAILWIND", "NODE.JS", "PYTHON", "OPENAI API", "SUPABASE", "FIREBASE", "VERCEL", "GITHUB", "OTHER"];
 const TRACKS = ["AI for Campus Life", "Web Development", "Mobile App", "IoT / Hardware", "Data Analytics", "Open Track"];
+const UNIVERSITIES = ['NUS', 'NTU', 'SMU', 'SUTD', 'SIT', 'SUSS', 'SIM', 'Kaplan', 'PSB Academy', 'MDIS', 'James Cook University', 'Curtin Singapore', 'Other'];
 
 function Step01({
   form,
@@ -615,6 +658,9 @@ function Step01({
   maxFileSizeMb,
   thumbnailError,
   setThumbnailError,
+  fieldChecks,
+  checkField,
+  clearCheck,
 }: {
   form: FormState;
   setForm: (f: FormState) => void;
@@ -624,6 +670,9 @@ function Step01({
   maxFileSizeMb: number;
   thumbnailError: string | null;
   setThumbnailError: (message: string | null) => void;
+  fieldChecks: Record<string, CheckStatus>;
+  checkField: (key: string, dbField: string, value: string) => Promise<void>;
+  clearCheck: (key: string) => void;
 }) {
   const set = (k: keyof FormState) => (v: string) => setForm({ ...form, [k]: v });
   const toggleTag = (tag: string) => {
@@ -640,12 +689,26 @@ function Step01({
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         <div>
           <FieldLabel required>Project Name</FieldLabel>
-          <SInput value={form.projectName} onChange={set("projectName")} placeholder="Enter your project name…" />
+          <SInput
+            value={form.projectName}
+            onChange={(v) => { set("projectName")(v); clearCheck("projectName"); }}
+            onBlur={() => void checkField("projectName", "project_name", form.projectName)}
+            placeholder="Enter your project name…"
+            hasError={fieldChecks.projectName === "taken"}
+          />
+          <CheckMsg status={fieldChecks.projectName} takenMsg="PROJECT NAME ALREADY SUBMITTED" />
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: 18 }}>
           <div>
-            <FieldLabel required>Team ID</FieldLabel>
-            <SInput value={form.teamId} onChange={set("teamId")} placeholder="e.g. TEAM_07" />
+            <FieldLabel required>Team Name</FieldLabel>
+            <SInput
+              value={form.teamId}
+              onChange={(v) => { setForm({ ...form, teamId: v }); clearCheck("teamId"); }}
+              onBlur={() => void checkField("teamId", "team_id", form.teamId)}
+              placeholder="e.g. TEAM_07"
+              hasError={fieldChecks.teamId === "taken"}
+            />
+            <CheckMsg status={fieldChecks.teamId} takenMsg="TEAM_ID ALREADY SUBMITTED — USE YOUR EDIT LINK TO UPDATE" />
           </div>
           <div>
             <FieldLabel required>Track</FieldLabel>
@@ -664,14 +727,33 @@ function Step01({
         </div>
         <div>
           <FieldLabel required hint="MAX 6 WORDS">Project Description</FieldLabel>
-          <SInput value={form.description} onChange={set("description")} placeholder="e.g. AI campus food-waste tracker" suffix={`${words(form.description)} / 6`} />
+          <SInput
+            value={form.description}
+            onChange={set("description")}
+            placeholder="e.g. AI campus food-waste tracker"
+            suffix={`${words(form.description)} / 6`}
+            hasError={words(form.description) > 6}
+          />
+          {words(form.description) > 6 && (
+            <span className="block mt-2 text-xs font-mono font-bold text-[#CC0000]">&gt;&gt; [ERR: MAX 6 WORDS EXCEEDED]</span>
+          )}
         </div>
         <div>
           <FieldLabel required hint="MAX 150 WORDS">Short Pitch</FieldLabel>
-          <STextarea value={form.pitch} onChange={set("pitch")} placeholder="What does it do, and who is it for?" suffix={`${words(form.pitch)} / 150`} h={86} />
+          <STextarea
+            value={form.pitch}
+            onChange={set("pitch")}
+            placeholder="What does it do, and who is it for?"
+            suffix={`${words(form.pitch)} / 150`}
+            h={86}
+            hasError={words(form.pitch) > 150}
+          />
+          {words(form.pitch) > 150 && (
+            <span className="block mt-2 text-xs font-mono font-bold text-[#CC0000]">&gt;&gt; [ERR: MAX 150 WORDS EXCEEDED]</span>
+          )}
         </div>
         <div>
-          <FieldLabel hint="16:9 RECOMMENDED">Thumbnail</FieldLabel>
+          <FieldLabel required hint="16:9 RECOMMENDED">Thumbnail</FieldLabel>
           <input ref={thumbRef} type="file" accept="image/*" style={{ display: "none" }}
             onChange={(e) => {
               setThumbnailError(null);
@@ -711,13 +793,13 @@ function Step01({
           )}
         </div>
         <div>
-          <FieldLabel hint="SELECT ALL THAT APPLY">Tech Stack</FieldLabel>
+          <FieldLabel required hint="SELECT ALL THAT APPLY">Tech Stack</FieldLabel>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {TECH_TAGS.map(t => <STag key={t} active={form.techStack.includes(t)} onClick={() => toggleTag(t)}>{t}</STag>)}
           </div>
           {form.techStack.includes("OTHER") && (
             <div style={{ marginTop: 10 }}>
-              <FieldLabel hint="COMMA-SEPARATED · AUTO-UPPERCASED">Specify Other Tech</FieldLabel>
+              <FieldLabel required hint="COMMA-SEPARATED · AUTO-UPPERCASED">Specify Other Tech</FieldLabel>
               <SInput
                 value={form.otherTechStack}
                 onChange={(v) => setForm({ ...form, otherTechStack: v })}
@@ -727,7 +809,11 @@ function Step01({
           )}
         </div>
       </div>
-      <FormFooter onNext={onNext} nextLabel="Next: Assets →" showBack={false} disabled={!validateStep(0, form, maxTeamSize)} />
+      <FormFooter onNext={onNext} nextLabel="Next: Assets →" showBack={false} disabled={
+        !validateStep(0, form, maxTeamSize) ||
+        fieldChecks.teamId === "taken" || fieldChecks.teamId === "checking" ||
+        fieldChecks.projectName === "taken" || fieldChecks.projectName === "checking"
+      } />
     </>
   );
 }
@@ -777,7 +863,7 @@ function Step02({
           )}
         </div>
         <div>
-          <FieldLabel required hint="GOOGLE DRIVE / CANVA / SLIDES SHARE LINK">Pitch Deck Share Link</FieldLabel>
+          <FieldLabel required hint="GOOGLE DRIVE / CANVA / SLIDES SHARE LINK">Pitch Deck Share URL</FieldLabel>
           <SInput value={form.pitchDeckShareUrl} onChange={set("pitchDeckShareUrl")} onBlur={touch("pitchDeckShareUrl")} placeholder="https://drive.google.com/… or Canva / Slides link" />
           {touched.pitchDeckShareUrl && form.pitchDeckShareUrl && !isValidUrl(form.pitchDeckShareUrl) && (
             <Mono color={RED} size={10} style={{ display: "block", marginTop: 5 }}>// Invalid URL — must start with https://</Mono>
@@ -827,7 +913,7 @@ function Step02({
           )}
         </div>
         <div>
-          <FieldLabel hint="YOUTUBE / LOOM / GOOGLE DRIVE · OPTIONAL">Demo Video URL</FieldLabel>
+          <FieldLabel required hint="YOUTUBE / LOOM / GOOGLE DRIVE · REQUIRED">Demo Video URL</FieldLabel>
           <SInput value={form.demoVideoUrl} onChange={set("demoVideoUrl")} onBlur={touch("demoVideoUrl")} placeholder="https://youtube.com/… or Loom / Google Drive link" />
           {touched.demoVideoUrl && form.demoVideoUrl && !isValidUrl(form.demoVideoUrl) && (
             <Mono color={RED} size={10} style={{ display: "block", marginTop: 5 }}>// Invalid URL — must start with https://</Mono>
@@ -847,24 +933,40 @@ const memberInputStyle: React.CSSProperties = {
   width: "100%", boxShadow: SHADOW_SM, boxSizing: "border-box",
 };
 
+const memberSelectStyle: React.CSSProperties = {
+  height: 36, border: `1.5px solid ${DARK_BG}`, padding: "0 20px 0 8px",
+  fontFamily: FM, fontSize: 12, outline: "none",
+  width: "100%", boxShadow: SHADOW_SM, boxSizing: "border-box",
+  background: "#fff", appearance: "none", cursor: "pointer",
+};
+
 function Step03({
   form,
   setForm,
   onNext,
   onBack,
   maxTeamSize,
+  fieldChecks,
+  checkField,
+  clearCheck,
 }: {
   form: FormState;
   setForm: (f: FormState) => void;
   onNext: () => void;
   onBack: () => void;
   maxTeamSize: number;
+  fieldChecks: Record<string, CheckStatus>;
+  checkField: (key: string, dbField: string, value: string) => Promise<void>;
+  clearCheck: (key: string) => void;
 }) {
   const addMember = () => {
     if (form.members.length < maxTeamSize)
-      setForm({ ...form, members: [...form.members, { id: Date.now().toString(), name: "", studentId: "", role: "", email: "" }] });
+      setForm({ ...form, members: [...form.members, { id: Date.now().toString(), name: "", university: "", role: "", email: "" }] });
   };
-  const removeMember = (id: string) => setForm({ ...form, members: form.members.filter(m => m.id !== id) });
+  const removeMember = (id: string) => {
+    clearCheck(`member:${id}`);
+    setForm({ ...form, members: form.members.filter(m => m.id !== id) });
+  };
   const updateMember = (id: string, k: keyof Member, v: string) =>
     setForm({ ...form, members: form.members.map(m => m.id === id ? { ...m, [k]: v } : m) });
 
@@ -875,7 +977,7 @@ function Step03({
       <div style={{ overflowX: "auto" }}>
         <div style={{ minWidth: 560 }}>
       <div style={{ display: "grid", gridTemplateColumns: "36px 1.3fr 0.85fr 1fr 1.3fr 28px", gap: 6, background: DARK_BG, padding: "10px 8px", border: `1.5px solid ${DARK_BG}` }}>
-        {["#", "Name", "Student ID", "Role", "Email", ""].map((h, i) => (
+        {["#", "Name", "University", "Role", "Email", ""].map((h, i) => (
           <Mono key={i} color="#fff" size={10} weight={800} style={{ padding: "0 4px" }}>{h}</Mono>
         ))}
       </div>
@@ -892,9 +994,28 @@ function Step03({
             <div style={{ display: "grid", gridTemplateColumns: "36px 1.3fr 0.85fr 1fr 1.3fr 28px", gap: 6, alignItems: "center", padding: "8px", borderLeft: `1.5px solid ${DARK_BG}`, borderRight: `1.5px solid ${DARK_BG}`, borderBottom: `1.5px solid ${LINE}`, background: "#fff" }}>
               <Badge n={String(i + 1).padStart(2, "0")} size={26} />
               <input value={m.name} onChange={(e) => updateMember(m.id, "name", e.target.value)} placeholder="Full name" style={memberInputStyle} />
-              <input value={m.studentId} onChange={(e) => updateMember(m.id, "studentId", e.target.value)} placeholder="SIM-…" style={memberInputStyle} />
+              <div style={{ position: "relative", width: "100%" }}>
+                <select
+                  value={m.university}
+                  onChange={(e) => updateMember(m.id, "university", e.target.value)}
+                  style={{ ...memberSelectStyle, color: m.university ? DARK_BG : MUTED }}
+                >
+                  <option value="" disabled>[ SELECT UNI ]</option>
+                  {UNIVERSITIES.map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
+                <span style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", fontFamily: FM, fontSize: 10, color: MUTED, pointerEvents: "none" }}>▾</span>
+              </div>
               <input value={m.role} onChange={(e) => updateMember(m.id, "role", e.target.value)} placeholder="Lead / Dev…" style={memberInputStyle} />
-              <input value={m.email} onChange={(e) => updateMember(m.id, "email", e.target.value)} placeholder="name@mail.sim.edu" style={memberInputStyle} />
+              <div>
+                <input
+                  value={m.email}
+                  onChange={(e) => { updateMember(m.id, "email", e.target.value); clearCheck(`member:${m.id}`); }}
+                  onBlur={() => void checkField(`member:${m.id}`, "member_email", m.email)}
+                  placeholder="name@mail.sim.edu"
+                  style={{ ...memberInputStyle, borderColor: fieldChecks[`member:${m.id}`] === "taken" ? RED : DARK_BG }}
+                />
+                <CheckMsg status={fieldChecks[`member:${m.id}`]} takenMsg="EMAIL ALREADY REGISTERED" />
+              </div>
               <motion.button
                 onClick={() => removeMember(m.id)}
                 whileHover={{ background: RED, color: "#fff", borderColor: RED }}
@@ -928,10 +1049,10 @@ function Step03({
       </AnimatePresence>
         </div>
       </div>
-      <div style={{ height: 18 }} />
-      <FieldLabel hint="OPTIONAL">Additional Notes</FieldLabel>
-      <STextarea value={form.notes} onChange={(v) => setForm({ ...form, notes: v })} placeholder="Anything the judges should know? e.g. 'Stanley led ML; Wei Quan led UX.'" h={70} />
-      <FormFooter onNext={onNext} onBack={onBack} nextLabel="Next: Review →" disabled={!validateStep(2, form, maxTeamSize)} />
+      <FormFooter onNext={onNext} onBack={onBack} nextLabel="Next: Review →" disabled={
+        !validateStep(2, form, maxTeamSize) ||
+        form.members.some((m) => fieldChecks[`member:${m.id}`] === "taken" || fieldChecks[`member:${m.id}`] === "checking")
+      } />
     </>
   );
 }
@@ -971,7 +1092,7 @@ function Step04({ form, onBack, onSubmit, isEditing, isPastDeadline, resubmissio
       <div style={{ maxHeight: 480, overflow: "auto", paddingRight: 4 }}>
         <RBlock n="01" title="PROJECT_IDENTITY">
           <RRow label="Project" value={form.projectName} />
-          <RRow label="Team ID" value={form.teamId} mono />
+          <RRow label="Team Name" value={form.teamId} mono />
           <RRow label="Track" value={form.track} />
           <RRow label="Description" value={form.description} />
           <RRow label="Pitch" value={form.pitch} />
@@ -984,14 +1105,13 @@ function Step04({ form, onBack, onSubmit, isEditing, isPastDeadline, resubmissio
         <RBlock n="02" title="ASSETS">
           <RRow label="Repo" value={form.githubRepoUrl} mono />
           <RRow label="Live Demo URL" value={form.liveDemoUrl} mono />
-          <RRow label="Pitch Deck Share Link" value={form.pitchDeckShareUrl} mono />
+          <RRow label="Pitch Deck Share URL" value={form.pitchDeckShareUrl} mono />
           <RRow label="Deck File" value={form.pitchDeckFile ? form.pitchDeckFile.name : ""} mono />
           <RRow label="Video Demo URL" value={form.demoVideoUrl} mono />
         </RBlock>
 
         <RBlock n="03" title="TEAM_MANIFEST">
           <RRow label="Members" value={form.members.filter(m => m.name).map(m => `${m.name} (${m.role})`).join(", ")} />
-          <RRow label="Notes" value={form.notes} />
         </RBlock>
 
         <motion.div
@@ -1282,7 +1402,7 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isSubmissi
                 Get these ready so you can submit the moment the portal opens.
               </div>
               {([
-                ["01", "Project Identity", "Your project name, team ID, chosen track, and a short pitch (~100 words)."],
+                ["01", "Project Identity", "Your project name, team name, chosen track, and a short pitch (~100 words)."],
                 ["02", "GitHub Repo", "A public repository link — must be accessible to judges by the deadline."],
                 ["03", "Pitch Deck", "A PDF deck or a shareable Google Slides / Canva link."],
                 ["04", "Team Details", `Full name, student ID, role, and email for every member (1-${maxTeamSize} people).`],
@@ -1358,7 +1478,7 @@ function SubmissionLanding({ tick, onStart, hasDraft, isPastDeadline, isSubmissi
             <div style={{ position: "absolute", top: -1.5, left: -1.5, right: -1.5, height: 3, background: RED }} />
             <Mono size={11} weight={800} style={{ display: "block", marginBottom: 20 }}>&gt; How to Submit</Mono>
             {([
-              ["01", "Identity", "Fill in your project name, team ID, track, and a short pitch."],
+              ["01", "Identity", "Fill in your project name, team name, track, and a short pitch."],
               ["02", "Assets", "Link your GitHub repo and pitch deck URL. Upload your deck if you have it."],
               ["03", "Team", `Add all team members — minimum 1, maximum ${maxTeamSize}.`],
               ["04", "Review", "Check your submission, give consent, and submit. You can resubmit until the deadline."],
@@ -1416,8 +1536,7 @@ const INITIAL_FORM: FormState = {
   techStack: [], otherTechStack: "", githubRepoUrl: "", liveDemoUrl: "", pitchDeckShareUrl: "",
   pitchDeckFile: null, pitchDeckUploadUrl: null, demoVideoUrl: "",
   thumbnailFile: null, thumbnailUrl: null,
-  members: [{ id: "initial", name: "", studentId: "", role: "", email: "" }],
-  notes: "",
+  members: [{ id: "initial", name: "", university: "", role: "", email: "" }],
 };
 
 // ─── Main Page ────────────────────────────────────────────────
@@ -1440,6 +1559,7 @@ export default function SubmitPage() {
   const [isMountLoading, setIsMountLoading] = useState(true);
   const [thumbnailUploadError, setThumbnailUploadError] = useState<string | null>(null);
   const [pitchDeckUploadError, setPitchDeckUploadError] = useState<string | null>(null);
+  const [fieldChecks, setFieldChecks] = useState<Record<string, CheckStatus>>({});
   const [nowMs, setNowMs] = useState(() => Date.now());
   const draftFallbackTeamIdRef = useRef(`draft_${Math.random().toString(36).slice(2, 12)}`);
   const draftSyncInFlightRef = useRef(false);
@@ -1485,7 +1605,7 @@ export default function SubmitPage() {
     }
 
     // No token — check for a saved draft
-    const rawDraft = localStorage.getItem("hx26_draft");
+    const rawDraft = localStorage.getItem("project_submission_draft");
     if (rawDraft) {
       try {
         const draft: StoredDraft = JSON.parse(rawDraft);
@@ -1529,7 +1649,7 @@ export default function SubmitPage() {
       const now = new Date();
       setLastSaved({ step, stepName: STEP_NAMES[step], time: now });
       if (!submitted) {
-        localStorage.setItem("hx26_draft", JSON.stringify({
+        localStorage.setItem("project_submission_draft", JSON.stringify({
           form: serializeForm(form),
           step,
           maxReached,
@@ -1540,48 +1660,27 @@ export default function SubmitPage() {
     return () => clearTimeout(id);
   }, [form, step, maxReached, submitted]);
 
-  // Database draft sync:
-  // - creates a draft row as soon as user starts filling fields (is_draft = true)
-  // - keeps updating that draft row while user is working
-  useEffect(() => {
-    if (submitted || isEditing || isMountLoading || view !== "form" || isSubmitting) return;
-    if (!hasAnyDraftInput(form)) return;
+  // Database draft sync removed. Drafts are now handled solely via localStorage.
 
-    const fallbackTrack = trackOptions[0] ?? TRACKS[0] ?? "Open Innovation";
-    const draftPayload = buildDraftPayload({
-      form,
-      fallbackTeamId: draftFallbackTeamIdRef.current,
-      fallbackTrack,
-    });
+  const checkField = useCallback(async (key: string, dbField: string, value: string) => {
+    const v = value.trim();
+    if (!v || editToken) return;
+    setFieldChecks((prev) => ({ ...prev, [key]: "checking" }));
+    try {
+      const res = await fetch(
+        `/api/submissions/check?field=${encodeURIComponent(dbField)}&value=${encodeURIComponent(v)}`,
+      );
+      const { exists } = (await res.json()) as { exists: boolean };
+      setFieldChecks((prev) => ({ ...prev, [key]: exists ? "taken" : "available" }));
+    } catch {
+      // Silent — server-side 409 is the fallback.
+      setFieldChecks((prev) => ({ ...prev, [key]: "idle" }));
+    }
+  }, [editToken]);
 
-    const timeoutId = setTimeout(async () => {
-      if (draftSyncInFlightRef.current) return;
-      draftSyncInFlightRef.current = true;
-
-      try {
-        const url = editToken ? `/api/submissions/${editToken}` : "/api/submissions";
-        const method = editToken ? "PUT" : "POST";
-
-        const response = await fetch(url, {
-          method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(draftPayload),
-        });
-
-        if (!response.ok) return;
-        const result = (await response.json().catch(() => ({}))) as { editToken?: string };
-
-        if (!editToken && typeof result.editToken === "string" && result.editToken) {
-          setEditToken(result.editToken);
-          localStorage.setItem("hx26_edit_token", result.editToken);
-        }
-      } finally {
-        draftSyncInFlightRef.current = false;
-      }
-    }, 900);
-
-    return () => clearTimeout(timeoutId);
-  }, [editToken, form, isEditing, isMountLoading, isSubmitting, submitted, trackOptions, view]);
+  const clearCheck = useCallback((key: string) => {
+    setFieldChecks((prev) => (prev[key] === "idle" ? prev : { ...prev, [key]: "idle" }));
+  }, []);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -1684,7 +1783,7 @@ export default function SubmitPage() {
 
       // 4. Store just the token locally (source of truth is now the DB)
       localStorage.setItem("hx26_edit_token", token);
-      localStorage.removeItem("hx26_draft");
+      localStorage.removeItem("project_submission_draft");
 
       setEditToken(token);
       setSubmitted(true);
@@ -1746,9 +1845,41 @@ export default function SubmitPage() {
             <PageHero tick={tick} deadline={deadlineAt} />
             <style>{`
               @media (max-width: 1024px) {
-                .submit-form-layout { flex-direction: column !important; }
+                .submit-page-hero {
+                  padding: 24px 16px 16px !important;
+                }
+                .submit-form-layout {
+                  padding: 0 16px 16px !important;
+                  flex-direction: column !important;
+                }
                 .submit-step-rail,
-                .submit-info-sidebar { width: 100% !important; }
+                .submit-info-sidebar {
+                  width: 100% !important;
+                }
+                .submit-step-rail {
+                  flex-direction: row !important;
+                  overflow-x: auto !important;
+                  max-width: 100% !important;
+                  margin-bottom: 16px !important;
+                  gap: 0 !important;
+                  -webkit-overflow-scrolling: touch;
+                }
+                .submit-step-rail-item {
+                  flex: 1 0 auto !important;
+                  border: 1.5px solid #1A1A1A !important;
+                  border-right: none !important;
+                  padding: 10px 14px !important;
+                }
+                .submit-step-rail-item:nth-child(4) {
+                  border-right: 1.5px solid #1A1A1A !important;
+                }
+                .submit-step-rail-saved {
+                  display: none !important;
+                }
+                .submit-form-card {
+                  padding: 16px !important;
+                  width: 100% !important;
+                }
               }
             `}</style>
             <div className="submit-form-layout" style={{ padding: "0 48px 48px", display: "flex", gap: 24, alignItems: "flex-start" }}>
@@ -1759,7 +1890,7 @@ export default function SubmitPage() {
                 maxTeamSize={maxTeamSize}
                 lastSaved={lastSaved}
               />
-              <Card padding={28} style={{ flex: 1, minWidth: 0, minHeight: 520 }}>
+              <Card className="submit-form-card" padding={28} style={{ flex: 1, minWidth: 0, minHeight: 520 }}>
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={step}
@@ -1778,6 +1909,9 @@ export default function SubmitPage() {
                         maxFileSizeMb={maxFileSizeMb}
                         thumbnailError={thumbnailUploadError}
                         setThumbnailError={setThumbnailUploadError}
+                        fieldChecks={fieldChecks}
+                        checkField={checkField}
+                        clearCheck={clearCheck}
                       />
                     )}
                     {step === 1 && (
@@ -1792,7 +1926,7 @@ export default function SubmitPage() {
                         setPitchDeckError={setPitchDeckUploadError}
                       />
                     )}
-                    {step === 2 && <Step03 form={form} setForm={setForm} onNext={goNext} onBack={() => setStep(1)} maxTeamSize={maxTeamSize} />}
+                    {step === 2 && <Step03 form={form} setForm={setForm} onNext={goNext} onBack={() => setStep(1)} maxTeamSize={maxTeamSize} fieldChecks={fieldChecks} checkField={checkField} clearCheck={clearCheck} />}
                     {step === 3 && (
                       <Step04
                         form={form}

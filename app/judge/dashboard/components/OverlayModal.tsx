@@ -136,7 +136,12 @@ export function OverlayModal({ project, onClose }: { project: JudgeProject; onCl
                         ROLE: {m.role.toUpperCase()}
                       </div>
                     ) : null}
-                    {m.studentId ? (
+                    {m.university ? (
+                      <div style={{ fontFamily: FM, fontSize: 11, color: C.muted2, marginTop: 2, wordBreak: "break-all" }}>
+                        UNIVERSITY: {m.university.toUpperCase()}
+                      </div>
+                    ) : null}
+                    {m.studentId && !m.university ? (
                       <div style={{ fontFamily: FM, fontSize: 11, color: C.muted2, marginTop: 2, wordBreak: "break-all" }}>
                         STUDENT ID: {m.studentId.toUpperCase()}
                       </div>

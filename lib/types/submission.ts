@@ -10,6 +10,7 @@ export type TeamMember = {
   id?: string;
   name: string;
   studentId?: string;
+  university?: string;
   role?: string;
   email: string;
 };

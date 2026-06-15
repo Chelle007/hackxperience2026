@@ -49,6 +49,7 @@ function normalizeTeamMembers(value: unknown): TeamMember[] {
         id?: unknown;
         name?: unknown;
         studentId?: unknown;
+        university?: unknown;
         role?: unknown;
         email?: unknown;
       };
@@ -61,6 +62,7 @@ function normalizeTeamMembers(value: unknown): TeamMember[] {
 
       if (typeof row.id === "string" && row.id.trim()) member.id = row.id;
       if (typeof row.studentId === "string" && row.studentId.trim()) member.studentId = row.studentId;
+      if (typeof row.university === "string" && row.university.trim()) member.university = row.university;
       if (typeof row.role === "string" && row.role.trim()) member.role = row.role;
 
       return member;

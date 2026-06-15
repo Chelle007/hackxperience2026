@@ -320,7 +320,8 @@ export default function SubmissionViewOverlay({
                                 <div className={styles.memberName}>{member.name}</div>
                                 <div className={styles.memberEmail}>{member.email}</div>
                                 {member.role ? <div className={styles.memberEmail}>ROLE: {member.role}</div> : null}
-                                {member.studentId ? <div className={styles.memberEmail}>STUDENT ID: {member.studentId}</div> : null}
+                                {member.university ? <div className={styles.memberEmail}>UNIVERSITY: {member.university}</div> : null}
+                                {member.studentId && !member.university ? <div className={styles.memberEmail}>STUDENT ID: {member.studentId}</div> : null}
                               </div>
                             </div>
                             {i < submission.members!.length - 1 ? (
