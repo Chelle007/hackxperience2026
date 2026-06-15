@@ -2,8 +2,10 @@
 
 import type { AdminSubmission } from "@/lib/types";
 
-const BOLD = { bold: true } as const;
-const FREEZE_ROW_1 = [{ state: "frozen" as const, ySplit: 1 }];
+type XlsxModule = typeof import("xlsx");
+type XlsxWorkbook = import("xlsx").WorkBook;
+type XlsxCell = string | number;
+type XlsxCols = NonNullable<import("xlsx").WorkSheet["!cols"]>;
 
 function numOrEmpty(v: number | null | undefined): number | string {
   return typeof v === "number" ? v : "";
@@ -13,24 +15,23 @@ function strOrEmpty(v: string | null | undefined): string {
   return typeof v === "string" ? v : "";
 }
 
+function createSheet(
+  xlsx: XlsxModule,
+  headers: string[],
+  rows: XlsxCell[][],
+  widths: number[],
+): import("xlsx").WorkSheet {
+  const ws = xlsx.utils.aoa_to_sheet([headers, ...rows]);
+  ws["!cols"] = widths.map((wch) => ({ wch })) as XlsxCols;
+  return ws;
+}
+
 export async function exportScoresXlsx(
   submissions: AdminSubmission[],
   filename: string,
 ): Promise<void> {
-  const ExcelJS = (await import("exceljs")).default;
-  const wb = new ExcelJS.Workbook();
-  wb.creator = "HackXperience Admin";
-  wb.created = new Date();
-
-  // ── Sheet 1: Aggregate Overview ─────────────────────────────────────────────
-  const ws1 = wb.addWorksheet("Aggregate Overview");
-  ws1.columns = [
-    { header: "Project Name",          key: "project", width: 32 },
-    { header: "Team Name",             key: "team",    width: 26 },
-    { header: "Overall Average Score", key: "avg",     width: 24 },
-  ];
-  ws1.views = FREEZE_ROW_1;
-  ws1.getRow(1).eachCell((cell) => { cell.font = BOLD; });
+  const xlsx = await import("xlsx");
+  const wb = xlsx.utils.book_new();
 
   const aggregated = submissions
     .map((sub) => {
@@ -45,91 +46,101 @@ export async function exportScoresXlsx(
     .filter((r): r is NonNullable<typeof r> => r !== null)
     .sort((a, b) => b.avg - a.avg || a.project.localeCompare(b.project));
 
-  for (const row of aggregated) ws1.addRow(row);
+  const aggregateRows = aggregated.map((row) => [row.project, row.team, row.avg]);
+  const ws1 = createSheet(
+    xlsx,
+    ["Project Name", "Team Name", "Overall Average Score"],
+    aggregateRows,
+    [32, 26, 24],
+  );
+  xlsx.utils.book_append_sheet(wb, ws1, "Aggregate Overview");
 
-  // ── Sheet 2: Detailed Judge Breakdown ────────────────────────────────────────
-  const ws2 = wb.addWorksheet("Detailed Judge Breakdown");
-  ws2.columns = [
-    { header: "Project Name",           key: "project",  width: 32 },
-    { header: "Team Name",              key: "team",     width: 26 },
-    { header: "Judge Username",         key: "judge",    width: 22 },
-    { header: "Technical Execution",    key: "te",       width: 22 },
-    { header: "Problem/Solution Fit",   key: "psf",      width: 24 },
-    { header: "Innovation/Creativity",  key: "ic",       width: 24 },
-    { header: "Presentation Quality",   key: "pq",       width: 24 },
-    { header: "Total Judge Score",      key: "total",    width: 20 },
-    { header: "Comments",               key: "comments", width: 44 },
-  ];
-  ws2.views = FREEZE_ROW_1;
-  ws2.getRow(1).eachCell((cell) => { cell.font = BOLD; });
+  const detailedRows: XlsxCell[][] = [];
 
   for (const sub of submissions) {
     for (const s of sub.scores) {
-      // Skip rows where the judge hasn't submitted anything yet
       if (s.score === null && s.technicalExecution == null) continue;
-      ws2.addRow({
-        project:  sub.projectName,
-        team:     sub.teamName,
-        judge:    s.judgeId,
-        te:       numOrEmpty(s.technicalExecution),
-        psf:      numOrEmpty(s.problemSolutionFit),
-        ic:       numOrEmpty(s.innovationCreativity),
-        pq:       numOrEmpty(s.presentationQuality),
-        total:    numOrEmpty(s.score),
-        comments: strOrEmpty(s.comments),
-      });
+      detailedRows.push([
+        sub.projectName,
+        sub.teamName,
+        s.judgeId,
+        numOrEmpty(s.technicalExecution),
+        numOrEmpty(s.problemSolutionFit),
+        numOrEmpty(s.innovationCreativity),
+        numOrEmpty(s.presentationQuality),
+        numOrEmpty(s.score),
+        strOrEmpty(s.comments),
+      ]);
     }
   }
 
-  await downloadWorkbook(wb, filename);
+  const ws2 = createSheet(
+    xlsx,
+    [
+      "Project Name",
+      "Team Name",
+      "Judge Username",
+      "Technical Execution",
+      "Problem/Solution Fit",
+      "Innovation/Creativity",
+      "Presentation Quality",
+      "Total Judge Score",
+      "Comments",
+    ],
+    detailedRows,
+    [32, 26, 22, 22, 24, 24, 24, 20, 44],
+  );
+  xlsx.utils.book_append_sheet(wb, ws2, "Detailed Judge Breakdown");
+
+  await downloadWorkbook(xlsx, wb, filename);
 }
 
 export async function exportProjectsXlsx(
   submissions: AdminSubmission[],
   filename: string,
 ): Promise<void> {
-  const ExcelJS = (await import("exceljs")).default;
-  const wb = new ExcelJS.Workbook();
-  wb.creator = "HackXperience Admin";
-  wb.created = new Date();
+  const xlsx = await import("xlsx");
+  const wb = xlsx.utils.book_new();
 
-  const ws = wb.addWorksheet("Projects");
-  ws.columns = [
-    { header: "Project Name",   key: "project",   width: 32 },
-    { header: "Team Name",      key: "team",       width: 26 },
-    { header: "Team ID",        key: "teamId",     width: 16 },
-    { header: "Track",          key: "track",      width: 20 },
-    { header: "Status",         key: "status",     width: 14 },
-    { header: "Submitted At",   key: "submitted",  width: 22 },
-    { header: "GitHub URL",     key: "github",     width: 40 },
-    { header: "Live URL",       key: "live",       width: 36 },
-    { header: "Pitch Deck URL", key: "pitchDeck",  width: 36 },
-  ];
-  ws.views = FREEZE_ROW_1;
-  ws.getRow(1).eachCell((cell) => { cell.font = BOLD; });
+  const rows = submissions.map((sub) => [
+    sub.projectName,
+    sub.teamName,
+    strOrEmpty(sub.teamId),
+    sub.track,
+    sub.status.toUpperCase(),
+    sub.submittedAt,
+    strOrEmpty(sub.githubUrl),
+    strOrEmpty(sub.liveUrl),
+    strOrEmpty(sub.pitchDeckUrl),
+  ]);
 
-  for (const sub of submissions) {
-    ws.addRow({
-      project:   sub.projectName,
-      team:      sub.teamName,
-      teamId:    strOrEmpty(sub.teamId),
-      track:     sub.track,
-      status:    sub.status.toUpperCase(),
-      submitted: sub.submittedAt,
-      github:    strOrEmpty(sub.githubUrl),
-      live:      strOrEmpty(sub.liveUrl),
-      pitchDeck: strOrEmpty(sub.pitchDeckUrl),
-    });
-  }
+  const ws = createSheet(
+    xlsx,
+    [
+      "Project Name",
+      "Team Name",
+      "Team ID",
+      "Track",
+      "Status",
+      "Submitted At",
+      "GitHub URL",
+      "Live URL",
+      "Pitch Deck URL",
+    ],
+    rows,
+    [32, 26, 16, 20, 14, 22, 40, 36, 36],
+  );
+  xlsx.utils.book_append_sheet(wb, ws, "Projects");
 
-  await downloadWorkbook(wb, filename);
+  await downloadWorkbook(xlsx, wb, filename);
 }
 
 async function downloadWorkbook(
-  wb: import("exceljs").Workbook,
+  xlsx: XlsxModule,
+  wb: XlsxWorkbook,
   filename: string,
 ): Promise<void> {
-  const buffer = await wb.xlsx.writeBuffer();
+  const buffer = xlsx.write(wb, { bookType: "xlsx", type: "array" });
   const blob = new Blob([buffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
