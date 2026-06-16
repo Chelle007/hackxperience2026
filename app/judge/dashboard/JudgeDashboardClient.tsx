@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import type { JudgeProject } from "@/lib/types";
-import { C, FM, FB, SPRING, SHADOW, SHADOW_LG, RESPONSIVE_CSS } from "./constants";
+import { C, FM, FB, SPRING, SHADOW, RESPONSIVE_CSS } from "./constants";
 import { makeBlankScore, calcLiveTotal, calcMaxTotal, isFieldInvalid, type CriterionKey, type ScoringCriterion } from "./scoring";
 import type { ScoreEntry } from "./types";
 import { PlaceholderThumb } from "./components/atoms";
