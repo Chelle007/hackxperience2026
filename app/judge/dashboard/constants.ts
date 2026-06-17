@@ -3,22 +3,22 @@
 // ── Colour tokens ─────────────────────────────────────────────────
 export const C = {
   // Backgrounds
-  bgPrimary:    "#FAFAFA", // Main page background
-  bgThumbnail:  "#F0EBE3", // Thumbnail placeholder
+  bgPrimary:    "#f2ede5", // Main page background
+  bgThumbnail:  "#f2ede5", // Thumbnail placeholder
 
   // Text
-  textPrimary:  "#1A1A1A", // Main text
-  textMuted:    "#555555", // Secondary text, labels
-  textSuccess:  "#22C55E", // Success states
+  textPrimary:  "#1d1c17", // Main text
+  textMuted:    "#7a7669", // Secondary text, labels
+  textSuccess:  "#3a9e6a", // Success states (matches admin --green)
 
   // Borders
-  borderLight:  "#EAE3D8", // Dividers, subtle borders
-  borderMedium: "#D0C8BC", // Card borders, inputs
-  borderSuccess:"#22C55E", // Success borders
+  borderLight:  "#d8d2c5", // Dividers, subtle borders
+  borderMedium: "#d8d2c5", // Card borders, inputs
+  borderSuccess:"#3a9e6a", // Success borders (matches admin --green)
 
   // Brands / Accents
-  primary:      "#CC0000", // Main accent red
-  white:        "#FFFFFF", // Pure white
+  primary:      "#CC0000", // Main accent red (matches SHADOW + admin --red)
+  white:        "#fef9f1", // Pure white
 } as const;
 
 export const FM        = "var(--font-ibm-plex-mono), 'IBM Plex Mono', monospace";
@@ -47,9 +47,10 @@ export const RESPONSIVE_CSS = `
     .r-hero-meta { gap: 10px 20px !important; margin-top: 10px !important; }
   }
 
-  /* Body layout */
+  /* Body layout — fixed sidebar + offset content (mirrors admin) */
+  .r-content { margin-left: 256px; }
   @media (max-width: 1024px) {
-    .r-body    { flex-direction: column !important; }
+    .r-content { margin-left: 0 !important; }
     .r-sidebar { display: none !important; }
   }
 
@@ -98,6 +99,21 @@ export const RESPONSIVE_CSS = `
     }
     .r-overlay-body { padding: 16px !important; gap: 14px !important; }
   }
+
+  /* ── Button / link hover states ── */
+  .r-help-link    { transition: background 0.15s, color 0.15s; }
+  .r-help-link:hover    { background: rgba(204,0,0,0.07); }
+
+  .r-icon-btn-red { transition: background 0.15s, color 0.15s, border-color 0.15s; }
+  .r-icon-btn-red:hover { background: #CC0000; color: #fef9f1; }
+
+  .r-hamburger:hover    { border-color: #CC0000 !important; color: #CC0000 !important; }
+
+  .r-ghost-btn    { transition: background 0.15s, color 0.15s, border-color 0.15s; }
+  .r-ghost-btn:hover    { border-color: #CC0000; color: #CC0000; }
+
+  .r-x-close      { transition: color 0.15s; }
+  .r-x-close:hover      { color: #CC0000; }
 
   /* Progress bar animation */
   @keyframes r-progress-fill {

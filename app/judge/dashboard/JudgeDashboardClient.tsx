@@ -39,7 +39,7 @@ const NAV_ITEMS = [
 ] as const;
 
 export default function JudgeDashboardClient() {
-  const { settings, deadlineAt } = useSettings();
+  const { settings } = useSettings();
   const router = useRouter();
   const [expandedId,     setExpandedId]     = useState<string | null>(null);
   const [overlayProject, setOverlayProject] = useState<JudgeProject | null>(null);
@@ -209,16 +209,93 @@ export default function JudgeDashboardClient() {
   const expandedProject = projectsData.find((p) => p.id === expandedId) ?? null;
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bgPrimary, display: "flex", flexDirection: "column" }}>
+    <div style={{ minHeight: "100vh", background: C.bgPrimary }}>
       <style>{RESPONSIVE_CSS}</style>
+
+      {/* ── Sidebar (fixed full-height left column, mirrors admin portal) ── */}
+      <aside
+        className="r-sidebar"
+        style={{ position: "fixed", top: 0, left: 0, height: "100vh", width: 256, background: C.white, borderRight: `1px solid ${C.primary}`, display: "flex", flexDirection: "column", zIndex: 40 }}
+      >
+        {/* MAIN group */}
+        <div style={{ borderBottom: `1px solid ${C.borderLight}`, padding: "16px 0 12px" }}>
+          <h2 style={{ margin: 0, padding: "0 20px 12px", fontFamily: FM, fontSize: 11, fontWeight: 400, color: C.textMuted, letterSpacing: "0.06em", textTransform: "uppercase" as const }}>
+            // MAIN
+          </h2>
+          {NAV_ITEMS.map((item) => (
+            <div
+              key={item.key}
+              style={{
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "11px 20px",
+                background: item.active ? "rgba(204,0,0,0.07)" : "transparent",
+                borderLeft: item.active ? `3px solid ${C.primary}` : "3px solid transparent",
+                cursor: "pointer",
+                transition: "background 0.15s",
+              }}
+            >
+              <span style={{ fontFamily: FM, fontSize: 11, color: item.active ? C.primary : C.textMuted, letterSpacing: "0.04em" }}>
+                {item.icon}
+              </span>
+              <span style={{ fontFamily: FM, fontSize: 11, color: item.active ? C.textPrimary : C.textMuted, letterSpacing: "0.06em", fontWeight: item.active ? 700 : 400 }}>
+                {item.label}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Spacer pushes HELP + profile to the bottom */}
+        <div style={{ flex: 1 }} />
+
+        {/* HELP group (bottom, before logout) */}
+        <div style={{ borderTop: `1px solid ${C.borderLight}`, padding: "16px 0 12px" }}>
+          <h2 style={{ margin: 0, padding: "0 20px 12px", fontFamily: FM, fontSize: 11, fontWeight: 400, color: C.textMuted, letterSpacing: "0.06em", textTransform: "uppercase" as const }}>
+            // HELP
+          </h2>
+          <a
+            href="#"
+            className="r-help-link"
+            style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 20px", borderLeft: "3px solid transparent", fontFamily: FM, fontSize: 11, color: C.primary, textDecoration: "none", letterSpacing: "0.04em" }}
+          >
+            <span style={{ color: C.textMuted }}>?</span>
+            Judging guidelines ↗
+          </a>
+        </div>
+
+        {/* Profile block */}
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "13px 20px", borderTop: `1px solid ${C.borderLight}`, background: C.bgPrimary }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+            <span style={{ fontFamily: FM, fontSize: 12, color: C.textPrimary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              &gt; {sessionUser}
+            </span>
+            <span style={{ fontFamily: FM, fontSize: 10, color: C.textMuted }}>// JUDGE</span>
+          </div>
+          <button
+            type="button"
+            className="r-icon-btn-red"
+            onClick={handleLogout}
+            aria-label="Logout"
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, flexShrink: 0, border: `1px solid ${C.primary}`, background: "transparent", color: C.primary, cursor: "pointer" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Content (offset to the right of the fixed sidebar) ── */}
+      <div className="r-content" style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
 
       {/* ── Topbar ── */}
       <header
         className="r-topbar"
         style={{
           height: 54, background: C.bgPrimary,
-          borderBottom: `1px solid ${C.borderMedium}`,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          borderBottom: `1px solid ${C.primary}`,
+          boxShadow: "none",
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "0 32px", flexShrink: 0, position: "sticky", top: 0, zIndex: 20,
         }}
@@ -267,7 +344,7 @@ export default function JudgeDashboardClient() {
             transition={SPRING}
             style={{
               height: 28, padding: "0 14px", background: "transparent",
-              border: `1.5px solid ${C.primary}`, borderRadius: 2,
+              border: `1.5px solid ${C.primary}`, borderRadius: 0,
               fontFamily: FM, fontSize: 11, color: C.primary,
               cursor: "pointer", letterSpacing: "0.06em", whiteSpace: "nowrap",
             }}
@@ -300,86 +377,26 @@ export default function JudgeDashboardClient() {
       {/* ── Hero ── */}
       <div
         className="r-hero"
-        style={{ background: C.bgPrimary, borderBottom: `1px solid ${C.borderMedium}`, padding: "22px 32px 18px", position: "relative", overflow: "hidden", flexShrink: 0 }}
+        style={{ background: C.bgPrimary, borderBottom: `1px solid ${C.primary}`, padding: "16px 32px 14px", position: "relative", overflow: "hidden", flexShrink: 0 }}
       >
-        <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(rgba(26,26,26,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(26,26,26,0.04) 1px, transparent 1px)`, backgroundSize: "20px 20px", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(rgba(29,28,23,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(29,28,23,0.04) 1px, transparent 1px)`, backgroundSize: "20px 20px", pointerEvents: "none" }} />
         <div style={{ position: "relative" }}>
           <span
             className="r-hero-badge"
-            style={{ display: "inline-flex", alignItems: "center", height: 22, padding: "0 10px", background: C.primary, color: C.white, fontFamily: FM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 10 }}
+            style={{ display: "inline-flex", alignItems: "center", height: 22, padding: "0 10px", background: C.primary, color: C.white, fontFamily: FM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 8 }}
           >
             // MODULE_02 · SCORING
           </span>
           <h1
             className="r-hero-h1"
-            style={{ fontFamily: FB, fontSize: 42, lineHeight: "50px", margin: "0 0 10px", color: C.textPrimary }}
+            style={{ fontFamily: FB, fontSize: 42, lineHeight: "44px", margin: 0, color: C.textPrimary }}
           >
             PROJECT <span style={{ color: C.primary }}>SUBMISSION</span> PORTAL
           </h1>
-          <div className="r-hero-meta" style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
-            {[
-              { label: "EVENT_DATE", value: "JUN 25, 2026",                vc: C.primary     },
-              { label: "VENUE",      value: "SIM STUDENT HUB BLK B LVL 1", vc: C.textPrimary },
-              { label: "DEADLINE",   value: deadlineAt ? deadlineAt.toLocaleString("en-SG", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Singapore", timeZoneName: "short" }) : "--", vc: C.primary },
-            ].map(({ label, value, vc }) => (
-              <div key={label}>
-                <div style={{ fontFamily: FM, fontSize: 10, color: C.textMuted, letterSpacing: "0.06em" }}>{label}</div>
-                <div style={{ fontFamily: FM, fontSize: 11, color: vc, marginTop: 2 }}>{value}</div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
-      {/* ── Body ── */}
-      <div className="r-body" style={{ display: "flex", flex: 1, background: C.bgPrimary }}>
-
-        {/* ── Sidebar ── */}
-        <aside
-          className="r-sidebar"
-          style={{ width: 200, flexShrink: 0, background: C.white, borderRight: "none", display: "flex", flexDirection: "column" }}
-        >
-          <div style={{ paddingTop: 20, flex: 1 }}>
-            {NAV_ITEMS.map((item) => (
-              <div
-                key={item.key}
-                style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  padding: "13px 0 13px 30px",
-                  background: item.active ? "rgba(204,0,0,0.07)" : "transparent",
-                  borderLeft: item.active ? `3px solid ${C.primary}` : "3px solid transparent",
-                  cursor: "pointer",
-                  transition: "background 0.15s",
-                }}
-              >
-                <span style={{ fontFamily: FM, fontSize: 11, color: item.active ? C.primary : C.textMuted, letterSpacing: "0.04em" }}>
-                  {item.icon}
-                </span>
-                {item.active && (
-                  <span style={{ fontFamily: FM, fontSize: 11, color: C.textPrimary, letterSpacing: "0.06em" }}>
-                    {item.label}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Need help footer */}
-          <div style={{ padding: "14px 20px 20px", borderTop: `1px solid ${C.borderLight}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-              <span style={{ fontFamily: FM, fontSize: 10, color: C.textMuted }}>?</span>
-              <span style={{ fontFamily: FM, fontSize: 10, color: C.textMuted, letterSpacing: "0.04em" }}>NEED HELP?</span>
-            </div>
-            <a
-              href="#"
-              style={{ fontFamily: FM, fontSize: 10, color: C.primary, textDecoration: "none", letterSpacing: "0.04em", display: "flex", alignItems: "center", gap: 4 }}
-            >
-              View judging guidelines ↗
-            </a>
-          </div>
-        </aside>
-
-        {/* ── Main ── */}
+      {/* ── Main ── */}
         <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, background: C.bgPrimary, padding: "24px", gap: "24px" }}>
 
           {/* ── Judging Progress section ── */}
@@ -387,10 +404,10 @@ export default function JudgeDashboardClient() {
             className="r-progress-section"
             style={{
               background: C.white,
-              borderRadius: 12,
-              border: `1px solid ${C.borderLight}`,
+              borderRadius: 0,
+              border: `1px solid ${C.primary}`,
               padding: "18px 28px 16px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
+              boxShadow: SHADOW
             }}
           >
             {/* Label + bar */}
@@ -404,14 +421,14 @@ export default function JudgeDashboardClient() {
             </div>
 
             {/* Progress bar */}
-            <div style={{ height: 6, background: C.borderLight, borderRadius: 3, marginBottom: 10, overflow: "hidden" }}>
+            <div style={{ height: 6, background: C.borderLight, borderRadius: 0, marginBottom: 10, overflow: "hidden" }}>
               <div
                 className="r-progress-bar-fill"
                 style={{
                   height: "100%",
                   width: `${progressPct}%`,
                   background: `linear-gradient(90deg, ${C.primary})`,
-                  borderRadius: 3,
+                  borderRadius: 0,
                   transition: "width 0.8s ease-out",
                 }}
               />
@@ -460,10 +477,10 @@ export default function JudgeDashboardClient() {
             className="r-queue-section"
             style={{ 
               background: C.white, 
-              borderRadius: 12,
-              border: `1px solid ${C.borderLight}`,
+              borderRadius: 0,
+              border: `1px solid ${C.primary}`,
               padding: "18px 28px 24px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
+              boxShadow: SHADOW
             }}
           >
             {/* Queue header */}
@@ -510,6 +527,7 @@ export default function JudgeDashboardClient() {
                   <motion.button
                   key={track}
                   onClick={() => { setActiveTrack(track); setExpandedId(null); }}
+                  whileHover={activeTrack === track ? { scale: 1.04 } : { borderColor: C.primary, boxShadow: `3px 3px 0 0 ${C.primary}` }}
                   whileTap={{ y: 1 }}
                   transition={{ duration: 0.1 }}
                   style={{
@@ -517,7 +535,7 @@ export default function JudgeDashboardClient() {
                     fontFamily: FM, fontSize: 10, fontWeight: 700,
                     letterSpacing: "0.08em", textTransform: "uppercase" as const,
                     border: `2px solid ${activeTrack === track ? C.primary : C.textPrimary}`,
-                    borderRadius: 9999,
+                    borderRadius: 0,
                     background: activeTrack === track ? C.primary : C.bgPrimary,
                     color: activeTrack === track ? C.white : C.textPrimary,
                     boxShadow: activeTrack === track ? "none" : `3px 3px 0 0 ${C.textPrimary}`,
@@ -646,17 +664,17 @@ export default function JudgeDashboardClient() {
               >
                 <div className="r-detail-container" style={{
                   background: C.white,
-                  borderRadius: 12,
-                  border: `1px solid ${C.borderLight}`,
+                  borderRadius: 0,
+                  border: `1px solid ${C.primary}`,
                   display: "flex", gap: 0,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                  boxShadow: SHADOW,
                   overflow: "hidden"
                 }}>
 
                   {/* Mobile-only project overview (top horizontal bar) */}
                   <div className="r-detail-mobile-only" style={{ padding: "16px", borderBottom: `1px solid ${C.borderLight}`, flexDirection: "column", gap: "12px", background: "transparent" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      <div style={{ width: 96, height: 54, borderRadius: 6, overflow: "hidden", background: C.borderLight, flexShrink: 0, position: "relative" }}>
+                      <div style={{ width: 96, height: 54, borderRadius: 0, overflow: "hidden", background: C.borderLight, flexShrink: 0, position: "relative" }}>
                         {expandedProject.thumbnailUrl ? (
                           <img src={expandedProject.thumbnailUrl} alt={expandedProject.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         ) : (
@@ -675,7 +693,7 @@ export default function JudgeDashboardClient() {
                           {expandedProject.teamName}
                         </div>
                         <div style={{ marginTop: 6 }}>
-                          <span style={{ padding: "2px 6px", background: C.bgPrimary, border: `1px solid ${C.borderMedium}`, borderRadius: 4, fontFamily: FM, fontSize: 8, fontWeight: 700, color: C.textPrimary, letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
+                          <span style={{ padding: "2px 6px", background: C.bgPrimary, border: `1px solid ${C.borderMedium}`, borderRadius: 0, fontFamily: FM, fontSize: 8, fontWeight: 700, color: C.textPrimary, letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
                             {expandedProject.track}
                           </span>
                         </div>
@@ -688,8 +706,9 @@ export default function JudgeDashboardClient() {
                       </div>
                     </div>
                     <button
+                      className="r-ghost-btn"
                       onClick={() => setOverlayProject(expandedProject)}
-                      style={{ width: "100%", padding: "8px 0", background: "transparent", border: `1px solid ${C.borderMedium}`, borderRadius: 6, fontFamily: FM, fontSize: 10, fontWeight: 700, color: C.textPrimary, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                      style={{ width: "100%", padding: "8px 0", background: "transparent", border: `1px solid ${C.borderMedium}`, borderRadius: 0, fontFamily: FM, fontSize: 10, fontWeight: 700, color: C.textPrimary, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
                     >
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                         <rect x="0.5" y="0.5" width="11" height="11" rx="1" stroke="currentColor" strokeWidth="1"/>
@@ -818,7 +837,7 @@ export default function JudgeDashboardClient() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 60 }}
+              style={{ position: "fixed", inset: 0, background: "rgba(29,28,23,0.75)", zIndex: 60 }}
               onClick={() => setMobileNavOpen(false)}
             />
 
@@ -838,7 +857,7 @@ export default function JudgeDashboardClient() {
               {/* Header */}
               <div style={{
                 height: 54, padding: "0 20px", flexShrink: 0,
-                borderBottom: `1px solid ${C.borderMedium}`,
+                borderBottom: `1px solid ${C.primary}`,
                 display: "flex", alignItems: "center", justifyContent: "space-between",
               }}>
                 <span style={{ fontFamily: FB, fontSize: 20, color: C.textPrimary }}>
@@ -846,6 +865,7 @@ export default function JudgeDashboardClient() {
                 </span>
                 <button
                   type="button"
+                  className="r-icon-btn-red"
                   onClick={() => setMobileNavOpen(false)}
                   aria-label="Close navigation"
                   style={{

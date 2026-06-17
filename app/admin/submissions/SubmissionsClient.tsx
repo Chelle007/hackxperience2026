@@ -139,7 +139,7 @@ function ActionCell({
       {isOpen && createPortal(
         <ul
           ref={menuRef}
-          className={`${styles.kebabMenu} font-mono text-[#1A1A1A]`}
+          className={`${styles.kebabMenu} font-mono text-[#1d1c17]`}
           style={{
             top: menuPos.top,
             right: menuPos.right,
