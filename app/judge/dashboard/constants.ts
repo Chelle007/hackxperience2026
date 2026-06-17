@@ -24,7 +24,6 @@ export const C = {
 export const FM        = "var(--font-ibm-plex-mono), 'IBM Plex Mono', monospace";
 export const FB        = "var(--font-bebas-neue), 'Bebas Neue', sans-serif";
 export const SHADOW    = "4px 4px 0 0 #CC0000";
-export const SHADOW_LG = "6px 6px 0 0 #CC0000";
 export const SPRING    = { type: "spring" as const, stiffness: 420, damping: 18 };
 
 // ── Responsive CSS (scoped — avoids Tailwind colour utilities) ────
@@ -33,7 +32,7 @@ export const RESPONSIVE_CSS = `
   .r-hamburger { display: none; }
 
   /* Topbar */
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
     .r-topbar          { padding: 0 16px !important; }
     .r-topbar-status   { display: none !important; }
     .r-topbar-email    { display: none !important; }
@@ -49,13 +48,13 @@ export const RESPONSIVE_CSS = `
   }
 
   /* Body layout */
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
     .r-body    { flex-direction: column !important; }
     .r-sidebar { display: none !important; }
   }
 
   /* Main content padding adjustments */
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
     .r-progress-section { padding: 16px 20px 14px !important; }
     .r-queue-section    { padding: 16px 20px 16px !important; }
     .r-detail-section   { padding: 0 !important; }
