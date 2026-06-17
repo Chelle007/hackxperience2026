@@ -1,7 +1,7 @@
 .root {
   min-height: 100vh;
-  background: #f5f0e8;
-  color: #1a1a1a;
+  background: var(--cream-bg);
+  color: var(--dark-bg);
   overflow-x: hidden;
   font-family: var(--font-admin-mono), monospace;
 }
@@ -11,7 +11,7 @@
 }
 
 .brandAccent {
-  color: #cc0000;
+  color: #CC0100;
 }
 
 .topbar {
@@ -19,9 +19,9 @@
   top: 0;
   z-index: 60;
   height: 54px;
-  background: #1a1a1a;
-  border-bottom: 1px solid #cc0000;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
+  background: var(--cream-bg);
+  border-bottom: 1px solid var(--red);
+  box-shadow: none;
 }
 
 .topbarInner {
@@ -48,13 +48,13 @@
   font-family: var(--font-admin-display), sans-serif;
   font-size: 24px;
   line-height: 1;
-  color: #f5f0e8;
+  color: var(--dark-bg);
 }
 
 .brandDivider {
   width: 1px;
   height: 16px;
-  background: #cc0000;
+  background: var(--red);
 }
 
 .commandText,
@@ -62,7 +62,7 @@
 .handleText {
   font-size: 12px;
   line-height: 16px;
-  color: #888888;
+  color: var(--muted);
   white-space: nowrap;
 }
 
@@ -81,9 +81,9 @@
   gap: 6px;
   min-height: 26px;
   padding: 4px 12px;
-  border: 1px solid #f5f0e8;
-  background: #1a1a1a;
-  color: #f5f0e8;
+  border: 1px solid var(--dark-bg);
+  background: var(--cream-bg);
+  color: var(--dark-bg);
   font-size: 12px;
   line-height: 16px;
   text-transform: uppercase;
@@ -97,17 +97,17 @@
 }
 
 .logoutButton {
-  border-color: #cc0000;
-  color: #cc0000;
+  border-color: var(--red);
+  color: var(--red);
 }
 
 .logoutButton:hover {
-  background: #3a0808;
+  background: rgba(204,0,0,0.08);
   border-color: #ff2222;
 }
 
 .logoutButton:active {
-  background: #5a1010;
+  background: rgba(204,0,0,0.14);
 }
 
 .buttonIcon {
@@ -118,8 +118,8 @@
 
 .hero {
   position: relative;
-  min-height: 122px;
-  background: #1a1a1a;
+  min-height: 70px;
+  background: var(--cream-bg);
   border-bottom: 1px solid #3a0808;
   overflow: hidden;
 }
@@ -136,7 +136,7 @@
   left: -2%;
   width: 108%;
   height: 1px;
-  background: rgba(245, 240, 232, 0.1);
+  background: rgba(29, 28, 23, 0.08);
 }
 
 .heroLineA {
@@ -146,7 +146,7 @@
 }
 
 .heroLineB {
-  top: 78px;
+  top: 48px;
   transform: rotate(-4.4deg);
   transform-origin: left center;
 }
@@ -162,7 +162,7 @@
   font-size: 32px;
   line-height: 34px;
   font-weight: 400;
-  color: #f5f0e8;
+  color: var(--dark-bg);
 }
 
 .heroMeta {
@@ -182,31 +182,31 @@
 .metaLabel {
   font-size: 12px;
   line-height: 16px;
-  color: #888888;
+  color: var(--muted);
 }
 
 .metaValue {
   font-size: 12px;
   line-height: 16px;
-  color: #f5f0e8;
+  color: var(--dark-bg);
   max-width: 100%;
 }
 
 .metaAccent {
-  color: #cc0000;
+  color: var(--red);
 }
 
 .metrics {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  background: #f5f0e8;
-  border-bottom: 1px solid #cc0000;
+  background: var(--cream-bg);
+  border-bottom: 1px solid var(--red);
 }
 
 .metricCard {
   min-height: 121px;
   padding: 24px 32px 22px;
-  border-right: 1px solid #ddd8cf;
+  border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -220,7 +220,7 @@
 .metricLabel {
   font-size: 12px;
   line-height: 16px;
-  color: #888888;
+  color: var(--muted);
   text-transform: uppercase;
 }
 
@@ -247,23 +247,23 @@
 .metricHelper {
   font-size: 12px;
   line-height: 16px;
-  color: #888888;
+  color: var(--muted);
 }
 
 .toneNeutral {
-  color: #1a1a1a;
+  color: var(--dark-bg);
 }
 
 .toneAmber {
-  color: #1a1a1a;
+  color: var(--dark-bg);
 }
 
 .toneEmerald {
-  color: #1a1a1a;
+  color: var(--dark-bg);
 }
 
 .toneRed {
-  color: #cc0000;
+  color: var(--red);
 }
 
 /* ── Countdown metric card ─────────────────────── */
@@ -286,7 +286,7 @@
 .countdownUnit {
   font-size: 9px;
   line-height: 11px;
-  color: #888888;
+  color: var(--muted);
   letter-spacing: 0.08em;
   font-family: var(--font-admin-mono), monospace;
 }
@@ -294,12 +294,12 @@
 .body {
   display: grid;
   grid-template-columns: 1fr;
-  min-height: calc(100vh - 54px - 122px - 121px);
+  min-height: calc(100vh - 54px - 70px - 121px);
 }
 
 .sidebar {
-  background: #1a1a1a;
-  border-right: 1px solid #cc0000;
+  background: var(--cream-bg);
+  border-right: 1px solid var(--red);
   display: flex;
   flex-direction: column;
 }
@@ -316,8 +316,8 @@
   justify-content: space-between;
   gap: 10px;
   padding: 13px 20px;
-  border-top: 1px solid #2a2a2a;
-  background: #111111;
+  border-top: 1px solid #d8d2c5;
+  background: #fbf6ee;
 }
 
 .sidebarProfileInfo {
@@ -330,7 +330,7 @@
 .sidebarProfileName {
   font-size: 12px;
   line-height: 16px;
-  color: #f5f0e8;
+  color: var(--dark-bg);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -339,7 +339,7 @@
 .sidebarProfileRole {
   font-size: 10px;
   line-height: 13px;
-  color: #888888;
+  color: var(--muted);
 }
 
 .sidebarLogoutBtn {
@@ -349,24 +349,24 @@
   width: 28px;
   height: 28px;
   flex-shrink: 0;
-  border: 1px solid #cc0000;
+  border: 1px solid var(--red);
   background: transparent;
-  color: #cc0000;
+  color: var(--red);
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
 
 .sidebarLogoutBtn:hover {
-  background: #3a0808;
+  background: rgba(204,0,0,0.08);
   border-color: #ff2222;
 }
 
 .sidebarLogoutBtn:active {
-  background: #5a1010;
+  background: rgba(204,0,0,0.14);
 }
 
 .sidebarGroup {
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid #d8d2c5;
   padding: 16px 0 12px;
 }
 
@@ -375,7 +375,7 @@
   padding: 0 32px 12px;
   font-size: 12px;
   line-height: 16px;
-  color: #888888;
+  color: var(--muted);
   font-weight: 400;
   text-transform: uppercase;
 }
@@ -392,26 +392,26 @@
   padding: 11px 32px;
   font-size: 12px;
   line-height: 16px;
-  color: #f5f0e8;
+  color: var(--dark-bg);
   text-decoration: none;
   border-left: 2px solid transparent;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 .sidebarLink:hover {
-  background: rgba(204, 0, 0, 0.12);
-  border-left-color: rgba(204, 0, 0, 0.5);
+  background: rgba(192, 0, 0, 0.12);
+  border-left-color: rgba(192, 0, 0, 0.5);
 }
 
 .sidebarLink:active {
-  background: rgba(204, 0, 0, 0.18);
-  border-left-color: #cc0000;
+  background: rgba(192, 0, 0, 0.18);
+  border-left-color: var(--red);
 }
 
 .sidebarLinkActive {
-  background: #3a0808;
-  border-left: 3px solid #cc0000;
-  color: #ffffff;
+  background: rgba(204,0,0,0.08);
+  border-left: 3px solid var(--red);
+  color: #1d1c17;
   padding-left: 29px;
 }
 
@@ -423,10 +423,10 @@
 
 .main {
   min-width: 0;
-  background: #f5f0e8;
+  background: var(--cream-bg);
   background-image:
-    linear-gradient(rgba(26, 26, 26, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(26, 26, 26, 0.055) 1px, transparent 1px);
+    linear-gradient(rgba(29, 28, 23, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(29, 28, 23, 0.055) 1px, transparent 1px);
   background-size: 20px 20px;
   padding: 26px 24px 48px 26px;
 }
@@ -440,21 +440,21 @@
   width: 34px;
   height: 34px;
   padding: 0;
-  border: 1px solid #888888;
+  border: 1px solid var(--muted);
   background: transparent;
-  color: #888888;
+  color: var(--muted);
   cursor: pointer;
   flex-shrink: 0;
   transition: border-color 0.15s, color 0.15s;
 }
 
 .hamburgerBtn:hover {
-  border-color: #f5f0e8;
-  color: #f5f0e8;
+  border-color: var(--dark-bg);
+  color: var(--dark-bg);
 }
 
 .hamburgerBtn:active {
-  background: rgba(245, 240, 232, 0.1);
+  background: rgba(29, 28, 23, 0.08);
 }
 
 .mobileDrawerBackdrop {
@@ -475,8 +475,8 @@
   left: 0;
   height: 100%;
   width: 280px;
-  background: #1a1a1a;
-  border-right: 1px solid #cc0000;
+  background: var(--cream-bg);
+  border-right: 1px solid var(--red);
   z-index: 65;
   display: flex;
   flex-direction: column;
@@ -496,8 +496,8 @@
   padding: 0 20px;
   height: 54px;
   flex-shrink: 0;
-  border-bottom: 1px solid #cc0000;
-  background: #1a1a1a;
+  border-bottom: 1px solid var(--red);
+  background: var(--cream-bg);
 }
 
 .mobileDrawerClose {
@@ -507,8 +507,8 @@
   align-items: center;
   justify-content: center;
   background: transparent;
-  border: 1px solid #cc0000;
-  color: #cc0000;
+  border: 1px solid var(--red);
+  color: var(--red);
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
@@ -518,11 +518,11 @@
 }
 
 .mobileDrawerClose:hover {
-  background: #3a0808;
+  background: rgba(204,0,0,0.08);
 }
 
 .mobileDrawerClose:active {
-  background: #5a1010;
+  background: rgba(204,0,0,0.14);
 }
 
 .mobileDrawerNav {
@@ -533,7 +533,7 @@
 .mobileDrawerFooter {
   flex-shrink: 0;
   padding: 16px 20px;
-  border-top: 1px solid #2a2a2a;
+  border-top: 1px solid #d8d2c5;
 }
 
 .mobileDrawerLogout {

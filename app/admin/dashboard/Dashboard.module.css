@@ -2,7 +2,7 @@
   margin: -26px -24px 24px -26px;
   min-height: 70px;
   padding: 26px 26px 14px;
-  background: #1a1a1a;
+  background: #f2ede5;
   border-top: 3px solid #cc0000;
   border-bottom: 1px solid #3a0808;
 }
@@ -23,7 +23,7 @@
   font-size: 11px;
   line-height: 14px;
   letter-spacing: 0.04em;
-  color: #888888;
+  color: #7a7669;
   text-decoration: none;
   border-bottom: 2px solid transparent;
   transition: color 0.15s, border-color 0.15s;
@@ -31,7 +31,7 @@
 }
 
 .tab:hover {
-  color: #f5f0e8;
+  color: #1d1c17;
 }
 
 .tabActive {
@@ -54,7 +54,7 @@
 
 .contentHeader p {
   margin-top: 3px;
-  color: #888888;
+  color: #7a7669;
   font-size: 12px;
   line-height: 16px;
 }
@@ -68,7 +68,7 @@
 .chartPanel,
 .quickPanel,
 .tablePanel {
-  background: #ffffff;
+  background: #fef9f1;
   border: 1px solid #cc0000;
   box-shadow: 4px 4px 0 0 #cc0000;
 }
@@ -116,9 +116,9 @@
   display: inline-flex;
   align-items: center;
   padding: 5px 14px;
-  background: #1a1a1a;
-  color: #f5f0e8;
-  border: 1px solid #1a1a1a;
+  background: #f2ede5;
+  color: #1d1c17;
+  border: 1px solid #1d1c17;
   font-size: 11px;
   line-height: 16px;
   font-family: var(--font-admin-mono), monospace;
@@ -131,7 +131,7 @@
 .viewAllBtn:hover {
   background: #cc0000;
   border-color: #cc0000;
-  box-shadow: 2px 2px 0 0 #1a1a1a;
+  box-shadow: 2px 2px 0 0 #1d1c17;
 }
 
 .tableToolbar {
@@ -147,9 +147,9 @@
   min-width: 180px;
   height: 30px;
   padding: 0 10px;
-  background: #ffffff;
-  border: 1px solid #1a1a1a;
-  color: #1a1a1a;
+  background: #fef9f1;
+  border: 1px solid #1d1c17;
+  color: #1d1c17;
   font-size: 11px;
   line-height: 16px;
   font-family: var(--font-admin-mono), monospace;
@@ -159,7 +159,7 @@
 }
 
 .searchInput::placeholder {
-  color: #888888;
+  color: #7a7669;
 }
 
 .searchInput:focus {
@@ -174,9 +174,9 @@
 .sortBtn {
   height: 30px;
   padding: 0 12px;
-  background: #ffffff;
-  border: 1px solid #1a1a1a;
-  color: #1a1a1a;
+  background: #fef9f1;
+  border: 1px solid #1d1c17;
+  color: #1d1c17;
   font-size: 11px;
   line-height: 16px;
   font-family: var(--font-admin-mono), monospace;
@@ -186,7 +186,7 @@
 }
 
 .sortBtn:hover {
-  background: #f5f0e8;
+  background: #f2ede5;
   border-color: #cc0000;
   color: #cc0000;
 }
@@ -219,7 +219,7 @@
 }
 
 .hpLabel {
-  color: #1a1a1a;
+  color: #1d1c17;
   font-size: 9px;
   line-height: 12px;
   letter-spacing: 0.04em;
@@ -292,7 +292,7 @@
   right: 4px;
   top: 50%;
   transform: translateY(-50%);
-  color: #ffffff;
+  color: #1d1c17;
   font-size: 9px;
   line-height: 12px;
   font-weight: 700;
@@ -322,7 +322,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  color: #1a1a1a;
+  color: #1d1c17;
   font-size: 12px;
   line-height: 16px;
 }
@@ -352,7 +352,7 @@
 .toggleThumb {
   width: 12px;
   height: 12px;
-  background: #ffffff;
+  background: #fef9f1;
 }
 
 .toggle:active {
@@ -363,7 +363,7 @@
   min-height: 28px;
   padding: 6px 8px;
   border: 1px solid #cc0000;
-  background: #ffffff;
+  background: #fef9f1;
   color: #cc0000;
   text-align: left;
   font-size: 12px;
@@ -374,8 +374,8 @@
 
 .exportButton:hover {
   background: #cc0000;
-  color: #ffffff;
-  box-shadow: 2px 2px 0 0 #1a1a1a;
+  color: #fef9f1;
+  box-shadow: 2px 2px 0 0 #1d1c17;
 }
 
 .exportButton:active {
@@ -398,8 +398,8 @@
   align-items: center;
   padding: 0 16px;
   border-bottom: 1px solid #cc0000;
-  background: #1a1a1a;
-  color: #888888;
+  background: #f2ede5;
+  color: #7a7669;
   font-size: 12px;
   line-height: 16px;
 }
@@ -414,8 +414,8 @@
   align-items: center;
   min-width: 0;
   padding: 12px 16px;
-  border-bottom: 1px solid #e5e0d8;
-  color: #1a1a1a;
+  border-bottom: 1px solid #d8d2c5;
+  color: #1d1c17;
   font-size: 10px;
   line-height: 13px;
   overflow-wrap: anywhere;
@@ -460,19 +460,19 @@
 }
 
 .statusPENDING {
-  color: #1a1a1a;
+  color: #1d1c17;
   background: transparent;
-  border: 1px solid #1a1a1a;
+  border: 1px solid #1d1c17;
 }
 
 .statusAPPROVED {
-  color: #ffffff;
+  color: #fef9f1;
   background: #3a9e6a;
   border: 1px solid #3a9e6a;
 }
 
 .statusREJECTED {
-  color: #ffffff;
+  color: #fef9f1;
   background: #cc0000;
   border: 1px solid #cc0000;
 }
@@ -490,9 +490,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #1a1a1a;
-  background: #ffffff;
-  color: #1a1a1a;
+  border: 1px solid #1d1c17;
+  background: #fef9f1;
+  color: #1d1c17;
   font-size: 10px;
   line-height: 13px;
   cursor: pointer;
@@ -512,7 +512,7 @@
 
 .iconAction:hover,
 .textAction:hover {
-  background: #f5f0e8;
+  background: #f2ede5;
   border-color: #cc0000;
   color: #cc0000;
 }
@@ -532,13 +532,13 @@
 .approveAction {
   background: #3a9e6a;
   border-color: #3a9e6a;
-  color: #ffffff;
+  color: #fef9f1;
 }
 
 .approveAction:hover {
   background: #2e8057;
   border-color: #2e8057;
-  color: #ffffff;
+  color: #1d1c17;
 }
 
 .approveAction:active {
@@ -548,13 +548,13 @@
 .rejectAction {
   background: #cc0000;
   border-color: #cc0000;
-  color: #ffffff;
+  color: #fef9f1;
 }
 
 .rejectAction:hover {
   background: #aa0000;
   border-color: #aa0000;
-  color: #ffffff;
+  color: #fef9f1;
 }
 
 .rejectAction:active {
@@ -570,7 +570,7 @@
 .deleteAction {
   border-color: #cc0000;
   color: #cc0000;
-  background: #ffffff;
+  background: #fef9f1;
 }
 
 .deleteAction:hover {
@@ -589,8 +589,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid #e5e0d8;
-  color: #888888;
+  border-bottom: 1px solid #d8d2c5;
+  color: #7a7669;
   font-size: 12px;
   line-height: 16px;
 }
@@ -607,7 +607,7 @@
 }
 
 .modalCard {
-  background: #1a1a1a;
+  background: #f2ede5;
   border: 1px solid #cc0000;
   box-shadow: 6px 6px 0 0 #cc0000;
   padding: 32px 36px;
@@ -619,7 +619,7 @@
   font-family: var(--font-admin-mono), monospace;
   font-size: 18px;
   font-weight: 700;
-  color: #f5f0e8;
+  color: #1d1c17;
   line-height: 1.2;
   margin: 0 0 8px;
   letter-spacing: 0.04em;
@@ -636,7 +636,7 @@
 .modalBody {
   font-family: var(--font-admin-mono), monospace;
   font-size: 12px;
-  color: #aaaaaa;
+  color: #a8a294;
   margin: 0 0 28px;
   line-height: 1.7;
 }
@@ -666,7 +666,7 @@
 
 .modalConfirmBtn:hover:not(:disabled) {
   background: #3a9e6a;
-  color: #ffffff;
+  color: #fef9f1;
 }
 
 .modalConfirmBtn:disabled,
@@ -680,7 +680,7 @@
   height: 40px;
   background: #cc0000;
   border: 1.5px solid #cc0000;
-  color: #ffffff;
+  color: #fef9f1;
   font-family: var(--font-admin-mono), monospace;
   font-size: 14px;
   font-weight: 700;
@@ -785,8 +785,8 @@
     grid-template-columns: 1fr 1fr;
     gap: 8px 12px;
     padding: 12px;
-    border: 1px solid #e5e0d8;
-    background: #ffffff;
+    border: 1px solid #d8d2c5;
+    background: #fef9f1;
     box-shadow: 2px 2px 0 0 #cc0000;
   }
 
@@ -812,7 +812,7 @@
     content: attr(data-label);
     display: block;
     margin-bottom: 3px;
-    color: #888888;
+    color: #7a7669;
     font-size: 10px;
     line-height: 14px;
     text-transform: uppercase;
@@ -918,7 +918,7 @@
 
 .scoreModal {
   width: min(560px, 100%);
-  background: #f5f0e8;
+  background: #f2ede5;
   border: 3px solid #cc0000;
   box-shadow: 8px 8px 0 0 #cc0000;
   font-family: var(--font-admin-mono), "IBM Plex Mono", "Courier New", monospace;
@@ -957,7 +957,7 @@
 
 .scoreModalClose:hover {
   background: #cc0000;
-  color: #ffffff;
+  color: #fef9f1;
 }
 
 .scoreModalBody {
@@ -966,7 +966,7 @@
 
 .scoreProjectTitle {
   margin: 0 0 24px;
-  color: #1a1a1a;
+  color: #1d1c17;
   font-family: var(--font-admin-mono), "IBM Plex Mono", "Courier New", monospace;
   font-size: 28px;
   line-height: 1.2;
@@ -991,7 +991,7 @@
 }
 
 .scoreOverallSub {
-  color: #1a1a1a;
+  color: #1d1c17;
   font-size: 10px;
   line-height: 14px;
   letter-spacing: 0.1em;
@@ -1001,7 +1001,7 @@
 
 .scoreJudgeCount {
   margin-top: 6px;
-  color: #1a1a1a;
+  color: #1d1c17;
   font-size: 10px;
   line-height: 14px;
   letter-spacing: 0.06em;
@@ -1026,7 +1026,7 @@
 }
 
 .scoreCriteriaLabel {
-  color: #1a1a1a;
+  color: #1d1c17;
   font-size: 12px;
   line-height: 16px;
   white-space: nowrap;
@@ -1042,7 +1042,7 @@
 }
 
 .scoreCriteriaValue {
-  color: #1a1a1a;
+  color: #1d1c17;
   font-size: 14px;
   line-height: 16px;
   white-space: nowrap;
@@ -1052,7 +1052,7 @@
 .scoreNoData {
   padding: 40px 0;
   text-align: center;
-  color: #1a1a1a;
+  color: #1d1c17;
   font-size: 13px;
   line-height: 18px;
   opacity: 0.5;

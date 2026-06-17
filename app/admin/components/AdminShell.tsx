@@ -86,19 +86,6 @@ const defaultShellState: AdminShellState = {
   ],
 };
 
-function formatDeadlineMeta(value: Date | null): string {
-  if (!value) return "--";
-  return value.toLocaleString("en-SG", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Asia/Singapore",
-    timeZoneName: "short",
-  });
-}
-
 function formatDeadlineCountdown(value: Date | null, nowMs: number): {
   value: string;
   helper: string;
@@ -408,21 +395,6 @@ export function AdminShellFrame({ children }: { children: ReactNode }) {
           <h1 className={`${styles.heroTitle} ${styles.displayFont}`}>
             PROJECT <span className={styles.brandAccent}>SUBMISSION</span> PORTAL
           </h1>
-
-          <div className={styles.heroMeta}>
-            <div className={styles.metaBlock}>
-              <span className={styles.metaLabel}>EVENT_DATE</span>
-              <span className={`${styles.metaValue} ${styles.metaAccent}`}>JUN 25, 2026</span>
-            </div>
-            <div className={styles.metaBlock}>
-              <span className={styles.metaLabel}>VENUE</span>
-              <span className={styles.metaValue}>SIM STUDENT HUB BLK B LVL 1</span>
-            </div>
-            <div className={styles.metaBlock}>
-              <span className={styles.metaLabel}>DEADLINE</span>
-              <span className={`${styles.metaValue} ${styles.metaAccent}`}>{formatDeadlineMeta(deadlineAt)}</span>
-            </div>
-          </div>
         </div>
       </section>
 

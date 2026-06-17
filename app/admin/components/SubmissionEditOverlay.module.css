@@ -18,10 +18,10 @@
   max-height: calc(100vh - 40px);
   display: flex;
   flex-direction: column;
-  background: #1a1a1a;
-  border: 1px solid #cc0000;
-  border-top: 3px solid #cc0000;
-  box-shadow: 8px 8px 0 0 #cc0000;
+  background: var(--cream-bg);
+  border: 1px solid var(--red);
+  border-top: 3px solid var(--red);
+  box-shadow: 8px 8px 0 0 var(--red);
   overflow: hidden;
 }
 
@@ -34,14 +34,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  background: #0d0d0d;
+  background: #fef9f1;
   border-bottom: 1px solid #3a0808;
 }
 
 .headerTitle {
   font-family: var(--font-admin-mono, var(--font-ibm-plex-mono, "IBM Plex Mono")), monospace;
   font-size: 13px;
-  color: #cc0000;
+  color: var(--red);
   letter-spacing: 0.04em;
 }
 
@@ -52,9 +52,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1f1f1f;
-  border: 0.5px solid #cc0000;
-  color: #cc0000;
+  background: #ece7de;
+  border: 0.5px solid var(--red);
+  color: var(--red);
   font-family: var(--font-admin-mono, var(--font-ibm-plex-mono, "IBM Plex Mono")), monospace;
   font-size: 17px;
   line-height: 1;
@@ -64,11 +64,11 @@
 }
 
 .headerClose:hover {
-  background: #3a0808;
+  background: rgba(204,0,0,0.08);
 }
 
 .headerClose:active {
-  background: #5a1010;
+  background: rgba(204,0,0,0.14);
 }
 
 /* ── Scrollable body ──────────────────────────── */
@@ -81,7 +81,7 @@
   flex-direction: column;
   gap: 16px;
   scrollbar-width: thin;
-  scrollbar-color: #3a0808 #141414;
+  scrollbar-color: #3a0808 #e5e0d8;
 }
 
 .body::-webkit-scrollbar {
@@ -89,15 +89,15 @@
 }
 
 .body::-webkit-scrollbar-track {
-  background: #141414;
+  background: #fbf6ee;
 }
 
 .body::-webkit-scrollbar-thumb {
-  background: #3a0808;
+  background: rgba(204,0,0,0.08);
 }
 
 .body::-webkit-scrollbar-thumb:hover {
-  background: #cc0000;
+  background: var(--red);
 }
 
 /* ── Form layout ──────────────────────────────── */
@@ -126,7 +126,7 @@
 .label {
   font-family: var(--font-admin-mono, var(--font-ibm-plex-mono, "IBM Plex Mono")), monospace;
   font-size: 11px;
-  color: #f5f0e8;
+  color: var(--dark-bg);
   letter-spacing: 0.06em;
 }
 
@@ -135,9 +135,9 @@
 .input {
   height: 30px;
   padding: 0 10px;
-  background: #0d0d0d;
-  border: 1px solid #cc0000;
-  color: #f5f0e8;
+  background: #fef9f1;
+  border: 1px solid var(--red);
+  color: var(--dark-bg);
   font-family: var(--font-admin-mono, var(--font-ibm-plex-mono, "IBM Plex Mono")), monospace;
   font-size: 12px;
   outline: none;
@@ -151,7 +151,7 @@
 }
 
 .inputReadonly {
-  color: #888888;
+  color: var(--muted);
   cursor: not-allowed;
   border-color: #3a0808;
   opacity: 0.7;
@@ -161,9 +161,9 @@
 
 .textarea {
   padding: 10px;
-  background: #0d0d0d;
-  border: 1px solid #cc0000;
-  color: #f5f0e8;
+  background: #fef9f1;
+  border: 1px solid var(--red);
+  color: var(--dark-bg);
   font-family: var(--font-admin-mono, var(--font-ibm-plex-mono, "IBM Plex Mono")), monospace;
   font-size: 12px;
   line-height: 1.6;
@@ -194,8 +194,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1a1a1a;
-  border: 1px solid #cc0000;
+  background: var(--cream-bg);
+  border: 1px solid var(--red);
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -211,7 +211,7 @@
 .uploadText {
   font-family: var(--font-admin-mono, var(--font-ibm-plex-mono, "IBM Plex Mono")), monospace;
   font-size: 11px;
-  color: #cc0000;
+  color: var(--red);
   text-align: center;
   line-height: 1.7;
   pointer-events: none;
@@ -229,22 +229,27 @@
 .currentFileLabel {
   font-family: var(--font-admin-mono, var(--font-ibm-plex-mono, "IBM Plex Mono")), monospace;
   font-size: 11px;
-  color: #888888;
+  color: var(--muted);
   letter-spacing: 0.04em;
 }
 
 .currentFileLink {
   font-family: var(--font-admin-mono, var(--font-ibm-plex-mono, "IBM Plex Mono")), monospace;
   font-size: 11px;
-  color: #f5f0e8;
+  color: var(--dark-bg);
   text-decoration: underline;
   word-break: break-all;
+  transition: color 0.15s;
+}
+
+.currentFileLink:hover {
+  color: #cc0000;
 }
 
 .currentFileMuted {
   font-family: var(--font-admin-mono, var(--font-ibm-plex-mono, "IBM Plex Mono")), monospace;
   font-size: 11px;
-  color: #555555;
+  color: #57534a;
 }
 
 /* ── Footer ───────────────────────────────────── */
@@ -256,16 +261,16 @@
   align-items: center;
   gap: 10px;
   padding: 0 20px;
-  background: #0d0d0d;
+  background: #fef9f1;
   border-top: 1px solid #3a0808;
 }
 
 .saveBtn {
   height: 30px;
   padding: 0 20px;
-  background: #1f1f1f;
-  border: 0.5px solid #f5f0e8;
-  color: #f5f0e8;
+  background: #ece7de;
+  border: 0.5px solid var(--dark-bg);
+  color: var(--dark-bg);
   font-family: var(--font-admin-mono, var(--font-ibm-plex-mono, "IBM Plex Mono")), monospace;
   font-size: 12px;
   letter-spacing: 0.06em;
@@ -275,19 +280,19 @@
 }
 
 .saveBtn:hover {
-  background: #2a2a2a;
+  background: #e5e0d8;
 }
 
 .saveBtn:active {
-  background: #3a3a3a;
+  background: #ddd6c8;
 }
 
 .cancelBtn {
   height: 30px;
   padding: 0 20px;
-  background: #1f1f1f;
-  border: 0.5px solid #cc0000;
-  color: #cc0000;
+  background: #ece7de;
+  border: 0.5px solid var(--red);
+  color: var(--red);
   font-family: var(--font-admin-mono, var(--font-ibm-plex-mono, "IBM Plex Mono")), monospace;
   font-size: 12px;
   letter-spacing: 0.06em;
@@ -297,11 +302,11 @@
 }
 
 .cancelBtn:hover {
-  background: #3a0808;
+  background: rgba(204,0,0,0.08);
 }
 
 .cancelBtn:active {
-  background: #5a1010;
+  background: rgba(204,0,0,0.14);
 }
 
 /* ── Responsive ───────────────────────────────── */

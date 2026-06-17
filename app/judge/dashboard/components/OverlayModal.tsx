@@ -73,7 +73,7 @@
     function Card({ title, icon, children, style }: any) {
       return (
         <div style={{
-          background: C.bgPrimary, border: `1px solid ${C.borderLight}`, borderRadius: 8, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 12, ...style }}>
+          background: C.bgPrimary, border: `1px solid ${C.borderLight}`, borderRadius: 0, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 12, ...style }}>
           {(title || icon) && (
             <div style={{ display: "flex", alignItems: "center", gap: 8, color: C.primary, fontFamily: FM, fontSize: 10, letterSpacing: "0.06em", fontWeight: 700}}>
               {icon && <span style={{ display: "flex" }}>{icon}</span>}{title}
@@ -89,7 +89,7 @@
     function LinkRow({ label, url }: { label: string; url?: string | null }) {
       if (!url) return null;
       return (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: `1px solid ${C.bgPrimary}` }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: `1px solid ${C.borderLight}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, color: C.textPrimary, fontWeight: 600 }}>
             <span style={{ color: C.primary }}>{Icons.link}</span>
             {label}
@@ -124,7 +124,7 @@
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
           className="r-overlay-backdrop"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+          style={{ position: "fixed", inset: 0, background: "rgba(29, 28, 23, 0.6)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
           onClick={e => { if (e.target === e.currentTarget) onClose(); }}
         >
           <style>{`
@@ -141,7 +141,7 @@
             transition={{ duration: 0.22, ease: "easeOut" }}
             onClick={e => e.stopPropagation()}
             className="r-overlay-panel"
-            style={{ width: "min(1200px, 100%)", maxHeight: "calc(100vh - 40px)", display: "flex", flexDirection: "column", background: C.bgPrimary, borderRadius: 12, boxShadow: "0 10px 40px rgba(0,0,0,0.2)", overflow: "hidden" }}
+            style={{ width: "min(1200px, 100%)", maxHeight: "calc(100vh - 40px)", display: "flex", flexDirection: "column", background: C.bgPrimary, border: `3px solid ${C.primary}`, borderRadius: 0, boxShadow: `8px 8px 0 0 ${C.primary}`, overflow: "hidden" }}
           >
             {/* Header */}
             <div style={{ background: C.bgPrimary, borderBottom: `1px solid ${C.borderLight}`, flexShrink: 0 }}>
@@ -151,11 +151,12 @@
                   {project.name} // {project.teamName}
                 </div>
                 <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                  <span style={{ border: `1px solid ${C.borderSuccess}`, color: C.textSuccess, padding: "4px 10px", borderRadius: 999, fontSize: 10, fontWeight: 700, fontFamily: FM }}>
+                  <span style={{ border: `1px solid ${C.borderSuccess}`, color: C.textSuccess, padding: "4px 10px", borderRadius: 0, fontSize: 10, fontWeight: 700, fontFamily: FM }}>
                     SUBMITTED
                   </span>
                   <button
                     onClick={onClose}
+                    className="r-x-close"
                     style={{ background: "transparent", border: "none", cursor: "pointer", color: C.textMuted, display: "flex", padding: 4 }}
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -174,7 +175,7 @@
             >
               <div className="modal-top-grid">
                 {/* Thumbnail */}
-                <div style={{ width: "100%", aspectRatio: "16/9", background: C.bgPrimary, border: `1px solid ${C.borderLight}`, borderRadius: 8, position: "relative", overflow: "hidden", flexShrink: 0 }}>
+                <div style={{ width: "100%", aspectRatio: "16/9", background: C.bgPrimary, border: `1px solid ${C.borderLight}`, borderRadius: 0, position: "relative", overflow: "hidden", flexShrink: 0 }}>
                   {project.thumbnailUrl ? (
                     <img src={project.thumbnailUrl} alt={`${project.name} thumbnail`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                   ) : (
@@ -192,7 +193,7 @@
                     <SummaryRow icon={Icons.tag} label="Track" value={project.track} />
                     <SummaryRow icon={Icons.clock} label="Submitted At" value={fmtDate(project.submittedAt)} />
                     <SummaryRow icon={Icons.clock} label="Last Updated" value={fmtDate(project.updatedAt)} />
-                    <SummaryRow icon={Icons.checkCircle} label="Status" badge={<span style={{ border: `1px solid ${C.borderSuccess}`, color: C.textSuccess, padding: "2px 8px", borderRadius: 4, fontSize: 9, textTransform: "uppercase" }}>SUBMITTED</span>} />
+                    <SummaryRow icon={Icons.checkCircle} label="Status" badge={<span style={{ border: `1px solid ${C.borderSuccess}`, color: C.textSuccess, padding: "2px 8px", borderRadius: 0, fontSize: 9, textTransform: "uppercase" }}>SUBMITTED</span>} />
                   </div>
                 </Card>
                                                                                                                                                                 
@@ -210,7 +211,7 @@
                 <Card title="TECH STACK" icon={Icons.layers}>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                     {project.techStack.length > 0 ? project.techStack.map(t => (
-                      <span key={t} style={{ padding: "6px 10px", background: C.bgPrimary, border: `1px solid ${C.primary}`, borderRadius: 4, fontFamily: FM, fontSize: 10, color: C.primary }}>
+                      <span key={t} style={{ padding: "6px 10px", background: C.bgPrimary, border: `1px solid ${C.primary}`, borderRadius: 0, fontFamily: FM, fontSize: 10, color: C.primary }}>
                         {t}
                       </span>
                     )) : <span style={{ color: C.textMuted }}>None specified</span>}
@@ -247,7 +248,7 @@
                               {m.role && !isLeader && <div>{m.role}</div>}
                             </div>
                             {isLeader && (
-                              <div style={{ marginTop: 6, display: "inline-block", padding: "2px 6px", border: `1px solid ${C.primary}`, color: C.primary, fontSize: 8, fontWeight: 700, borderRadius: 4 }}>
+                              <div style={{ marginTop: 6, display: "inline-block", padding: "2px 6px", border: `1px solid ${C.primary}`, color: C.primary, fontSize: 8, fontWeight: 700, borderRadius: 0 }}>
                                 LEADER
                               </div>
                             )}
@@ -270,7 +271,8 @@
               <div style={{ display: "flex", gap: 12 }}>
                 <button
                   onClick={onClose}
-                  style={{ padding: "10px 24px", background: C.bgPrimary, border: `1px solid ${C.borderMedium}`, borderRadius: 6, fontFamily: FM, fontSize: 11, fontWeight: 700, color: C.textPrimary, cursor: "pointer" }}                                                                                                                   
+                  className="r-ghost-btn"
+                  style={{ padding: "10px 24px", background: C.bgPrimary, border: `1px solid ${C.borderMedium}`, borderRadius: 0, fontFamily: FM, fontSize: 11, fontWeight: 700, color: C.textPrimary, cursor: "pointer" }}
                 >
                   CLOSE
                 </button>

@@ -4,7 +4,7 @@
   margin: -26px -24px 24px -26px;
   min-height: 70px;
   padding: 26px 26px 14px;
-  background: #1a1a1a;
+  background: #f2ede5;
   border-top: 3px solid #cc0000;
   border-bottom: 1px solid #3a0808;
 }
@@ -23,7 +23,7 @@
 
 .pageHeader p {
   margin-top: 3px;
-  color: #888888;
+  color: #7a7669;
   font-size: 12px;
   line-height: 16px;
 }
@@ -43,7 +43,7 @@
 /* ── Panel card ───────────────────────────────── */
 
 .panel {
-  background: #ffffff;
+  background: #fef9f1;
   border: 1px solid #cc0000;
   box-shadow: 4px 4px 0 0 #cc0000;
   display: flex;
@@ -57,7 +57,7 @@
   align-items: center;
   border-top: 3px solid #cc0000;
   border-bottom: 1px solid #3a0808;
-  background: #1a1a1a;
+  background: #f2ede5;
 }
 
 .panelHead h3 {
@@ -89,7 +89,7 @@
 .configLabel {
   font-size: 12px;
   line-height: 16px;
-  color: #1a1a1a;
+  color: #1d1c17;
   min-width: 0;
   flex: 1;
 }
@@ -98,7 +98,7 @@
   display: block;
   font-size: 10px;
   line-height: 14px;
-  color: #888888;
+  color: #7a7669;
   margin-top: 2px;
 }
 
@@ -133,7 +133,7 @@
 .toggleThumb {
   width: 14px;
   height: 14px;
-  background: #ffffff;
+  background: #fef9f1;
   pointer-events: none;
   transition: none;
 }
@@ -145,14 +145,14 @@
   width: 80px;
   min-height: 28px;
   padding: 4px 8px;
-  background: #ffffff;
-  border: 1px solid #1a1a1a;
-  color: #1a1a1a;
+  background: #fef9f1;
+  border: 1px solid #1d1c17;
+  color: #1d1c17;
   font-family: var(--font-admin-mono), monospace;
   font-size: 12px;
   line-height: 16px;
   text-align: right;
-  box-shadow: 2px 2px 0 0 #888888;
+  box-shadow: 2px 2px 0 0 #7a7669;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
@@ -171,7 +171,7 @@
   flex-shrink: 0;
   font-size: 10px;
   line-height: 14px;
-  color: #888888;
+  color: #7a7669;
   margin-left: 4px;
 }
 
@@ -187,13 +187,13 @@
 .deadlineInput {
   height: 30px;
   padding: 0 8px;
-  background: #ffffff;
-  border: 1px solid #1a1a1a;
-  color: #1a1a1a;
+  background: #fef9f1;
+  border: 1px solid #1d1c17;
+  color: #1d1c17;
   font-family: var(--font-admin-mono), monospace;
   font-size: 11px;
   line-height: 16px;
-  box-shadow: 2px 2px 0 0 #888888;
+  box-shadow: 2px 2px 0 0 #7a7669;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -212,7 +212,7 @@
   flex-shrink: 0;
   height: 30px;
   padding: 0 12px;
-  background: #1a1a1a;
+  background: #f2ede5;
   border: 1px solid #cc0000;
   color: #cc0000;
   font-family: var(--font-admin-mono), monospace;
@@ -226,7 +226,7 @@
 
 .deadlineSaveBtn:hover:not(:disabled) {
   background: #cc0000;
-  color: #ffffff;
+  color: #fef9f1;
 }
 
 .deadlineSaveBtn:disabled {
@@ -241,7 +241,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  border-bottom: 1px solid #e5e0d8;
+  border-bottom: 1px solid #d8d2c5;
   flex: 1;
 }
 
@@ -252,7 +252,7 @@
 .criteriaLabel {
   font-size: 11px;
   line-height: 14px;
-  color: #1a1a1a;
+  color: #1d1c17;
   flex: 1;
 }
 
@@ -266,7 +266,7 @@
 .criteriaTotal {
   font-size: 10px;
   line-height: 14px;
-  color: #888888;
+  color: #7a7669;
   margin-top: 0;
   display: flex;
   justify-content: flex-end;
@@ -275,7 +275,7 @@
 
 .criteriaTotal strong {
   font-weight: 400;
-  color: #1a1a1a;
+  color: #1d1c17;
 }
 
 /* ── Track rows ───────────────────────────────── */
@@ -285,7 +285,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  border-bottom: 1px solid #e5e0d8;
+  border-bottom: 1px solid #d8d2c5;
   padding-bottom: 14px;
 }
 
@@ -315,7 +315,7 @@
 .trackName {
   font-size: 10px;
   line-height: 13px;
-  color: #888888;
+  color: #7a7669;
   margin-top: 2px;
 }
 
@@ -327,7 +327,7 @@
   justify-content: space-between;
   flex: 1;
   padding-bottom: 18px;
-  border-bottom: 1px solid #e5e0d8;
+  border-bottom: 1px solid #d8d2c5;
   margin-bottom: 18px;
 }
 
@@ -340,7 +340,7 @@
 .sessionFieldLabel {
   font-size: 10px;
   line-height: 13px;
-  color: #888888;
+  color: #7a7669;
   flex-shrink: 0;
   width: 112px;
 }
@@ -348,7 +348,7 @@
 .sessionFieldValue {
   font-size: 11px;
   line-height: 14px;
-  color: #1a1a1a;
+  color: #1d1c17;
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -366,7 +366,7 @@
   margin-top: auto;
   background: #cc0000;
   border: 1px solid #cc0000;
-  color: #ffffff;
+  color: #fef9f1;
   font-family: var(--font-admin-mono), monospace;
   font-size: 12px;
   line-height: 16px;
@@ -401,7 +401,7 @@
   display: grid;
   grid-template-columns: minmax(100px, 1fr) minmax(120px, 1.2fr) 80px minmax(140px, 1fr) 150px;
   align-items: stretch;
-  border-bottom: 1px solid #e5e0d8;
+  border-bottom: 1px solid #d8d2c5;
 }
 
 .tableHead {
@@ -410,8 +410,8 @@
   align-items: center;
   padding: 0 12px;
   border-bottom: 1px solid #cc0000;
-  background: #1a1a1a;
-  color: #888888;
+  background: #f2ede5;
+  color: #7a7669;
   font-size: 10px;
   line-height: 13px;
   text-transform: uppercase;
@@ -427,8 +427,8 @@
   display: flex;
   align-items: center;
   padding: 10px 12px;
-  border-bottom: 1px solid #e5e0d8;
-  color: #1a1a1a;
+  border-bottom: 1px solid #d8d2c5;
+  color: #1d1c17;
   font-size: 11px;
   line-height: 14px;
   overflow-wrap: anywhere;
@@ -446,9 +446,9 @@
   min-width: 64px;
   font-size: 10px;
   line-height: 13px;
-  color: #ffffff;
-  background: #1a1a1a;
-  border: 1px solid #1a1a1a;
+  color: #1d1c17;
+  background: #f2ede5;
+  border: 1px solid #1d1c17;
 }
 
 .statusInactive {
@@ -459,9 +459,9 @@
   min-width: 64px;
   font-size: 10px;
   line-height: 13px;
-  color: #888888;
+  color: #7a7669;
   background: transparent;
-  border: 1px solid #888888;
+  border: 1px solid #7a7669;
 }
 
 .judgeActions {
@@ -476,9 +476,9 @@
   align-items: center;
   justify-content: center;
   padding: 0 9px;
-  background: #ffffff;
-  border: 1px solid #1a1a1a;
-  color: #1a1a1a;
+  background: #fef9f1;
+  border: 1px solid #1d1c17;
+  color: #1d1c17;
   font-family: var(--font-admin-mono), monospace;
   font-size: 10px;
   line-height: 13px;
@@ -487,7 +487,7 @@
 }
 
 .editBtn:hover {
-  background: #f5f0e8;
+  background: #f2ede5;
   border-color: #cc0000;
   color: #cc0000;
 }
@@ -504,7 +504,7 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  background: #ffffff;
+  background: #fef9f1;
   border: 1px solid #cc0000;
   color: #cc0000;
   cursor: pointer;
@@ -539,20 +539,20 @@
   align-items: center;
   padding: 8px 12px;
   border-bottom: 1px solid #cc0000;
-  background: #f5f0e8;
+  background: #f2ede5;
 }
 
 .addInput {
   width: 100%;
   min-height: 26px;
   padding: 4px 8px;
-  background: #ffffff;
-  border: 1px solid #1a1a1a;
-  color: #1a1a1a;
+  background: #fef9f1;
+  border: 1px solid #1d1c17;
+  color: #1d1c17;
   font-family: var(--font-admin-mono), monospace;
   font-size: 11px;
   line-height: 14px;
-  box-shadow: 2px 2px 0 0 #888888;
+  box-shadow: 2px 2px 0 0 #7a7669;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
@@ -568,7 +568,7 @@
 }
 
 .addInput::placeholder {
-  color: #888888;
+  color: #7a7669;
 }
 
 .addFormActions {
@@ -584,21 +584,21 @@
   justify-content: center;
   padding: 0;
   width: 22px;
-  background: #1a1a1a;
-  border: 1px solid #1a1a1a;
-  color: #ffffff;
+  background: #f2ede5;
+  border: 1px solid #1d1c17;
+  color: #1d1c17;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, transform 0.1s;
 }
 
 .confirmBtn:hover {
-  background: #3a3a3a;
-  border-color: #888888;
+  background: #ddd6c8;
+  border-color: #7a7669;
   transform: scale(1.08);
 }
 
 .confirmBtn:active {
-  background: #1a1a1a;
+  background: #f2ede5;
   transform: scale(0.95);
 }
 
@@ -611,7 +611,7 @@
   width: 22px;
   background: #cc0000;
   border: 1px solid #cc0000;
-  color: #ffffff;
+  color: #fef9f1;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, transform 0.1s;
 }
@@ -647,7 +647,7 @@
   gap: 6px;
   min-height: 30px;
   padding: 6px 14px;
-  background: #ffffff;
+  background: #fef9f1;
   border: 1px solid #cc0000;
   color: #cc0000;
   font-family: var(--font-admin-mono), monospace;
@@ -680,8 +680,8 @@
   min-height: 30px;
   padding: 6px 14px;
   background: transparent;
-  border: 1px solid #888888;
-  color: #555555;
+  border: 1px solid #7a7669;
+  color: #57534a;
   font-family: var(--font-admin-mono), monospace;
   font-size: 11px;
   line-height: 14px;
@@ -691,8 +691,8 @@
 }
 
 .resetBtn:hover {
-  border-color: #1a1a1a;
-  color: #1a1a1a;
+  border-color: #1d1c17;
+  color: #1d1c17;
 }
 
 /* ── Track management ─────────────────────────── */
@@ -702,7 +702,7 @@
   align-items: center;
   gap: 8px;
   padding-top: 14px;
-  border-top: 1px solid #e5e0d8;
+  border-top: 1px solid #d8d2c5;
   margin-top: auto;
 }
 
@@ -711,13 +711,13 @@
   min-width: 0;
   height: 32px;
   padding: 0 8px;
-  background: #ffffff;
-  border: 1px solid #1a1a1a;
-  color: #1a1a1a;
+  background: #fef9f1;
+  border: 1px solid #1d1c17;
+  color: #1d1c17;
   font-family: var(--font-admin-mono), monospace;
   font-size: 11px;
   line-height: 14px;
-  box-shadow: 2px 2px 0 0 #888888;
+  box-shadow: 2px 2px 0 0 #7a7669;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
@@ -733,7 +733,7 @@
 }
 
 .trackAddInput::placeholder {
-  color: #888888;
+  color: #7a7669;
   text-transform: uppercase;
 }
 
@@ -741,9 +741,9 @@
   flex-shrink: 0;
   height: 32px;
   padding: 0 12px;
-  background: #1a1a1a;
-  border: 1px solid #1a1a1a;
-  color: #f5f0e8;
+  background: #f2ede5;
+  border: 1px solid #1d1c17;
+  color: #1d1c17;
   font-family: var(--font-admin-mono), monospace;
   font-size: 10px;
   line-height: 14px;
@@ -780,14 +780,14 @@
 
 .removeTrackBtn:hover {
   background: #cc0000;
-  color: #ffffff;
+  color: #fef9f1;
 }
 
 .customTrackBadge {
   display: inline-block;
   font-size: 9px;
   line-height: 12px;
-  color: #888888;
+  color: #7a7669;
   border: 1px solid #d0c8bc;
   padding: 1px 5px;
   letter-spacing: 0.04em;
@@ -798,7 +798,7 @@
 .divider {
   width: 100%;
   height: 1px;
-  background: #e5e0d8;
+  background: #d8d2c5;
 }
 
 /* ── Update button ────────────────────────────── */
@@ -808,9 +808,9 @@
   align-items: center;
   min-height: 30px;
   padding: 6px 14px;
-  background: #1a1a1a;
-  border: 1px solid #1a1a1a;
-  color: #f5f0e8;
+  background: #f2ede5;
+  border: 1px solid #1d1c17;
+  color: #1d1c17;
   font-family: var(--font-admin-mono), monospace;
   font-size: 11px;
   line-height: 14px;
@@ -822,7 +822,7 @@
 .updateBtn:hover {
   background: #cc0000;
   border-color: #cc0000;
-  color: #ffffff;
+  color: #fef9f1;
 }
 
 .updateBtn:active {
@@ -840,7 +840,7 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: 11px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #1d1c17;
   animation: pulse 1s ease-in-out infinite;
 }
 
@@ -1039,7 +1039,7 @@
     gap: 12px;
     padding: 14px;
     border: 1px solid #cc0000;
-    background: #ffffff;
+    background: #fef9f1;
     box-shadow: 2px 2px 0 0 #cc0000;
     margin-bottom: 16px;
   }
@@ -1059,7 +1059,7 @@
   .addFormCell::before {
     content: attr(data-label) ": ";
     display: inline;
-    color: #888888;
+    color: #7a7669;
     font-size: 11px;
     text-transform: uppercase;
     font-weight: 700;
@@ -1073,7 +1073,7 @@
 
   .judgeCell[data-label="ACTIONS"],
   .addFormCell[data-label="ACTIONS"] {
-    border-top: 1px dashed #e5e0d8;
+    border-top: 1px dashed #d8d2c5;
     padding-top: 10px;
     margin-top: 4px;
     display: flex;

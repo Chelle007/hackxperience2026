@@ -27,7 +27,7 @@ export default function JudgeLayout({
   return (
     <div
       className={`${ibmPlexMono.variable} ${bebasNeue.variable}`}
-      style={{ flex: "1", minHeight: "100vh", background: "#0D0D0D" }}
+      style={{ flex: "1", minHeight: "100vh", background: "#f2ede5" }}
     >
       {children}
     </div>

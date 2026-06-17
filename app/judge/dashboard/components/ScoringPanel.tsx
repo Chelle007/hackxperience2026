@@ -17,7 +17,7 @@ const CRITERION_SUBTITLES: Record<string, string> = {
 function CriterionIcon({ color, criteriaKey }: { color: string; criteriaKey: string }) {
   return (
     <div style={{
-      width: 36, height: 36, background: color, borderRadius: 4,
+      width: 36, height: 36, background: color, borderRadius: 0,
       display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
       color: C.white,
     }}>

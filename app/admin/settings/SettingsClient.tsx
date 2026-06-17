@@ -615,7 +615,7 @@ function JudgeAccountsPanel({
                 <span className={styles.statusActive}>ACTIVE</span>
               </div>
               <div className={styles.addFormCell} data-label="LAST LOGGED IN">
-                <span style={{ color: "#888888", fontSize: 10 }}>—</span>
+                <span style={{ color: "#7a7669", fontSize: 10 }}>—</span>
               </div>
               <div className={styles.addFormCell} data-label="ACTIONS">
                 <div className={styles.addFormActions}>
@@ -655,7 +655,7 @@ function JudgeAccountsPanel({
         {adding && (
           <div className={styles.addFormRow}>
             <div className={styles.addFormCell} data-label="JUDGE_ID">
-              <span style={{ color: "#888888", fontSize: 10 }}>// AUTO</span>
+              <span style={{ color: "#7a7669", fontSize: 10 }}>// AUTO</span>
             </div>
             <div className={styles.addFormCell} data-label="JUDGE NAME">
               <input

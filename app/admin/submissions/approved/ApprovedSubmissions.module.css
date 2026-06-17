@@ -2,7 +2,7 @@
   margin: -26px -24px 0 -26px;
   min-height: 70px;
   padding: 26px 26px 14px;
-  background: #1a1a1a;
+  background: #f2ede5;
   border-top: 3px solid #cc0000;
   border-bottom: 1px solid #3a0808;
 }
@@ -21,7 +21,7 @@
 
 .sectionHeader p {
   margin-top: 3px;
-  color: #888888;
+  color: #7a7669;
   font-size: 12px;
   line-height: 16px;
 }
@@ -45,13 +45,13 @@
 .searchField input {
   width: 100%;
   min-height: 36px;
-  border: 1px solid #1a1a1a;
-  background: #ffffff;
-  color: #1a1a1a;
+  border: 1px solid #1d1c17;
+  background: #fef9f1;
+  color: #1d1c17;
   font-family: var(--font-admin-mono), monospace;
   font-size: 12px;
   line-height: 16px;
-  box-shadow: 2px 2px 0 0 #888888;
+  box-shadow: 2px 2px 0 0 #7a7669;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
@@ -60,7 +60,7 @@
 }
 
 .searchField input::placeholder {
-  color: #888888;
+  color: #7a7669;
 }
 
 .searchField input:hover:not(:focus) {
@@ -81,7 +81,7 @@
   width: 14px;
   height: 14px;
   transform: translateY(-50%);
-  color: #888888;
+  color: #7a7669;
   pointer-events: none;
   transition: color 0.15s;
 }
@@ -94,7 +94,7 @@
 /* ── Table ────────────────────────────────────── */
 
 .tablePanel {
-  background: #ffffff;
+  background: #fef9f1;
   border: 1px solid #cc0000;
   box-shadow: 4px 4px 0 0 #cc0000;
   overflow-x: auto;
@@ -113,8 +113,8 @@
   align-items: center;
   padding: 0 14px;
   border-bottom: 1px solid #cc0000;
-  background: #1a1a1a;
-  color: #888888;
+  background: #f2ede5;
+  color: #7a7669;
   font-size: 11px;
   line-height: 16px;
   text-transform: uppercase;
@@ -131,8 +131,8 @@
   align-items: center;
   min-width: 0;
   padding: 12px 14px;
-  border-bottom: 1px solid #e5e0d8;
-  color: #1a1a1a;
+  border-bottom: 1px solid #d8d2c5;
+  color: #1d1c17;
   font-size: 10px;
   line-height: 13px;
   overflow-wrap: anywhere;
@@ -174,9 +174,9 @@
   align-items: center;
   justify-content: center;
   padding: 3px 8px;
-  color: #ffffff;
-  background: #1a1a1a;
-  border: 1px solid #1a1a1a;
+  color: #1d1c17;
+  background: #f2ede5;
+  border: 1px solid #1d1c17;
   font-size: 10px;
   line-height: 13px;
 }
@@ -200,7 +200,7 @@
   padding: 0;
   background: #cc0000;
   border: 1px solid #cc0000;
-  color: #ffffff;
+  color: #fef9f1;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, transform 0.1s;
 }
@@ -229,9 +229,9 @@
   align-items: center;
   justify-content: center;
   padding: 0 9px;
-  background: #ffffff;
-  border: 1px solid #1a1a1a;
-  color: #1a1a1a;
+  background: #fef9f1;
+  border: 1px solid #1d1c17;
+  color: #1d1c17;
   font-family: var(--font-admin-mono), monospace;
   font-size: 10px;
   line-height: 13px;
@@ -241,7 +241,7 @@
 }
 
 .viewAction:hover {
-  background: #f5f0e8;
+  background: #f2ede5;
   border-color: #cc0000;
   color: #cc0000;
 }
@@ -259,7 +259,7 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  background: #ffffff;
+  background: #fef9f1;
   border: 1px solid #cc0000;
   color: #cc0000;
   cursor: pointer;
@@ -291,8 +291,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid #e5e0d8;
-  color: #888888;
+  border-bottom: 1px solid #d8d2c5;
+  color: #7a7669;
   font-size: 12px;
   line-height: 16px;
 }
@@ -313,7 +313,7 @@
 .modal {
   position: relative;
   width: min(507px, 100%);
-  background: #ffffff;
+  background: #fef9f1;
   border: 1px solid #cc0000;
   box-shadow: 8px 8px 0 0 #cc0000;
   padding: 28px 28px 24px;
@@ -341,7 +341,7 @@
   font-family: var(--font-admin-mono), monospace;
   font-size: 12px;
   line-height: 16px;
-  color: #888888;
+  color: #7a7669;
   margin: 0 0 16px;
   font-weight: 400;
 }
@@ -350,7 +350,7 @@
   font-family: var(--font-admin-mono), monospace;
   font-size: 13px;
   line-height: 17px;
-  color: #1a1a1a;
+  color: #1d1c17;
   margin: 0 0 24px;
   font-weight: 400;
 }
@@ -378,7 +378,7 @@
 .modalYes {
   background: #cc0000;
   border-color: #cc0000;
-  color: #ffffff;
+  color: #fef9f1;
 }
 
 .modalYes:hover {
@@ -387,14 +387,14 @@
 }
 
 .modalNo {
-  background: #1a1a1a;
-  border-color: #1a1a1a;
-  color: #ffffff;
+  background: #f2ede5;
+  border-color: #1d1c17;
+  color: #1d1c17;
 }
 
 .modalNo:hover {
-  background: #3a3a3a;
-  border-color: #3a3a3a;
+  background: #ddd6c8;
+  border-color: #d0c8bc;
 }
 
 /* ── Responsive ───────────────────────────────── */
@@ -471,8 +471,8 @@
     flex-direction: column;
     gap: 10px;
     padding: 12px;
-    border: 1px solid #e5e0d8;
-    background: #ffffff;
+    border: 1px solid #d8d2c5;
+    background: #fef9f1;
     box-shadow: 2px 2px 0 0 #cc0000;
   }
 
@@ -489,7 +489,7 @@
     content: attr(data-label);
     display: block;
     margin-bottom: 3px;
-    color: #888888;
+    color: #7a7669;
     font-size: 10px;
     line-height: 14px;
     text-transform: uppercase;
