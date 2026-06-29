@@ -12,9 +12,10 @@ const Tracks: React.FC = () => {
   return (
     <section
       id="tracks"
-      className="py-24 px-6 max-w-7xl mx-auto font-sans scroll-mt-11"
+      className="w-full py-24 scroll-mt-11"
       style={{ fontFamily: "Montserrat", backgroundColor: CREAM_BG }}
     >
+      <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 md:px-12">
       <div className="mb-12 md:mb-16">
         <div
           className="inline-block px-3 py-1.5 font-mono uppercase text-[10px] md:text-xs tracking-widest font-bold mb-5"
@@ -28,7 +29,7 @@ const Tracks: React.FC = () => {
         >
           {HACKATHON_THEME.title.toUpperCase()}
         </h2>
-        <p className="text-base sm:text-lg md:text-xl leading-relaxed opacity-80 font-medium max-w-4xl" style={{ color: DARK_BG }}>
+        <p className="text-base sm:text-lg md:text-xl leading-relaxed opacity-80 font-medium" style={{ color: DARK_BG }}>
           {HACKATHON_THEME.intro} {HACKATHON_THEME.closing}
         </p>
       </div>
@@ -37,7 +38,7 @@ const Tracks: React.FC = () => {
         <h3 className="font-mono font-bold uppercase tracking-widest text-xs sm:text-sm" style={{ color: RED }}>
           // TRACKS
         </h3>
-        <p className="mt-3 text-sm md:text-base opacity-70 max-w-3xl" style={{ color: DARK_BG }}>
+        <p className="mt-3 text-sm md:text-base opacity-70" style={{ color: DARK_BG }}>
           Pick the track that speaks to your team. Each has sub-tracks to guide your agentic build, and you&apos;re free to explore within or across them.
         </p>
       </div>
@@ -103,6 +104,7 @@ const Tracks: React.FC = () => {
         style={{ borderColor: DARK_BG, color: DARK_BG, backgroundColor: CREAM_CARD }}
       >
         // BUILD AGENTIC SOLUTIONS · CHOOSE YOUR TRACK AT SUBMISSION · SUB-TRACKS ARE GUIDES, NOT LIMITS
+      </div>
       </div>
     </section>
   );

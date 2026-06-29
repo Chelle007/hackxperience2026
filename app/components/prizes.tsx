@@ -61,9 +61,10 @@ const Prizes: React.FC = () => {
   return (
     <section
       id="prizes"
-      className="py-24 px-6 max-w-7xl mx-auto font-sans scroll-mt-11"
+      className="w-full py-24 scroll-mt-11"
       style={{ fontFamily: "Montserrat", backgroundColor: CREAM_BG }}
     >
+      <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 md:px-12">
       <div className="mb-10 md:mb-14">
         <div
           className="inline-block px-3 py-1.5 font-mono uppercase text-[10px] md:text-xs tracking-widest font-bold mb-5"
@@ -77,7 +78,7 @@ const Prizes: React.FC = () => {
         >
           WIN BIG. BUILD BOLD.
         </h2>
-        <p className="text-base sm:text-lg opacity-80 font-medium max-w-3xl" style={{ color: DARK_BG }}>
+        <p className="text-base sm:text-lg opacity-80 font-medium" style={{ color: DARK_BG }}>
           Over <strong>{PRIZE_POOL_TOTAL}</strong> in track prizes, sponsor awards, and community votes, across Care Forward, Friction To Flow, and special categories.
         </p>
         <p className="mt-2 font-mono text-[11px] sm:text-xs tracking-widest uppercase opacity-70" style={{ color: DARK_BG }}>
@@ -89,6 +90,7 @@ const Prizes: React.FC = () => {
         {HACKATHON_PRIZES.map((award) => (
           <PrizeCard key={award.id} award={award} />
         ))}
+      </div>
       </div>
     </section>
   );

@@ -59,7 +59,14 @@ const JUDGES = [
 ]
 
 const SPONSORS = [
-  { name: 'DynamicWeb', tier: 'gold', img: '/sponsors/dynamicweb.png', url: 'https://dynamicweb.com/' },
+  {
+    name: 'DynamicWeb',
+    tier: 'gold',
+    img: '/sponsors/dynamicweb.png',
+    url: 'https://dynamicweb.com/',
+    logoClass:
+      'w-full max-w-[min(100%,26rem)] h-auto max-h-28 sm:max-h-36 md:max-h-40 object-contain transition-transform duration-200 group-hover:scale-[1.03]',
+  },
   { name: 'IAMCP', tier: 'gold', img: '/sponsors/iamcp.png', url: 'https://www.iamcp.org/' },
 ]
 
@@ -269,7 +276,7 @@ function SponsorRow({ tier, sponsors }) {
               <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-red-600 opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none" />
               <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-red-600 opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none" />
               {s.img ? (
-                <img src={s.img} alt={s.name} className={logoClass} />
+                <img src={s.img} alt={s.name} className={s.logoClass ?? logoClass} />
               ) : (
                 <div className="text-[#1d1c17] text-sm sm:text-base font-bold tracking-wider font-mono text-center px-4">
                   {s.name}
@@ -319,8 +326,6 @@ export default function TimeLine() {
             />
           ))}
         </div>
-
-        <div className="w-full h-px bg-red-700 mt-12 sm:mt-16 mb-8 sm:mb-12" />
 
         <div id="judges">
           <SectionHeader title="JUDGES_AND_MENTORS" subtitle="// INDUSTRY EXPERTS EVALUATING YOUR WORK" />

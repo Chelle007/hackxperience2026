@@ -14,11 +14,41 @@ interface Member {
   role: string;
   name: string;
   img: string | null;
+  /** full = zoom for full-body outdoor shots; medium/tight = already closer framing */
+  frame?: "full" | "medium" | "tight";
 }
 
 interface Team {
   label: string;
   members: Member[];
+}
+
+const PHOTO_FRAMES = {
+  full: { scale: 1.9, objectPosition: "50% 38%" },
+  medium: { scale: 1.28, objectPosition: "50% 44%" },
+  tight: { scale: 1.05, objectPosition: "50% 48%" },
+} as const;
+
+function MemberPhoto({ member }: { member: Member }) {
+  const frame = member.frame ?? "full";
+  const { scale, objectPosition } = PHOTO_FRAMES[frame];
+
+  return (
+    <div className="w-full aspect-[3/4] bg-[#ddd8cf] border border-[#ccc7bd] overflow-hidden">
+      {member.img ? (
+        <img
+          src={member.img}
+          alt={member.name}
+          className="w-full h-full object-cover"
+          style={{
+            objectPosition,
+            transform: `scale(${scale})`,
+            transformOrigin: objectPosition,
+          }}
+        />
+      ) : null}
+    </div>
+  );
 }
 
 const TEAMS: Team[] = [
@@ -27,8 +57,8 @@ const TEAMS: Team[] = [
     members: [
       { role: "PRESIDENT", name: "JAYADIPA FUKUTARO", img: "/committee/jayadipa-fukutaro.jpg" },
       { role: "VICE PRESIDENT", name: "MICHELLE CHAN", img: "/committee/michelle-chan.jpg" },
-      { role: "SECRETARY", name: "REYNALDI ARDIANTO WIYOGO", img: "/committee/reynaldi-ardianto.jpg" },
-      { role: "TECHNICAL DIRECTOR", name: "YAN MEI WONG", img: "/committee/yan-mei-wong.jpg" },
+      { role: "SECRETARY", name: "REYNALDI ARDIANTO WIYOGO", img: "/committee/reynaldi-ardianto.jpg", frame: "medium" },
+      { role: "TECHNICAL DIRECTOR", name: "YAN MEI WONG", img: "/committee/yan-mei-wong.jpg", frame: "medium" },
       { role: "TECHNICAL DIRECTOR", name: "DESMOND", img: "/committee/desmond.jpg" },
       { role: "MARKETING DIRECTOR", name: "VANNESS YANG", img: "/committee/vanness-yang.jpg" },
       { role: "PARTNERSHIPS DIRECTOR", name: "WINSTON FAUSTIN", img: "/committee/winston-faustin.jpg" },
@@ -40,11 +70,11 @@ const TEAMS: Team[] = [
       { role: "SUBCOMMITTEE", name: "LEE HAE EUN CHLOE", img: "/committee/chloe.jpg" },
       { role: "SUBCOMMITTEE", name: "VUN KIAN HIUNG", img: "/committee/vun-kian-hiung.jpg" },
       { role: "SUBCOMMITTEE", name: "MOE PYE SONE", img: "/committee/moe-pye-sone.jpg" },
-      { role: "SUBCOMMITTEE", name: "CHUA WEE YEE GERALD", img: "/committee/gerald.jpg" },
-      { role: "SUBCOMMITTEE", name: "TAN WEI QUAN", img: "/committee/wei-quan.jpg" },
-      { role: "SUBCOMMITTEE", name: "STANLEY LAURENZ", img: "/committee/stanley-laurenz.jpg" },
+      { role: "SUBCOMMITTEE", name: "CHUA WEE YEE GERALD", img: "/committee/gerald.jpg", frame: "medium" },
+      { role: "SUBCOMMITTEE", name: "TAN WEI QUAN", img: "/committee/wei-quan.jpg", frame: "medium" },
+      { role: "SUBCOMMITTEE", name: "STANLEY LAURENZ", img: "/committee/stanley-laurenz.jpg", frame: "medium" },
       { role: "SUBCOMMITTEE", name: "VICKY YANG", img: "/committee/vicky-yang.jpg" },
-      { role: "SUBCOMMITTEE", name: "NADON PANWONG", img: "/committee/nadon-panwong.jpg" },
+      { role: "SUBCOMMITTEE", name: "NADON PANWONG", img: "/committee/nadon-panwong.jpg", frame: "medium" },
       { role: "SUBCOMMITTEE", name: "AMEER", img: "/committee/ameer.jpg" },
     ],
   },
@@ -69,7 +99,7 @@ const TEAMS: Team[] = [
       { role: "SUBCOMMITTEE", name: "SHISA YOSHIHIRO", img: "/committee/shisa-yoshihiro.jpg" },
       { role: "SUBCOMMITTEE", name: "EILEEN LEE", img: "/committee/eileen-lee.jpg" },
       { role: "SUBCOMMITTEE", name: "SU YI MAUNG", img: "/committee/su-yi-maung.jpg" },
-      { role: "SUBCOMMITTEE", name: "KARTHIKEYAN SURESH", img: "/committee/karthik.jpg" },
+      { role: "SUBCOMMITTEE", name: "KARTHIKEYAN SURESH", img: "/committee/karthik.jpg", frame: "medium" },
       { role: "SUBCOMMITTEE", name: "ANG LIJA", img: "/committee/lija.jpg" },
     ],
   },
@@ -105,15 +135,7 @@ export default function Committee() {
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8 gap-4 sm:gap-5">
                 {team.members.map((member, i) => (
                   <div key={`${team.label}-${i}`}>
-                    <div className="w-full aspect-[3/4] bg-[#ddd8cf] border border-[#ccc7bd] flex items-center justify-center overflow-hidden">
-                      {member.img ? (
-                        <img
-                          src={member.img}
-                          alt={member.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : null}
-                    </div>
+                    <MemberPhoto member={member} />
                     <div className="mt-3 text-[10px] sm:text-[11px] font-bold tracking-[0.10em] text-[#c00000] uppercase">
                       {member.role}
                     </div>
