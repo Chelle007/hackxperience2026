@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { IBM_Plex_Mono, Montserrat } from "next/font/google";
-import { div } from 'framer-motion/client';
 
 const PastEvents: React.FC = () => {
   const [activeYear, setActiveYear] = useState<'2025' | '2024'>('2025');
@@ -14,8 +13,8 @@ const PastEvents: React.FC = () => {
 
   const eventData = {
     '2025': {
-      title: <>HACK<wbr/><span style={{ color: RED }}>EXPERIENCE</span></>,
-      desc: "In 2025, Hackexperience brought together 90+ participants to develop 20 distinct projects within a 24-hour sprint. The event focused on practical execution and collaborative prototyping among students and early-career developers. Our efforts in coordinating this technical exchange were recognized with SIM’s 2025 Outstanding Event Award (Silver).",
+      title: <>HACK<wbr/><span style={{ color: RED }}>XPERIENCE</span></>,
+      desc: "In 2025, HackXperience brought 90+ builders together to ship 20 projects in a 24-hour sprint — all-in on practical execution and collaborative prototyping. The event earned SIM's 2025 Outstanding Event Award (Silver).",
       imgs: [
         "PastYear1.jpg",
         "PastYear2.jpg"
@@ -29,7 +28,7 @@ const PastEvents: React.FC = () => {
     },
     '2024': {
       title: <>OMNITOOL <span style={{ color: RED }}>HACKATHON</span> 2024</>,
-      desc: "Omnitool Hackathon 2024 focused on building versatile utility tools for students. It served as our foundational event, establishing the core community of developers and designers that would go on to build the Architects of the Underground.",
+      desc: "OmniTool Hackathon 2024 challenged teams to build versatile utility tools for students. As our founding event, it established the core community of developers and designers that HackXperience is built on today.",
       imgs: [
         "OmniTool1.jpg",
         "OmniTool3.jpg",

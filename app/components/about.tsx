@@ -27,7 +27,7 @@ const About: React.FC = () => {
           </h2>
           
           <p className="text-base sm:text-lg md:text-xl leading-relaxed mb-10 md:mb-12 opacity-80 font-medium">
-            Welcome to HackXperience — a 2-day agentic hackathon for curious students to build and deploy agentic products. SIM IT Club&apos;s flagship event brings together 100+ participants on 24–25 July under the theme <strong>AI for Living</strong> — easing the tension between work and life through care or automation. Register your team of 3–4 by <strong>16 July 2026</strong>.
+            Welcome to HackXperience — a 24-hour sprint hackathon for curious students to build and deploy agentic products. SIM IT Club&apos;s flagship event brings together 100+ participants on 24–25 July under the theme <strong>AI for Living</strong> — easing the tension between work and life through care or automation. Register your team of 3–4 by <strong>16 July 2026</strong>.
           </p>
 
           <div className="grid md:grid-cols-2 gap-8 md:gap-10 pt-8 md:pt-10 border-t border-white/10">
@@ -36,7 +36,7 @@ const About: React.FC = () => {
                 // WHO SHOULD JOIN
               </h4>
               <p className="text-sm md:text-base leading-relaxed" style={{ color: TEXT_DIM }}>
-                Curious students who want to build and deploy agentic products — web devs, AI engineers, designers, product thinkers, business analysts. Year 1 to Year 3. No minimum skill level, just the drive to ship something real in 2 days.
+                Curious students who want to build and deploy agentic products — web devs, AI engineers, designers, product thinkers, business analysts. Year 1 to Year 3. No minimum skill level, just the drive to ship something real in 24 hours.
               </p>
             </div>
             <div>
@@ -62,14 +62,14 @@ const About: React.FC = () => {
             }}
           >
             <span className="text-5xl md:text-6xl font-black" style={{ color: RED }}>
-              2D
+              24
             </span>
             <span className="font-mono text-[10px] md:text-xs uppercase font-bold tracking-[0.2em] mt-3" style={{ color: DARK_BG }}>
-              Agentic Innovation
+              Hours To Build
             </span>
           </div>
 
-          {/* 500+ Card */}
+          {/* 100+ Card */}
           <div 
             className="p-8 flex-1 flex flex-col justify-center"
             style={{ backgroundColor: RED, color: WHITE }}

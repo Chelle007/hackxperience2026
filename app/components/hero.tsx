@@ -81,7 +81,7 @@ const Hero: React.FC = () => {
             className="inline-block px-3 py-1.5 font-mono uppercase text-[10px] md:text-xs tracking-widest font-bold"
             style={{ backgroundColor: RED, color: OFF_WHITE }}
           >
-            // 2-DAY AGENTIC HACKATHON
+            // 24-HOUR SPRINT HACKATHON
           </div>
           
           <h1 
@@ -157,7 +157,14 @@ const Hero: React.FC = () => {
                   </button>
                 </a>
               </div>
-                
+
+              <p
+                className="mt-5 font-mono text-[11px] md:text-xs uppercase tracking-widest font-bold"
+                style={{ color: DARK_TEXT, opacity: 0.55 }}
+              >
+                {"// TEAMS OF 3–4 · FREE TO JOIN · REG CLOSES 16 JUL"}
+              </p>
+
             </div>
           </div>
           

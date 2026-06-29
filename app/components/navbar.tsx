@@ -9,18 +9,19 @@ const ibmPlexMono = IBM_Plex_Mono({
   weight: ["400", "500", "600", "700"],
 });
 
-// Homepage section jump links, in page order. The logo (left) is "MAIN".
-const NAV_ITEMS = [
-  { label: "OVERVIEW", target: "overview" },                 // About
-  { label: "TRACKS", target: "tracks" },                     // Tracks
-  { label: "PRIZES", target: "prizes" },                     // Prizes
-  { label: "PAST-EVENTS", target: "past-events" },           // Past Events
-  { label: "PRE-EVENTS", target: "pre-events" },             // Pre-events
-  { label: "TIMELINE", target: "timeline" },                 // Timeline
-  { label: "JUDGES", target: "judges" },                     // Judges
-  { label: "FAQ", target: "faq" },                           // FAQ
-  { label: "ORGANISE_MEMBERS", target: "organise-members" }, // Committee
-  { label: "JOIN_US!", target: "join-us" },                  // Final CTA
+// Nav links. `target` items smooth-scroll to a homepage section; `href` items
+// route to a standalone page. Kept short on purpose — only the essentials.
+type NavItem =
+  | { label: string; target: string }
+  | { label: string; href: string };
+
+const NAV_ITEMS: NavItem[] = [
+  { label: "TRACKS", target: "tracks" },
+  { label: "PRIZES", target: "prizes" },
+  { label: "TIMELINE", target: "timeline" },
+  { label: "FAQ", target: "faq" },
+  { label: "GALLERY", href: "/gallery" },
+  { label: "SUBMIT", href: "/submit" },
 ];
 
 export default function Navbar() {
@@ -42,9 +43,14 @@ export default function Navbar() {
     }
   };
 
-  const handleNavClick = (item: { label: string; target: string }) => {
-    // Every item is an in-page section anchor. If we're on another route,
-    // route home with the hash; otherwise smooth-scroll in place.
+  const handleNavClick = (item: NavItem) => {
+    // Standalone pages route directly.
+    if ("href" in item) {
+      router.push(item.href);
+      return;
+    }
+    // Section anchors: route home with the hash if we're elsewhere,
+    // otherwise smooth-scroll in place.
     if (pathname !== "/") {
       router.push(`/#${item.target}`);
     } else {
@@ -73,7 +79,7 @@ export default function Navbar() {
         className="flex items-center gap-0 text-white text-[13px] sm:text-[14px] font-bold tracking-wide cursor-pointer whitespace-nowrap"
       >
         <span className="text-[#c00000] mr-1">&gt;_</span>
-        HACK_TERMINAL
+        HACKXPERIENCE
       </button>
 
       {/* Center — Nav links */}

@@ -13,6 +13,7 @@ import Committee from "./components/committee";
 import Footer from "./components/footer";
 import SubmitProjectButton from "./components/ui/submit-project-button";
 import ScrollToTopButton from "./components/ui/scroll-to-top-button";
+import Reveal from "./components/ui/reveal";
 
 
 export default function Home() {
@@ -20,15 +21,15 @@ export default function Home() {
     <main className="pt-11">
       <Navbar/>
       <Hero/>
-      <About/>
-      <Tracks/>
-      <Prizes/>
-      <PastEvents/>
-      <PreEvent/>
-      <TimeLine/>
-      <Faq/>
-      <Committee/>
-      <TimelineCta/>
+      <Reveal><About/></Reveal>
+      <Reveal><Tracks/></Reveal>
+      <Reveal><Prizes/></Reveal>
+      <Reveal><PastEvents/></Reveal>
+      <Reveal><PreEvent/></Reveal>
+      <Reveal><TimeLine/></Reveal>
+      <Reveal><Faq/></Reveal>
+      <Reveal><Committee/></Reveal>
+      <Reveal><TimelineCta/></Reveal>
       <Footer/>
 
       {/* Floating action stack — Submit CTA sits above the scroll-to-top button */}

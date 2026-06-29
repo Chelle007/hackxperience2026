@@ -100,7 +100,7 @@ const FAQ_DATA: FaqCategory[] = [
             There are two pre-events leading up to the main hackathon:
             <ul className="list-disc pl-5 mt-2 space-y-1">
               <li><strong>IT Club Project Showcase</strong> — 15 April 2026, 12PM–4PM @ SIM Student Hub, Blk B Level 1</li>
-              <li><strong>Building Agentic AI: Microsoft Foundry Workshop</strong> — 17 July 2026 @ SIM Campus (time TBA)</li>
+              <li><strong>Building Agentic AI: Microsoft Foundry Workshop</strong> — 17 July 2026, 7:00–10:00 PM @ SIM Campus</li>
             </ul>
             <span className="block mt-2">Join our <TelegramLink /> for workshop time and registration updates.</span>
           </>
@@ -149,8 +149,30 @@ const FAQ_DATA: FaqCategory[] = [
         answer: "Sub-tracks (e.g. Mental Care, Workflow Automation) guide your build and are selected when you submit your project. They are starting points — you're welcome to explore ideas within or across them.",
       },
       {
+        question: "HOW DO I SUBMIT MY PROJECT?",
+        answer: (
+          <>
+            Submit via the project portal at{" "}
+            <a href="/submit" className="text-[#c00000] underline underline-offset-2 hover:text-[#a00000]">hackxperience2026.vercel.app/submit</a>
+            {" "}before <strong>25 July 2026, 12:00 PM SGT</strong> (strictly no late submissions). One submission per team — include your GitHub repository and slide deck. Duplicate submissions are not allowed.
+          </>
+        ),
+      },
+      {
+        question: "WHAT ARE THE GOLDEN RULES?",
+        answer: (
+          <ul className="list-disc pl-5 space-y-2">
+            <li><strong>Fairness</strong> — all code must be written during the hackathon; brainstorming beforehand is allowed, but no pre-coded work.</li>
+            <li><strong>Presence</strong> — at least one team member must be physically present throughout so you don&apos;t miss announcements.</li>
+            <li><strong>Timing</strong> — all work must be finalised by the submission deadline; no coding after submission.</li>
+            <li><strong>Ethical work</strong> — avoid projects that promote harm, discrimination, or unsafe use of AI.</li>
+            <li><strong>Inclusivity</strong> — mutual respect and support; no offensive language, bullying, or abusive behaviour.</li>
+          </ul>
+        ),
+      },
+      {
         question: "HOW WILL PROJECTS BE JUDGED?",
-        answer: "Teams present to industry judges across track prizes (Care Forward and Friction To Flow), sponsor choice awards, and community voting. See the Prizes section for full breakdown and judging criteria.",
+        answer: "Teams present in a showcase format — 7 minutes pitch plus 3 minutes Q&A per team. Industry judges evaluate track prizes (Care Forward and Friction To Flow), sponsor choice awards, and community voting on the HackXperience voting page. See the Prizes section for full breakdown and judging criteria.",
       },
     ],
   },
@@ -161,13 +183,13 @@ const FAQ_DATA: FaqCategory[] = [
         question: "WHAT ARE THE PRIZES?",
         answer: (
           <>
-            Over $1,800 in prizes — track winners and runner-ups ($300 / $150 each), sponsor awards including Best Use of Microsoft Stack ($700), Best Entrepreneurial Award ($100), Community Choice ($50), and more. See the full breakdown in the <a href="#prizes" className="text-[#c00000] underline underline-offset-2 hover:text-[#a00000]">Prizes section</a>.
+            Over $1,800 in prizes — track winners and runner-ups ($300 / $150 each), sponsor awards including Best Use of Microsoft Stack ($700), Best Entrepreneurial Award ($100), Community Choice ($50), and an informal Game Prize ($50, details TBC). See the full breakdown in the <a href="#prizes" className="text-[#c00000] underline underline-offset-2 hover:text-[#a00000]">Prizes section</a>.
           </>
         ),
       },
       {
         question: "WHAT IS HACKXPERIENCE?",
-        answer: "HackXperience is SIM IT Club's flagship hackathon — a 2-day agentic hackathon where curious students build and deploy agentic products. In 2025, it brought together 90+ participants across 20 projects and won SIM's Outstanding Event Award (Silver).",
+        answer: "HackXperience is SIM IT Club's flagship hackathon — a 24-hour sprint where curious students build and deploy agentic products. In 2025, it brought together 90+ participants across 20 projects and won SIM's Outstanding Event Award (Silver).",
       },
       {
         question: "HOW MANY PARTICIPANTS ARE EXPECTED?",

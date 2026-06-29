@@ -67,7 +67,6 @@ export default function TimelineCta() {
           <div className="sm:border-l border-white/30 sm:pl-6 text-left">
             <div className="text-[11px] sm:text-[13px] leading-[1.9] font-semibold tracking-[0.10em] uppercase whitespace-nowrap">
               <div>// TEAMS OF 3–4</div>
-              <div>// SOLO / PAIR: 1–2</div>
               <div>// REG CLOSES 16 JUL</div>
               <div>// FREE TO JOIN</div>
             </div>
