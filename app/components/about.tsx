@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { PRIZE_POOL_WORTH } from "@/lib/hackathon-prizes";
 import { HoverLift, RevealItem, RevealStagger } from "./ui/motion-ui";
 
 const About: React.FC = () => {
@@ -29,7 +30,7 @@ const About: React.FC = () => {
               </h2>
 
               <p className="text-base sm:text-lg md:text-xl leading-relaxed mb-10 md:mb-12 opacity-80 font-medium">
-                Welcome to HackXperience, a 24-hour sprint hackathon for curious students to build and deploy agentic products. SIM IT Club&apos;s flagship event brings together 100+ participants on 24–25 July under the theme <strong>AI for Living</strong>, easing the tension between work and life through care or automation. Register your team of 3–4 by <strong>16 July 2026</strong>.
+                Welcome to HackXperience, a 24-hour sprint hackathon for curious students to build and deploy agentic products. SIM IT Club&apos;s flagship event brings together 100+ participants on 24–25 July under the theme <strong>AI for Living</strong>. Register your team of 3–4 by <strong>16 July 2026</strong>.
               </p>
 
               <div className="grid md:grid-cols-2 gap-8 md:gap-10 pt-8 md:pt-10 border-t border-white/10">
@@ -51,7 +52,7 @@ const About: React.FC = () => {
                     <li className="flex gap-2"><span style={{ color: RED }} aria-hidden>›</span><span>Pre-event workshops to get you hackathon-ready</span></li>
                     <li className="flex gap-2"><span style={{ color: RED }} aria-hidden>›</span><span>On-site mentorship from industry professionals</span></li>
                     <li className="flex gap-2"><span style={{ color: RED }} aria-hidden>›</span><span>A stage to demo your agentic build</span></li>
-                    <li className="flex gap-2"><span style={{ color: RED }} aria-hidden>›</span><span>Prizes worth fighting for</span></li>
+                    <li className="flex gap-2"><span style={{ color: RED }} aria-hidden>›</span><span>Prizes {PRIZE_POOL_WORTH}</span></li>
                   </ul>
                 </div>
               </div>

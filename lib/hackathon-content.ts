@@ -5,8 +5,12 @@ export const HACKATHON_THEME = {
   tagline:
     "Ease the tension between work and life. Build agentic AI that helps us live better, not just keep up.",
   intro:
-    "In today's increasingly complex world, we are constantly juggled between two essential tasks: our work, and our life beyond it. HackXperience 2026 challenges you to ease that tension, through care that nurtures a healthier life, or automation that brings flow back into the workday.",
+    "In today's increasingly complex world, balancing work and everything beyond it is harder than ever. HackXperience 2026 challenges you to explore what agentic AI can do for real, everyday living.",
   closing:
+    "Full track details will be revealed at the pre-event.",
+  introRevealed:
+    "In today's increasingly complex world, we are constantly juggled between two essential tasks: our work, and our life beyond it. HackXperience 2026 challenges you to ease that tension, through care that nurtures a healthier life, or automation that brings flow back into the workday.",
+  closingRevealed:
     "Choose the side that speaks to your team, because at the end of the day, the question is simple: how can AI help us live better, not just keep up?",
 } as const;
 

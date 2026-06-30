@@ -17,6 +17,8 @@ const montserrat = Montserrat({
 
 import { TEAM_REGISTRATION_URL, LOOKING_FOR_TEAM_URL, TELEGRAM_URL } from "@/lib/site-links";
 import { MICROSOFT_FOUNDRY_WORKSHOP } from "@/lib/hackathon-pre-events";
+import { PRIZE_POOL_WORTH } from "@/lib/hackathon-prizes";
+import { REVEAL_TRACKS_AND_JUDGES } from "@/lib/event-reveal";
 
 const TelegramLink = () => (
   <a href={TELEGRAM_URL} target="_blank" rel="noopener noreferrer" className="text-[#c00000] underline underline-offset-2 hover:text-[#a00000]">
@@ -54,7 +56,8 @@ interface FaqCategory {
   items: FaqItem[];
 }
 
-const FAQ_DATA: FaqCategory[] = [
+function buildFaqData(): FaqCategory[] {
+  return [
   {
     label: "REGISTRATION",
     items: [
@@ -74,7 +77,7 @@ const FAQ_DATA: FaqCategory[] = [
         question: "I'M SOLO OR DON'T HAVE A FULL TEAM YET",
         answer: (
           <>
-            If you&apos;re registering solo or with fewer than 3 members, fill out the <LookingForTeamLink /> and look for teammates during the pre-event sessions.
+            If you&apos;re registering solo or with fewer than 3 members, please fill out the <LookingForTeamLink /> and look for teammates during the pre-event session or in our official <TelegramLink />. Our crew will be there to facilitate group formation.
           </>
         ),
       },
@@ -135,15 +138,21 @@ const FAQ_DATA: FaqCategory[] = [
       },
       {
         question: "WHAT ARE THE TRACKS?",
-        answer: (
+        answer: REVEAL_TRACKS_AND_JUDGES ? (
           <>
             This year&apos;s theme is <strong>AI for Living</strong>. Teams choose one of two tracks: <strong>Care Forward</strong> (mental, physical, and nutrition wellbeing) or <strong>Friction To Flow</strong> (task management, work quality, and workflow automation). See the full track breakdown in the <a href="#tracks" className="text-[#c00000] underline underline-offset-2 hover:text-[#a00000]">Tracks section</a>.
+          </>
+        ) : (
+          <>
+            This year&apos;s theme is <strong>AI for Living</strong>. The full track breakdown will be revealed at the pre-event Microsoft Foundry workshop on <strong>17 July 2026</strong>.
           </>
         ),
       },
       {
         question: "DO I NEED TO PICK A SUB-TRACK?",
-        answer: "Sub-tracks (e.g. Mental Care, Workflow Automation) guide your build and are selected when you submit your project. They are starting points, and you're welcome to explore ideas within or across them.",
+        answer: REVEAL_TRACKS_AND_JUDGES
+          ? "Sub-tracks (e.g. Mental Care, Workflow Automation) guide your build and are selected when you submit your project. They are starting points, and you're welcome to explore ideas within or across them."
+          : "Sub-track details will be shared at the pre-event. You select your sub-track when you submit your project — they are starting points, and you're welcome to explore ideas within or across them.",
       },
       {
         question: "HOW DO I SUBMIT MY PROJECT?",
@@ -169,7 +178,9 @@ const FAQ_DATA: FaqCategory[] = [
       },
       {
         question: "HOW WILL PROJECTS BE JUDGED?",
-        answer: "Teams present in a showcase format: 7 minutes pitch plus 3 minutes Q&A per team. Industry judges evaluate track prizes (Care Forward and Friction To Flow), sponsor choice awards, and community voting on the HackXperience voting page. See the Prizes section for the full prize breakdown.",
+        answer: REVEAL_TRACKS_AND_JUDGES
+          ? "Teams present in a showcase format: 7 minutes pitch plus 3 minutes Q&A per team. Industry judges evaluate track prizes (Care Forward and Friction To Flow), sponsor choice awards, and community voting on the HackXperience voting page. See the Prizes section for the full prize breakdown."
+          : "Teams present in a showcase format: 7 minutes pitch plus 3 minutes Q&A per team. Industry judges evaluate track prizes, sponsor choice awards, and community voting on the HackXperience voting page. See the Prizes section for the full prize breakdown.",
       },
     ],
   },
@@ -178,9 +189,13 @@ const FAQ_DATA: FaqCategory[] = [
     items: [
       {
         question: "WHAT ARE THE PRIZES?",
-        answer: (
+        answer: REVEAL_TRACKS_AND_JUDGES ? (
           <>
-            Over S$1,800 in prizes (all amounts in SGD): track winners and runner-ups (S$300 / S$150 each), sponsor awards including Best Use of Microsoft Stack (S$700), Best Entrepreneurial Award (S$100), Community Choice (S$50), and an informal Game Prize (S$50, details TBC). See the full breakdown in the <a href="#prizes" className="text-[#c00000] underline underline-offset-2 hover:text-[#a00000]">Prizes section</a>.
+            Prize pool {PRIZE_POOL_WORTH} (all amounts in SGD): track winners and runner-ups (S$300 / S$150 each), sponsor awards including Best Use of Microsoft Stack (S$700), Best Entrepreneurial Award (S$100), Community Choice (S$50), and an informal Game Prize (S$50, details TBC). See the full breakdown in the <a href="#prizes" className="text-[#c00000] underline underline-offset-2 hover:text-[#a00000]">Prizes section</a>.
+          </>
+        ) : (
+          <>
+            Prize pool {PRIZE_POOL_WORTH} (all amounts in SGD): track winners and runner-ups (S$300 / S$150 each per track), sponsor awards including Best Use of Microsoft Stack (S$700), Best Entrepreneurial Award (S$100), Community Choice (S$50), and an informal Game Prize (S$50, details TBC). Track names revealed at the pre-event. See the full breakdown in the <a href="#prizes" className="text-[#c00000] underline underline-offset-2 hover:text-[#a00000]">Prizes section</a>.
           </>
         ),
       },
@@ -206,7 +221,8 @@ const FAQ_DATA: FaqCategory[] = [
       },
     ],
   },
-];
+  ];
+}
 
 function FaqAccordionItem({
   itemKey,
@@ -271,6 +287,7 @@ function FaqAccordionItem({
 
 export default function Faq() {
   const [openKey, setOpenKey] = useState<string | null>(null);
+  const FAQ_DATA = buildFaqData();
 
   const toggle = (key: string) => {
     setOpenKey(openKey === key ? null : key);

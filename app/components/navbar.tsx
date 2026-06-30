@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { IBM_Plex_Mono } from "next/font/google";
 import { useRouter, usePathname } from "next/navigation";
+import { REVEAL_TRACKS_AND_JUDGES } from "@/lib/event-reveal";
 
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
@@ -17,7 +18,7 @@ type NavItem =
   | { label: string; href: string };
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "TRACKS", target: "tracks" },
+  { label: REVEAL_TRACKS_AND_JUDGES ? "TRACKS" : "THEME", target: "tracks" },
   { label: "PRIZES", target: "prizes" },
   { label: "TIMELINE", target: "timeline" },
   { label: "FAQ", target: "faq" },

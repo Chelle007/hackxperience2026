@@ -3,10 +3,12 @@
 import React from "react";
 import {
   HACKATHON_PRIZES,
-  PRIZE_POOL_TOTAL,
+  PRIZE_POOL_WORTH,
   PRIZE_CURRENCY_NOTE,
+  toLandingPrize,
   type PrizeAward,
 } from "@/lib/hackathon-prizes";
+import { REVEAL_TRACKS_AND_JUDGES } from "@/lib/event-reveal";
 import { HoverLift, RevealItem, RevealStagger } from "./ui/motion-ui";
 import { motion, useReducedMotion } from "framer-motion";
 
@@ -80,6 +82,8 @@ function PrizeCard({ award }: { award: PrizeAward }) {
 }
 
 const Prizes: React.FC = () => {
+  const visiblePrizes = HACKATHON_PRIZES.map(toLandingPrize);
+
   return (
     <section
       id="prizes"
@@ -101,7 +105,15 @@ const Prizes: React.FC = () => {
             WIN BIG. BUILD BOLD.
           </h2>
           <p className="text-base sm:text-lg opacity-80 font-medium" style={{ color: DARK_BG }}>
-            Over <strong>{PRIZE_POOL_TOTAL}</strong> in track prizes, sponsor awards, and community votes, across Care Forward, Friction To Flow, and special categories.
+            {REVEAL_TRACKS_AND_JUDGES ? (
+              <>
+                Prize pool <strong>{PRIZE_POOL_WORTH}</strong> in track prizes, sponsor awards, and community votes, across Care Forward, Friction To Flow, and special categories.
+              </>
+            ) : (
+              <>
+                Prize pool <strong>{PRIZE_POOL_WORTH}</strong> in track prizes, sponsor awards, community votes, and special categories. Track names revealed at the pre-event.
+              </>
+            )}
           </p>
           <p className="mt-2 font-mono text-[11px] sm:text-xs tracking-widest uppercase opacity-70" style={{ color: DARK_BG }}>
             // {PRIZE_CURRENCY_NOTE}
@@ -109,7 +121,7 @@ const Prizes: React.FC = () => {
         </div>
 
         <RevealStagger className="grid md:grid-cols-2 gap-6 md:gap-8" stagger={0.09}>
-          {HACKATHON_PRIZES.map((award) => (
+          {visiblePrizes.map((award) => (
             <RevealItem key={award.id}>
               <PrizeCard award={award} />
             </RevealItem>

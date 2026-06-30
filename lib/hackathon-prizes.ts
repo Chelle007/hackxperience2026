@@ -98,5 +98,33 @@ export const HACKATHON_PRIZES: readonly PrizeAward[] = [
   },
 ] as const;
 
-export const PRIZE_POOL_TOTAL = "S$1,800+";
+export const PRIZE_POOL_TOTAL = "S$1,800";
+export const PRIZE_POOL_WORTH = `worth ${PRIZE_POOL_TOTAL}`;
 export const PRIZE_CURRENCY_NOTE = "All prize amounts are in SGD.";
+
+/** Landing-page display before track names are revealed at pre-event. */
+const LANDING_TRACK_PRIZE_COPY: Record<
+  string,
+  Pick<PrizeAward, "title" | "summary" | "emoji">
+> = {
+  "care-forward": {
+    emoji: "🏆",
+    title: "Track 1 Prize",
+    summary:
+      "Winner and runner-up for a main hackathon track. Track name revealed at the pre-event.",
+  },
+  "friction-to-flow": {
+    emoji: "🏆",
+    title: "Track 2 Prize",
+    summary:
+      "Winner and runner-up for a main hackathon track. Track name revealed at the pre-event.",
+  },
+};
+
+import { REVEAL_TRACKS_AND_JUDGES } from "./event-reveal";
+
+export function toLandingPrize(award: PrizeAward): PrizeAward {
+  if (REVEAL_TRACKS_AND_JUDGES) return award;
+  const override = LANDING_TRACK_PRIZE_COPY[award.id];
+  return override ? { ...award, ...override } : award;
+}

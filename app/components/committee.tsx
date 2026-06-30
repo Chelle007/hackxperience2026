@@ -126,7 +126,7 @@ const TEAMS: Team[] = [
       { role: "SUBCOMMITTEE", name: "PHOO PWINT WAI", img: "/committee/phoo-pwint-wai.jpg", frame: "tight", objectPosition: "50% 58%" },
       { role: "SUBCOMMITTEE", name: "SHISA YOSHIHIRO", img: "/committee/shisa-yoshihiro.jpg", scale: 1.85 },
       { role: "SUBCOMMITTEE", name: "EILEEN LEE", img: "/committee/eileen-lee.jpg", frame: "tight" },
-      { role: "SUBCOMMITTEE", name: "SU YI MAUNG", img: "/committee/su-yi-maung.jpg", scale: 1.85 },
+      { role: "SUBCOMMITTEE", name: "SU YI MAUNG", img: "/committee/su-yi-maung.jpg" },
       { role: "SUBCOMMITTEE", name: "KARTHIKEYAN SURESH", img: "/committee/karthik.jpg", frame: "tight" },
       { role: "SUBCOMMITTEE", name: "ANG LIJA", img: "/committee/lija.jpg", frame: "tight" },
     ],

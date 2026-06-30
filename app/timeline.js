@@ -263,7 +263,7 @@ function JudgeRow({ name, role, company, bio, linkedin, img, isLast }) {
 
 function SponsorRow({ tier, sponsors }) {
   const tierMeta = {
-    gold:   { label: 'GOLD TIER',   sub: '// PRINCIPAL SPONSORS' },
+    gold:   { label: 'TITLE SPONSOR'},
     silver: { label: 'SILVER TIER', sub: '// SUPPORTING SPONSORS' },
     bronze: { label: 'BRONZE TIER', sub: '// COMMUNITY PARTNERS' },
   }
@@ -326,6 +326,27 @@ function SponsorRow({ tier, sponsors }) {
   )
 }
 
+function SupportedByRow() {
+  return (
+    <div className="mb-12 sm:mb-16 last:mb-0 mt-12 sm:mt-16">
+      <div className="mb-6 sm:mb-8">
+        <Label>SUPPORTED BY</Label>
+      </div>
+      <div className="max-w-md">
+        <div className="group relative flex h-[100px] sm:h-[120px] w-full items-center justify-center border-2 border-[#d5d0c8] bg-[#f2ede5] p-6 sm:p-8 transition-all duration-200 hover:border-red-600 hover:shadow-[8px_8px_0_0_#c00000] hover:-translate-y-1">
+          <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-red-600 opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none" />
+          <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-red-600 opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none" />
+          <img
+            src="/sponsors/sim-student-life.png"
+            alt="SIM Student Life"
+            className="w-full max-w-48 sm:max-w-56 max-h-14 sm:max-h-16 object-contain transition-transform duration-200 group-hover:scale-[1.03]"
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function TimeLine() {
   const gold   = SPONSORS.filter(s => s.tier === 'gold')
   const silver = SPONSORS.filter(s => s.tier === 'silver')
@@ -362,6 +383,8 @@ export default function TimeLine() {
         {gold.length   > 0 && <SponsorRow tier="gold"   sponsors={gold}   />}
         {silver.length > 0 && <SponsorRow tier="silver" sponsors={silver} />}
         {bronze.length > 0 && <SponsorRow tier="bronze" sponsors={bronze} />}
+
+        <SupportedByRow />
 
         <div className="w-full h-px bg-red-700 mt-12 sm:mt-20 mb-8 sm:mb-16" />
 
