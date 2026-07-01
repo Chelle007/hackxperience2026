@@ -77,7 +77,7 @@ function buildFaqData(): FaqCategory[] {
       },
       {
         question: "CAN I TEAM UP WITH STUDENTS FROM OTHER UNIVERSITIES?",
-        answer: "Yes. SIM students may form teams with students from other universities. For each member, indicate whether they are from SIM or another institution on the registration form.",
+        answer: "Yes. Active SIM students (foundations, diploma, undergraduate, and masters programmes) may invite non-SIM active undergraduate students to join their team. For each member, indicate whether they are from SIM or another institution on the registration form.",
       },
       {
         question: "IS THERE A REGISTRATION FEE?",
@@ -85,7 +85,7 @@ function buildFaqData(): FaqCategory[] {
       },
       {
         question: "WHO IS ELIGIBLE TO PARTICIPATE?",
-        answer: "All SIM students are welcome, across all years. You may also team up with students from other universities (see above).",
+        answer: "Active SIM students across foundations, diploma, undergraduate, and masters programmes are eligible. Active SIM students may also invite non-SIM active undergraduate students to join their team.",
       },
     ],
   },
