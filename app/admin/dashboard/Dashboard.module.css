@@ -128,6 +128,32 @@
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
+.quickLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #1d1c17;
+  background: #fef9f1;
+  color: #1d1c17;
+  text-decoration: none;
+  font-family: var(--font-admin-mono), monospace;
+  font-size: 11px;
+  line-height: 16px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.12s;
+}
+
+.quickLink:hover {
+  background: #cc0000;
+  border-color: #cc0000;
+  color: #fef9f1;
+}
+
+.quickLink:active {
+  transform: translateY(1px);
+}
+
 .viewAllBtn:hover {
   background: #cc0000;
   border-color: #cc0000;
@@ -165,10 +191,6 @@
 .searchInput:focus {
   border-color: #cc0000;
   box-shadow: 2px 2px 0 0 #cc0000;
-}
-
-.filterDropdown {
-  /* flex sizing handled by toolbar context */
 }
 
 .sortBtn {

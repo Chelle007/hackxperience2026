@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Heart,
   LayoutDashboard,
   List,
   LogOut,
@@ -189,6 +190,7 @@ const navGroups = [
     items: [
       { key: "dashboard", href: "/admin/dashboard", label: "DASHBOARD", icon: LayoutDashboard },
       { key: "submissions", href: "/admin/submissions", label: "SUBMISSIONS", icon: List },
+      { key: "voting", href: "/admin/voting", label: "COMMUNITY VOTING", icon: Heart },
       { key: "results", href: "/admin/results", label: "AGGREGATE SCORES", icon: Sigma },
     ],
   },
@@ -202,6 +204,7 @@ const navGroups = [
 
 function getActiveNav(pathname: string) {
   if (pathname.startsWith("/admin/submissions")) return "submissions";
+  if (pathname.startsWith("/admin/voting")) return "voting";
   if (pathname.startsWith("/admin/results")) return "results";
   if (pathname.startsWith("/admin/settings")) return "settings";
   return "dashboard";
@@ -287,7 +290,10 @@ export function AdminShellFrame({ children }: { children: ReactNode }) {
   const activeNav = useMemo(() => getActiveNav(pathname), [pathname]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [sessionUser, setSessionUser] = useState("admin");
+  const [sessionRole, setSessionRole] = useState<"admin" | "kiosk">("admin");
+  const [sessionChecked, setSessionChecked] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const isVotingRoute = pathname.startsWith("/admin/voting");
 
   useEffect(() => {
     const id = window.setInterval(() => setNowMs(Date.now()), 1000);
@@ -332,15 +338,27 @@ export function AdminShellFrame({ children }: { children: ReactNode }) {
         const payload = await response.json();
         if (cancelled) return;
 
-        if (payload?.session?.role !== "admin") {
+        const role = payload?.session?.role;
+        const isKiosk = role === "kiosk";
+        if (isVotingRoute) {
+          if (role !== "admin" && role !== "kiosk") {
+            router.replace("/admin/login");
+            return;
+          }
+        } else if (role !== "admin") {
           router.replace("/admin/login");
           return;
         }
         if (typeof payload?.session?.username === "string") {
           setSessionUser(payload.session.username);
         }
+        setSessionRole(isKiosk ? "kiosk" : "admin");
+        setSessionChecked(true);
       } catch {
-        if (!cancelled) router.replace("/admin/login");
+        if (!cancelled) {
+          setSessionChecked(true);
+          router.replace("/admin/login");
+        }
       }
     };
 
@@ -348,10 +366,26 @@ export function AdminShellFrame({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [pathname, router]);
+  }, [isVotingRoute, pathname, router]);
 
   if (pathname === "/admin/login" || pathname === "/admin") {
     return <>{children}</>;
+  }
+
+  if (isVotingRoute && !sessionChecked) {
+    return (
+      <div className={styles.root}>
+        <main className={styles.main}>{children}</main>
+      </div>
+    );
+  }
+
+  if (isVotingRoute && sessionRole === "kiosk") {
+    return (
+      <div className={styles.root}>
+        <main className={styles.main}>{children}</main>
+      </div>
+    );
   }
 
   return (
@@ -411,7 +445,7 @@ export function AdminShellFrame({ children }: { children: ReactNode }) {
           <div className={styles.sidebarNav}>
             {navGroups.map((group) => (
               <section key={group.heading} className={styles.sidebarGroup}>
-                <h2 className={styles.sidebarHeading}>// {group.heading}</h2>
+                <h2 className={styles.sidebarHeading}>{"// "}{group.heading}</h2>
                 <nav className={styles.navList}>
                   {group.items.map((item) => {
                     const isActive = activeNav === item.key;
@@ -432,7 +466,7 @@ export function AdminShellFrame({ children }: { children: ReactNode }) {
           <div className={styles.sidebarProfile}>
             <div className={styles.sidebarProfileInfo}>
               <span className={styles.sidebarProfileName}>&gt; {sessionUser}</span>
-              <span className={styles.sidebarProfileRole}>// ADMIN</span>
+              <span className={styles.sidebarProfileRole}>{"// ADMIN"}</span>
             </div>
             <button
               type="button"
@@ -482,7 +516,7 @@ export function AdminShellFrame({ children }: { children: ReactNode }) {
         <div className={styles.mobileDrawerNav}>
           {navGroups.map((group) => (
             <section key={group.heading} className={styles.sidebarGroup}>
-              <h2 className={styles.sidebarHeading}>// {group.heading}</h2>
+              <h2 className={styles.sidebarHeading}>{"// "}{group.heading}</h2>
               <nav className={styles.navList}>
                 {group.items.map((item) => {
                   const isActive = activeNav === item.key;
