@@ -22,6 +22,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "PRIZES", target: "prizes" },
   { label: "TIMELINE", target: "timeline" },
   { label: "FAQ", target: "faq" },
+  { label: "FAVOURITES", href: "/community-favourites" },
   // { label: "GALLERY", href: "/gallery" },
   // { label: "SUBMIT", href: "/submit" },
 ];

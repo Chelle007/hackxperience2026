@@ -1,6 +1,6 @@
 "use client";
 
-import type { AdminSubmission } from "@/lib/types";
+import type { AdminSubmission, CommunityVotingLeaderboardEntry, CommunityVotingTeam } from "@/lib/types";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 
 export type AdminSubmissionsPayload = {
@@ -31,6 +31,28 @@ export type AdminJudge = {
   id: string;
   username: string;
   last_login?: string | null;
+};
+
+export type CommunityVotingMember = CommunityVotingTeam["members"][number] & {
+  hasVoted: boolean;
+};
+
+export type CommunityVotingTeamPayload = Omit<CommunityVotingTeam, "members"> & {
+  members: CommunityVotingMember[];
+};
+
+export type CommunityVotingBallot = {
+  id: string;
+  sourceTeamId: string;
+  voterName: string;
+  voterEmail: string;
+  createdByAdmin: string;
+  createdAt: string;
+  votedTeams: Array<{
+    submissionId: string;
+    teamId: string;
+    projectName: string;
+  }>;
 };
 
 async function parseJson<T>(response: Response): Promise<T> {
@@ -120,4 +142,37 @@ export async function updateAdminJudge(id: string, payload: { username?: string;
 export async function deleteAdminJudge(id: string) {
   const response = await fetch(`/api/admin/judges/${encodeURIComponent(id)}`, { method: "DELETE" });
   return handleResponse<{ ok: boolean }>(response, "Unable to delete judge.");
+}
+
+export async function fetchAdminVotingTeams() {
+  const response = await fetch("/api/admin/voting", { cache: "no-store" });
+  return handleResponse<{
+    mode: "admin" | "kiosk";
+    teams: CommunityVotingTeamPayload[];
+    ballots: CommunityVotingBallot[];
+  }>(
+    response,
+    "Unable to load eligible voting teams.",
+  );
+}
+
+export async function submitCommunityVote(payload: {
+  sourceTeamId: string;
+  voterEmail: string;
+  votedSubmissionIds: string[];
+}) {
+  const response = await fetch("/api/admin/voting", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return handleResponse<{ ok: boolean }>(response, "Unable to submit community vote.");
+}
+
+export async function fetchCommunityVotingLeaderboard() {
+  const response = await fetch("/api/community-voting/leaderboard", { cache: "no-store" });
+  return handleResponse<{ leaderboard: CommunityVotingLeaderboardEntry[] }>(
+    response,
+    "Unable to load community leaderboard.",
+  );
 }

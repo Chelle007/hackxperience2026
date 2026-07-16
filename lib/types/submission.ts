@@ -17,6 +17,24 @@ export type TeamMember = {
   email: string;
 };
 
+export type CommunityVotingTeam = {
+  submissionId: string;
+  teamId: string;
+  projectName: string;
+  track: string;
+  thumbnailUrl: string | null;
+  members: TeamMember[];
+};
+
+export type CommunityVotingLeaderboardEntry = {
+  submissionId: string;
+  teamId: string;
+  projectName: string;
+  voteCount: number;
+  rank: number;
+  thumbnailUrl: string | null;
+};
+
 /** One judge's score for a submission (null = not yet scored). */
 export type SubmissionScore = {
   judgeId: string;
