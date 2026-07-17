@@ -15,7 +15,7 @@ const montserrat = Montserrat({
   weight: ["800", "900"],
 });
 
-import { TEAM_REGISTRATION_URL, LOOKING_FOR_TEAM_URL } from "@/lib/site-links";
+import { TEAM_REGISTRATION_URL, LOOKING_FOR_TEAM_URL, REGISTRATION_OPEN } from "@/lib/site-links";
 import { MICROSOFT_FOUNDRY_WORKSHOP } from "@/lib/hackathon-pre-events";
 import { PRIZE_POOL_WORTH } from "@/lib/hackathon-prizes";
 import { REVEAL_TRACKS_AND_JUDGES } from "@/lib/event-reveal";
@@ -57,9 +57,13 @@ function buildFaqData(): FaqCategory[] {
     items: [
       {
         question: "HOW DO I REGISTER FOR HACKXPERIENCE 2026?",
-        answer: (
+        answer: REGISTRATION_OPEN ? (
           <>
             Your team&apos;s <strong>Team Leader</strong> completes the <TeamRegistrationLink /> on behalf of the team. Registration closes on <strong>16 July 2026, 23:59 SGT</strong>.
+          </>
+        ) : (
+          <>
+            Registration closed on <strong>16 July 2026, 23:59 SGT</strong>. New team sign-ups are no longer accepted. Join the Telegram group for event updates if you&apos;re already registered.
           </>
         ),
       },
@@ -69,9 +73,13 @@ function buildFaqData(): FaqCategory[] {
       },
       {
         question: "I'M SOLO OR DON'T HAVE A FULL TEAM YET",
-        answer: (
+        answer: REGISTRATION_OPEN ? (
           <>
             If you&apos;re registering solo or with fewer than 3 members, please fill out the <LookingForTeamLink /> and our crew will facilitate the group formation.
+          </>
+        ) : (
+          <>
+            Registration is closed, so new solo / incomplete-team sign-ups are no longer accepted. If you already registered, check Telegram for team-formation updates from the organisers.
           </>
         ),
       },
@@ -98,7 +106,7 @@ function buildFaqData(): FaqCategory[] {
           <>
             The pre-hackathon workshop leading up to the main event:
             <ul className="list-disc pl-5 mt-2 space-y-1">
-              <li><strong>Building Agentic AI: Microsoft Foundry Workshop</strong> · 17 July 2026, 7:00–10:00 PM @ {MICROSOFT_FOUNDRY_WORKSHOP.meta}</li>
+              <li><strong>Building Agentic AI: Microsoft Foundry Workshop</strong> · 17 July 2026, 6:00–10:00 PM @ {MICROSOFT_FOUNDRY_WORKSHOP.meta}</li>
             </ul>
           </>
         ),
@@ -107,7 +115,7 @@ function buildFaqData(): FaqCategory[] {
         question: "WHAT IS THE MICROSOFT FOUNDRY WORKSHOP ABOUT?",
         answer: (
           <>
-            A pre-hackathon workshop on <strong>17 July 2026, 7:00–10:00 PM</strong> at <strong>{MICROSOFT_FOUNDRY_WORKSHOP.meta}</strong>, covering agentic AI with Microsoft Foundry, including agent fundamentals, Foundry models and workflows, multi-agent design, hands-on agent builds, and responsible AI.
+            A pre-hackathon workshop on <strong>17 July 2026, 6:00–10:00 PM</strong> at <strong>{MICROSOFT_FOUNDRY_WORKSHOP.meta}</strong>, covering agentic AI with Microsoft Foundry, including agent fundamentals, Foundry models and workflows, multi-agent design, hands-on agent builds, and responsible AI.
             <ul className="list-disc pl-5 mt-2 space-y-1">
               {MICROSOFT_FOUNDRY_WORKSHOP.topics.map((topic) => (
                 <li key={topic}>{topic}</li>
@@ -152,7 +160,7 @@ function buildFaqData(): FaqCategory[] {
         answer: (
           <>
             Submit via the project portal at{" "}
-            <a href="/submit" className="text-[#c00000] underline underline-offset-2 hover:text-[#a00000]">hackxperience2026.vercel.app/submit</a>
+            <a href="/submit" className="text-[#c00000] underline underline-offset-2 hover:text-[#a00000]">hackxperience2026.simitclub.com/submit</a>
             {" "}before <strong>25 July 2026, 12:00 PM SGT</strong> (strictly no late submissions). One submission per team. Include your GitHub repository and slide deck. Duplicate submissions are not allowed.
           </>
         ),
@@ -168,12 +176,6 @@ function buildFaqData(): FaqCategory[] {
             <li><strong>Inclusivity:</strong> mutual respect and support; no offensive language, bullying, or abusive behaviour.</li>
           </ul>
         ),
-      },
-      {
-        question: "HOW WILL PROJECTS BE JUDGED?",
-        answer: REVEAL_TRACKS_AND_JUDGES
-          ? "Teams present in a showcase format: 7 minutes pitch plus 3 minutes Q&A per team. Industry judges evaluate track prizes (Care Forward and Friction To Flow), sponsor choice awards, and community voting on the HackXperience voting page. See the Prizes section for the full prize breakdown."
-          : "Teams present in a showcase format: 7 minutes pitch plus 3 minutes Q&A per team. Industry judges evaluate track prizes, sponsor choice awards, and community voting on the HackXperience voting page. The judging panel will be announced at the pre-event on 17 July 2026. See the Prizes section for the full prize breakdown.",
       },
     ],
   },
