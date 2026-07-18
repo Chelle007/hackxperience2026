@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { TEAM_REGISTRATION_URL, TELEGRAM_URL } from "@/lib/site-links";
+import { TEAM_REGISTRATION_URL, TELEGRAM_URL, REGISTRATION_OPEN } from "@/lib/site-links";
 import { HACKATHON_THEME } from "@/lib/hackathon-content";
 import { BRUTAL_EASE } from "./ui/motion-ui";
 
@@ -84,8 +84,12 @@ const Hero: React.FC = () => {
           <div className="absolute inset-0 bg-[url('/hero-hackxperience-2026.png')] bg-cover bg-center mix-blend-screen opacity-70 group-hover:opacity-85 transition-opacity duration-500" />
 
           <div className="relative h-full flex flex-col justify-end p-4 md:p-6 bg-linear-to-t from-black/90 to-transparent">
-            <div className="font-mono text-[10px] md:text-xs mb-2 animate-pulse tracking-widest" style={{ color: RED }}>
-              STATUS: INITIALIZING...
+            <div className="font-mono text-[10px] md:text-xs mb-2 tracking-widest" style={{ color: RED }}>
+              {REGISTRATION_OPEN ? (
+                <span className="animate-pulse">STATUS: INITIALIZING...</span>
+              ) : (
+                <span>STATUS: REGISTRATION_CLOSED</span>
+              )}
             </div>
             <div className="font-sans text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[0.9] tracking-normal">
               HackXperience
@@ -126,7 +130,7 @@ const Hero: React.FC = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              {TEAM_REGISTRATION_URL ? (
+              {REGISTRATION_OPEN && TEAM_REGISTRATION_URL ? (
                 <a
                   href={TEAM_REGISTRATION_URL}
                   target="_blank"
@@ -148,6 +152,21 @@ const Hero: React.FC = () => {
                     register your team
                   </MotionBtn>
                 </a>
+              ) : !REGISTRATION_OPEN ? (
+                <div className="inline-block w-full sm:w-auto">
+                  <div
+                    className="w-full sm:w-auto px-8 md:px-10 py-4 font-black uppercase text-xs md:text-sm tracking-widest border-2 cursor-not-allowed opacity-70"
+                    style={{
+                      backgroundColor: "transparent",
+                      color: DARK_TEXT,
+                      borderColor: DARK_TEXT,
+                      boxShadow: `4px 4px 0px ${DARK_TEXT}`,
+                    }}
+                    aria-disabled="true"
+                  >
+                    registration closed
+                  </div>
+                </div>
               ) : null}
               <a
                 href={TELEGRAM_URL}
@@ -158,8 +177,8 @@ const Hero: React.FC = () => {
                 <MotionBtn
                   className="w-full sm:w-auto px-8 md:px-10 py-4 font-black uppercase text-xs md:text-sm tracking-widest border-2"
                   style={{
-                    backgroundColor: TEAM_REGISTRATION_URL ? "transparent" : RED,
-                    color: TEAM_REGISTRATION_URL ? DARK_TEXT : OFF_WHITE,
+                    backgroundColor: REGISTRATION_OPEN && TEAM_REGISTRATION_URL ? "transparent" : RED,
+                    color: REGISTRATION_OPEN && TEAM_REGISTRATION_URL ? DARK_TEXT : OFF_WHITE,
                     borderColor: DARK_TEXT,
                     boxShadow: `4px 4px 0px ${DARK_TEXT}`,
                   }}
@@ -167,7 +186,7 @@ const Hero: React.FC = () => {
                     whileHover: {
                       y: -3,
                       boxShadow: `6px 6px 0px ${DARK_TEXT}`,
-                      backgroundColor: TEAM_REGISTRATION_URL ? DARK_TEXT : DARK_RED,
+                      backgroundColor: REGISTRATION_OPEN && TEAM_REGISTRATION_URL ? DARK_TEXT : DARK_RED,
                       color: OFF_WHITE,
                     },
                     whileTap: { y: 2, boxShadow: `2px 2px 0px ${DARK_TEXT}` },
@@ -182,7 +201,9 @@ const Hero: React.FC = () => {
               className="mt-5 font-mono text-[11px] md:text-xs uppercase tracking-widest font-bold"
               style={{ color: DARK_TEXT, opacity: 0.55 }}
             >
-              {"// TEAMS OF 3–4 · FREE TO JOIN · REG CLOSES 16 JUL"}
+              {REGISTRATION_OPEN
+                ? "// TEAMS OF 3–4 · FREE TO JOIN · REG CLOSES 16 JUL"
+                : "// TEAMS OF 3–4 · FREE TO JOIN · REGISTRATION CLOSED"}
             </p>
           </div>
         </motion.div>

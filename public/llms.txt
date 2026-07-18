@@ -24,9 +24,9 @@ HackXperience 2026 is a student-run hackathon organised by SIM IT Club (SIMITC),
 - Website: https://hackxperience2026.vercel.app
 
 ## Registration
-- Team registration (Team Leader submits for the whole team): https://forms.cloud.microsoft/r/BjC48ET3vW
-- Looking for a team (solo or incomplete teams): https://forms.cloud.microsoft/r/Lycc7m85fx
-- Registration closes 16 July 2026, 23:59 SGT
+- **Status: CLOSED** (closed 16 July 2026, 23:59 SGT)
+- New team / solo sign-ups are no longer accepted
+- Already registered? Join Telegram for updates: https://t.me/+o_3QtjEFmNFhYmFl
 
 ## Pre-Events
 - **Building Agentic AI: Microsoft Foundry Workshop** — 17 July 2026, 18:00–22:00, SIM Campus. Covers agent fundamentals, Microsoft Foundry ecosystem, multi-agent workflows, hands-on agent builds, and responsible AI. Room details via Telegram.
@@ -67,9 +67,14 @@ Total prize pool: $1,800+
 Judging criteria emphasise creativity & impact, agentic depth (autonomous reasoning, tool use, orchestration), technical execution, and presentation quality. Track-specific criteria are on the website Prizes section.
 
 ## Judges
-- **Vincent Choy** — Senior Cloud Consultant, Fedelelis · Microsoft MVP
+- **Cher Lim** — AI Educator, SIM Global Education · Wine Treasures
 - **Richard Lee** — Chief Architect, IntelWave AI
-- **Cher Lim** — AI Educator, SIM Global Education
+- **Dileepa Rajapaksa** — Cloud, Channel Specialist, Pax8 · Microsoft MVP
+- **Vincent Choy** — Senior Cloud Consultant, Fedelelis · Microsoft MVP
+
+## Mentors
+- **Roger Yeo** — NavTech Ministry Director · Co-Founder, GeeksHacking
+- **Senthamil** — Solutions Architect, Acumant · Microsoft MVP
 
 ## Sponsors & Partners
 - **DynamicWeb** (gold) — https://dynamicweb.com/
@@ -105,32 +110,32 @@ Programs:
 ## Pages
 - Homepage: https://hackxperience2026.vercel.app
 - Photo gallery (past events): https://hackxperience2026.vercel.app/gallery
-- Project submission portal: https://hackxperience2026.vercel.app/submit
+- Project submission portal: https://hackxperience2026.simitclub.com/submit
 
 ## Frequently Asked Questions
 
 ### Registration
 Q: How do I register for HackXperience 2026?
-A: Your team's Team Leader submits the Team Registration Form (https://forms.cloud.microsoft/r/BjC48ET3vW) on behalf of the team. Registration closes 16 July 2026, 23:59 SGT.
+A: Registration closed on 16 July 2026, 23:59 SGT. New team sign-ups are no longer accepted. Join Telegram for event updates if you're already registered: https://t.me/+o_3QtjEFmNFhYmFl
 
 Q: What is the team size?
 A: 3 to 4 members. One Team Leader is the primary contact and submits the form.
 
 Q: I'm solo or don't have a full team yet.
-A: Fill out the Looking for a Team form (https://forms.cloud.microsoft/r/Lycc7m85fx) and find teammates during pre-events.
+A: Registration is closed, so new solo / incomplete-team sign-ups are no longer accepted. If you already registered, check Telegram for team-formation updates.
 
 Q: Can I team up with students from other universities?
-A: Yes. Indicate SIM vs other institution for each member on the registration form.
+A: Yes — active SIM students may invite non-SIM active undergraduates. Indicate SIM vs other institution for each member on the registration form.
 
 Q: Is there a registration fee?
 A: No. Free to participate.
 
 Q: Who is eligible?
-A: All SIM students, all years. Cross-university teammates allowed.
+A: Active SIM students (foundations, diploma, undergraduate, masters). Active SIM students may invite non-SIM active undergraduate students.
 
 ### Pre-Events
 Q: What are the pre-events?
-A: Microsoft Foundry Workshop (17 Jul 2026, 7–10 PM, SIM Campus). Join Telegram for updates: https://t.me/+o_3QtjEFmNFhYmFl
+A: Microsoft Foundry Workshop (17 Jul 2026, 6–10 PM, SIM Campus). Join Telegram for updates: https://t.me/+o_3QtjEFmNFhYmFl
 
 Q: Do I need to attend pre-events?
 A: No, but highly recommended.

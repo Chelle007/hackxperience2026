@@ -2,7 +2,7 @@
 
 import { IBM_Plex_Mono, Montserrat } from "next/font/google";
 import { motion, useReducedMotion } from "framer-motion";
-import { TEAM_REGISTRATION_URL, LOOKING_FOR_TEAM_URL, TELEGRAM_URL } from "@/lib/site-links";
+import { TEAM_REGISTRATION_URL, LOOKING_FOR_TEAM_URL, TELEGRAM_URL, REGISTRATION_OPEN } from "@/lib/site-links";
 import { RevealItem, RevealStagger } from "./ui/motion-ui";
 
 const ibmPlexMono = IBM_Plex_Mono({
@@ -56,8 +56,9 @@ export default function TimelineCta() {
 
         <RevealItem>
           <p className="mx-auto mt-6 sm:mt-8 max-w-[560px] text-center italic text-[15px] sm:text-[17px] leading-[1.55] font-normal tracking-[0.02em] text-white/70">
-            Join 100+ curious students on 24–25 July. Deploy agentic products
-            that matter, not just keep up with the trends.
+            {REGISTRATION_OPEN
+              ? "Join 100+ curious students on 24–25 July. Deploy agentic products that matter, not just keep up with the trends."
+              : "Registration is closed. See you on 24–25 July — join the Telegram community for updates and day-of announcements."}
           </p>
         </RevealItem>
 
@@ -66,7 +67,7 @@ export default function TimelineCta() {
           stagger={0.1}
         >
           <RevealItem className="w-full sm:w-auto">
-            {TEAM_REGISTRATION_URL ? (
+            {REGISTRATION_OPEN && TEAM_REGISTRATION_URL ? (
               <CtaButton
                 href={TEAM_REGISTRATION_URL}
                 className="bg-[#1a1a1a] px-10 sm:px-14 py-5 text-[13px] sm:text-[15px] font-bold tracking-[0.12em] uppercase shadow-[5px_5px_0_0_rgba(255,255,255,0.25)] hover:brightness-125"
@@ -83,7 +84,7 @@ export default function TimelineCta() {
             )}
           </RevealItem>
 
-          {LOOKING_FOR_TEAM_URL ? (
+          {REGISTRATION_OPEN && LOOKING_FOR_TEAM_URL ? (
             <RevealItem className="w-full sm:w-auto">
               <CtaButton
                 href={LOOKING_FOR_TEAM_URL}
@@ -92,13 +93,22 @@ export default function TimelineCta() {
                 SOLO / PAIR REGISTRATION
               </CtaButton>
             </RevealItem>
+          ) : !REGISTRATION_OPEN ? (
+            <RevealItem className="w-full sm:w-auto">
+              <span
+                className="block w-full sm:w-auto text-center border-2 border-white/40 px-10 sm:px-14 py-5 text-[13px] sm:text-[15px] font-bold tracking-[0.12em] uppercase text-white/60 cursor-not-allowed"
+                aria-disabled="true"
+              >
+                REGISTRATION CLOSED
+              </span>
+            </RevealItem>
           ) : null}
 
           <RevealItem>
             <div className="sm:border-l border-white/30 sm:pl-6 text-left">
               <div className="text-[11px] sm:text-[13px] leading-[1.9] font-semibold tracking-[0.10em] uppercase whitespace-nowrap">
                 <div>// TEAMS OF 3–4</div>
-                <div>// REG CLOSES 16 JUL</div>
+                <div>{REGISTRATION_OPEN ? "// REG CLOSES 16 JUL" : "// REGISTRATION CLOSED"}</div>
                 <div>// FREE TO JOIN</div>
               </div>
             </div>

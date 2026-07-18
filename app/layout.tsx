@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 const SITE_URL = "https://hackxperience2026.vercel.app";
 const SITE_TITLE = "HackXperience 2026: 24-Hour Agentic Sprint Hackathon at SIM";
 const SITE_DESCRIPTION =
-  "Join HackXperience 2026, SIM IT Club's flagship 24-hour sprint hackathon. Teams of 3–4 build and deploy agentic products around AI for Living, 24–25 July at SIM. Register by 16 July. Open to curious students.";
+  "HackXperience 2026, SIM IT Club's flagship 24-hour sprint hackathon. Teams of 3–4 build and deploy agentic products around AI for Living, 24–25 July at SIM. Registration is closed.";
 
 export const metadata: Metadata = {
   title: {

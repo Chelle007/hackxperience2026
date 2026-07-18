@@ -1,9 +1,14 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+
 const PRE_EVENTS = [
   {
     date: '17 JUL 2026',
     time: '6:00 PM - 10:00 PM',
     title: 'BUILDING AGENTIC AI: MICROSOFT FOUNDRY WORKSHOP',
     meta: 'LT.B.5.05 · SIM CAMPUS',
+    endsAt: '2026-07-17T22:00:00+08:00',
   },
 ]
 
@@ -117,19 +122,31 @@ function ActionButton({ href, children }) {
   )
 }
 
-function PreEventItem({ date, time, title, meta, isLast }) {
+function useNow() {
+  const [now, setNow] = useState(null)
+  useEffect(() => {
+    setNow(Date.now())
+  }, [])
+  return now
+}
+
+function isEnded(endsAt, now) {
+  if (!endsAt || now == null) return false
+  return now >= new Date(endsAt).getTime()
+}
+
+function PreEventItem({ date, time, title, meta, isLast, isPassed }) {
   const isPending = date === 'DATES_PENDING'
   const hasTime = Boolean(time?.trim())
-  const calendarLink = !isPending && hasTime
+  const calendarLink = !isPending && !isPassed && hasTime
     ? buildGoogleCalendarLink({ date, time, title, meta })
     : null
-  const link = calendarLink ?? TELEGRAM_LINK
 
   return (
-    <div className="flex gap-4 sm:gap-8">
+    <div className={`flex gap-4 sm:gap-8 ${isPassed ? 'opacity-45' : ''}`}>
       <div className="flex flex-col items-center w-3 sm:w-4 flex-shrink-0">
         <div
-          className="w-3 sm:w-3.5 bg-red-700"
+          className={`w-3 sm:w-3.5 ${isPassed ? 'bg-gray-600' : 'bg-red-700'}`}
           style={{
             height: 18,
             clipPath:
@@ -137,14 +154,21 @@ function PreEventItem({ date, time, title, meta, isLast }) {
           }}
         />
         {!isLast && (
-          <div className="w-0.5 bg-red-700 flex-1 min-h-14 sm:min-h-16" />
+          <div className={`w-0.5 ${isPassed ? 'bg-gray-700' : 'bg-red-700'} flex-1 min-h-14 sm:min-h-16`} />
         )}
       </div>
 
       <div className="flex-1 pb-6 sm:pb-8 pt-0.5">
-        <Label>{date}</Label>
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+          <div className="text-red-500 text-[10px] sm:text-xs tracking-widest font-mono mb-1.5">{date}</div>
+          {isPassed && (
+            <span className="text-[10px] sm:text-xs tracking-widest font-mono text-gray-500 mb-1.5">
+              // CLOSED
+            </span>
+          )}
+        </div>
 
-        <div className="text-white text-lg sm:text-xl lg:text-2xl font-bold tracking-wider font-mono mb-1.5">
+        <div className={`text-lg sm:text-xl lg:text-2xl font-bold tracking-wider font-mono mb-1.5 ${isPassed ? 'text-gray-500' : 'text-white'}`}>
           {title}
         </div>
 
@@ -154,22 +178,26 @@ function PreEventItem({ date, time, title, meta, isLast }) {
           </Meta>
         )}
 
-        <div className="mt-3 sm:mt-4">
-          <ActionButton href={link}>
-            <img
-              src={calendarLink ? '/google_calendar.svg' : '/telegram.svg'}
-              className="w-4 h-4"
-              alt="icon"
-            />
-            {calendarLink ? 'SET_REMINDER' : 'GET_NOTIFIED'}
-          </ActionButton>
-        </div>
+        {!isPassed && (
+          <div className="mt-3 sm:mt-4">
+            <ActionButton href={calendarLink ?? TELEGRAM_LINK}>
+              <img
+                src={calendarLink ? '/google_calendar.svg' : '/telegram.svg'}
+                className="w-4 h-4"
+                alt=""
+              />
+              {calendarLink ? 'SET_REMINDER' : 'GET_NOTIFIED'}
+            </ActionButton>
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
 export default function PreEvent() {
+  const now = useNow()
+
   return (
     <section id="pre-events" className="bg-[#1a1a1a] px-6 md:px-12 pt-14 sm:pt-20 pb-10 font-mono scroll-mt-11">
       <div className="max-w-7xl mx-auto">
@@ -184,6 +212,7 @@ export default function PreEvent() {
               key={i}
               {...event}
               isLast={i === PRE_EVENTS.length - 1}
+              isPassed={isEnded(event.endsAt, now)}
             />
           ))}
         </div>

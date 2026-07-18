@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { RevealItem, RevealStagger } from './components/ui/motion-ui'
 import { motion } from 'framer-motion'
 
@@ -9,30 +10,35 @@ const EVENTS = [
     title: 'REGISTRATION DEADLINE',
     time: '11:59 PM',
     meta: 'SGT · TEAM REGISTRATION FORM',
+    endsAt: '2026-07-16T23:59:59+08:00',
   },
   {
     date: '24 JUL 2026',
     title: 'OPENING CEREMONY',
     time: '',
     meta: 'SIM CAMPUS',
+    endsAt: '2026-07-24T23:59:59+08:00',
   },
   {
     date: '24–25 JUL 2026',
     title: 'HACKING PERIOD',
     time: '',
     meta: 'SIM CAMPUS',
+    endsAt: '2026-07-25T12:00:00+08:00',
   },
   {
     date: '25 JUL 2026',
     title: 'SUBMISSION DEADLINE',
     time: '12:00 PM',
     meta: 'SGT · PROJECT PORTAL',
+    endsAt: '2026-07-25T12:00:00+08:00',
   },
   {
     date: '25 JUL 2026',
     title: 'JUDGING + WINNERS',
     time: '',
     meta: 'SIM CAMPUS',
+    endsAt: '2026-07-25T23:59:59+08:00',
   },
 ]
 
@@ -40,12 +46,12 @@ const REVEAL_TRACKS_AND_JUDGES = process.env.NEXT_PUBLIC_REVEAL_TRACKS_AND_JUDGE
 
 const JUDGES = [
   {
-    name: 'VINCENT CHOY',
-    role: 'SENIOR CLOUD CONSULTANT',
-    company: 'FEDELELIS · MICROSOFT MVP',
-    bio: 'Microsoft MVP for Microsoft 365 and Copilot, honored every year since 2014. Global judge and mentor for the Microsoft Imagine Cup. Frequent international speaker on security and digital transformation, passionate about guiding students to turn bold ideas into lasting impact.',
-    linkedin: 'https://www.linkedin.com/in/office365mvp/',
-    img: '/judges/vincent-choy.png',
+    name: 'CHER LIM',
+    role: 'AI EDUCATOR',
+    company: 'SIM GLOBAL EDUCATION · WINE TREASURES',
+    bio: 'Educator at SIM Global Education teaching AI and machine learning across partner-university programs: deep learning, ML algorithm development, data visualization, and AI project modules. Teaching Excellence Award 2025 and 15-Year Lecturer Service Award recipient at SIM.',
+    linkedin: 'https://www.linkedin.com/in/cher-l-812959/',
+    img: '/judges/cher-lim.png',
   },
   {
     name: 'RICHARD LEE',
@@ -56,12 +62,39 @@ const JUDGES = [
     img: '/judges/richard-lee.png',
   },
   {
-    name: 'CHER LIM',
-    role: 'AI EDUCATOR',
-    company: 'SIM GLOBAL EDUCATION · WINE TREASURES',
-    bio: 'Educator at SIM Global Education teaching AI and machine learning across partner-university programs: deep learning, ML algorithm development, data visualization, and AI project modules. Teaching Excellence Award 2025 and 15-Year Lecturer Service Award recipient at SIM.',
-    linkedin: 'https://www.linkedin.com/in/cher-l-812959/',
-    img: '/judges/cher-lim.png',
+    name: 'DILEEPA RAJAPAKSA',
+    role: 'CLOUD, CHANNEL SPECIALIST',
+    company: 'PAX8 · MICROSOFT MVP',
+    bio: 'Microsoft MVP and MCT in AI, cloud technologies, and the Microsoft ecosystem. Over 15 years in solution architecture, Azure, and partner enablement. Passionate about empowering the technical community through mentoring, public speaking, and real-world innovation.',
+    linkedin: 'https://www.linkedin.com/in/rajapaksa/',
+    img: '/judges/dileepa-rajapaksa.png',
+  },
+  {
+    name: 'VINCENT CHOY',
+    role: 'SENIOR CLOUD CONSULTANT',
+    company: 'FEDELELIS · MICROSOFT MVP',
+    bio: 'Microsoft MVP for Microsoft 365 and Copilot, honored every year since 2014. Global judge and mentor for the Microsoft Imagine Cup. Frequent international speaker on security and digital transformation, passionate about guiding students to turn bold ideas into lasting impact.',
+    linkedin: 'https://www.linkedin.com/in/office365mvp/',
+    img: '/judges/vincent-choy.png',
+  },
+]
+
+const MENTORS = [
+  {
+    name: 'ROGER YEO',
+    role: 'MENTOR',
+    company: 'NAVTECH · GEEKSHACKING',
+    bio: 'Ministry Director at The Navigators and Co-Founder of GeeksHacking. Software developer with a strong background in leadership, collaboration, and technical problem-solving. Youth mentor with NavTeens for over 15 years, bringing a practical, real-world lens to building technology that serves people.',
+    linkedin: 'https://www.linkedin.com/in/rogeryeosm/',
+    img: '/judges/roger-yeo.png',
+  },
+  {
+    name: 'SENTHAMIL',
+    role: 'MENTOR',
+    company: 'ACUMANT · MICROSOFT MVP',
+    bio: 'AI solutions architect specializing in Azure AI Foundry, MCP-based extensibility, and agentic frameworks for enterprise automation. Designs modern AI systems with autonomous agents, secure API orchestration, and deep Microsoft ecosystem integration — including Copilot Studio, Power Platform, and GitHub Copilot.',
+    linkedin: 'https://www.linkedin.com/in/altfo/',
+    img: '/judges/senthamil.png',
   },
 ]
 
@@ -174,45 +207,74 @@ function buildGoogleCalendarLink({ title, date, time, meta }) {
   )}&dates=${start}/${end}&location=${encodeURIComponent(meta)}`
 }
 
-function TimelineItem({ date, title, time, meta, isLast }) {
+function useNow() {
+  const [now, setNow] = useState(null)
+  useEffect(() => {
+    setNow(Date.now())
+  }, [])
+  return now
+}
+
+function isEnded(endsAt, now) {
+  if (!endsAt || now == null) return false
+  return now >= new Date(endsAt).getTime()
+}
+
+function TimelineItem({ date, title, time, meta, isLast, isPassed, isNext }) {
   const isPending = date === 'DATES_PENDING' || date.includes('–')
 
-  const calendarLink = !isPending
+  const calendarLink = !isPending && !isPassed
     ? buildGoogleCalendarLink({ title, date, time, meta })
     : null
+
+  const markerClass = isPassed ? 'bg-gray-600' : isNext ? 'bg-red-600' : 'bg-red-700'
+  const lineClass = isPassed ? 'bg-gray-700' : 'bg-red-700'
 
   return (
     <RevealItem>
     <motion.div
-      className="flex gap-4 sm:gap-8"
-      whileHover={{ x: 4 }}
+      className={`flex gap-4 sm:gap-8 ${isPassed ? 'opacity-45' : ''}`}
+      whileHover={isPassed ? undefined : { x: 4 }}
       transition={{ type: 'spring', stiffness: 400, damping: 28 }}
     >
       <div className="flex flex-col items-center w-4 flex-shrink-0">
         <div
-          className="w-3.5 bg-red-700"
+          className={`w-3.5 ${markerClass}`}
           style={{
             height: 18,
             clipPath: 'polygon(50% 0%, 100% 35%, 100% 100%, 0% 100%, 0% 35%)',
           }}
         />
-        {!isLast && <div className="w-0.5 bg-red-700 flex-1 min-h-12" />}
+        {!isLast && <div className={`w-0.5 ${lineClass} flex-1 min-h-12`} />}
       </div>
 
       <div className="flex-1 pb-8 sm:pb-10 pt-0.5">
-        <Label>{date}</Label>
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+          <div className="text-red-500 text-xs tracking-widest font-mono mb-1.5">{date}</div>
+          {isPassed && (
+            <span className="text-[10px] sm:text-xs tracking-widest font-mono text-gray-500 mb-1.5">
+              // CLOSED
+            </span>
+          )}
+          {!isPassed && isNext && (
+            <span className="text-[10px] sm:text-xs tracking-widest font-mono text-red-500 mb-1.5">
+              // UP NEXT
+            </span>
+          )}
+        </div>
 
-        <div className="text-white text-base sm:text-xl font-bold tracking-wider font-mono mb-1.5">
+        <div className={`text-base sm:text-xl font-bold tracking-wider font-mono mb-1.5 ${isPassed ? 'text-gray-500' : 'text-white'}`}>
           {title}
         </div>
 
         {!isPending && time && <Meta>{time} // {meta}</Meta>}
+        {!isPending && !time && meta && <Meta>{meta}</Meta>}
 
-        {!isPending && (
+        {!isPending && !isPassed && calendarLink && calendarLink !== '#' && (
           <div className="mt-4">
             <ActionButton href={calendarLink}>
               <span className="flex items-center gap-2">
-                <img src="/google_calendar.svg" className="w-4 h-4" />
+                <img src="/google_calendar.svg" className="w-4 h-4" alt="" />
                 SET_REMINDER
               </span>
             </ActionButton>
@@ -350,9 +412,11 @@ function SupportedByRow() {
 }
 
 export default function TimeLine() {
+  const now = useNow()
   const gold   = SPONSORS.filter(s => s.tier === 'gold')
   const silver = SPONSORS.filter(s => s.tier === 'silver')
   const bronze = SPONSORS.filter(s => s.tier === 'bronze')
+  const nextIndex = now == null ? -1 : EVENTS.findIndex((event) => !isEnded(event.endsAt, now))
 
   return (
     <section id="timeline" className="bg-[#1a1a1a] px-6 md:px-12 pt-12 sm:pt-16 md:pt-20 pb-8 sm:pb-12 font-mono scroll-mt-11">
@@ -368,16 +432,21 @@ export default function TimeLine() {
               key={i}
               {...event}
               isLast={i === EVENTS.length - 1}
+              isPassed={isEnded(event.endsAt, now)}
+              isNext={nextIndex >= 0 && i === nextIndex}
             />
           ))}
         </RevealStagger>
 
         {REVEAL_TRACKS_AND_JUDGES && (
           <div id="judges">
-            <SectionHeader title="JUDGES_AND_MENTORS" subtitle="// INDUSTRY EXPERTS EVALUATING YOUR WORK" />
+            <SectionHeader title="JUDGES_AND_MENTORS" subtitle="// INDUSTRY EXPERTS EVALUATING AND GUIDING YOUR WORK" />
             <RevealStagger className="flex flex-col" stagger={0.1}>
               {JUDGES.map((judge, i) => (
-                <JudgeRow key={judge.name} {...judge} isLast={i === JUDGES.length - 1} />
+                <JudgeRow key={judge.name} {...judge} isLast={false} />
+              ))}
+              {MENTORS.map((mentor, i) => (
+                <JudgeRow key={mentor.name} {...mentor} isLast={i === MENTORS.length - 1} />
               ))}
             </RevealStagger>
           </div>
