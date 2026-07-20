@@ -15,6 +15,7 @@ export function proxy(request: NextRequest) {
 
   const isAdmin = pathname.startsWith("/admin");
   const isJudge = pathname.startsWith("/judge");
+  const isAdminVoting = pathname.startsWith("/admin/voting");
   const isAdminLogin = pathname === "/admin/login";
   const isJudgeLogin = pathname === "/judge/login";
 
@@ -22,9 +23,9 @@ export function proxy(request: NextRequest) {
 
   if (pathname === "/admin") {
     if (!session) return redirectTo("/admin/login", request);
-    return session.role === "admin"
-      ? redirectTo("/admin/dashboard", request)
-      : redirectTo("/judge/dashboard", request, true);
+    if (session.role === "admin") return redirectTo("/admin/dashboard", request);
+    if (session.role === "kiosk") return redirectTo("/admin/voting", request);
+    return redirectTo("/judge/dashboard", request, true);
   }
 
   if (pathname === "/judge") {
@@ -36,9 +37,9 @@ export function proxy(request: NextRequest) {
 
   if (isAdminLogin) {
     if (!session) return NextResponse.next();
-    return session.role === "admin"
-      ? redirectTo("/admin/dashboard", request)
-      : redirectTo("/judge/dashboard", request);
+    if (session.role === "admin") return redirectTo("/admin/dashboard", request);
+    if (session.role === "kiosk") return redirectTo("/admin/voting", request);
+    return redirectTo("/judge/dashboard", request);
   }
 
   if (isJudgeLogin) {
@@ -50,7 +51,11 @@ export function proxy(request: NextRequest) {
 
   if (isAdmin) {
     if (!session) return redirectTo("/admin/login", request);
+    if (session.role === "kiosk") {
+      return isAdminVoting ? NextResponse.next() : redirectTo("/admin/voting", request);
+    }
     if (session.role !== "admin") return redirectTo("/judge/login", request, true);
+    if (isAdminVoting) return NextResponse.next();
     return NextResponse.next();
   }
 

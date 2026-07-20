@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { AdminShellConfig, type AdminMetric } from "../components/AdminShell";
 import { type AdminSubmission, HACKX_TRACKS } from "@/lib/types";
@@ -176,6 +177,7 @@ function TrackChart({ submissions }: { submissions: AdminSubmission[] }) {
 export default function DashboardClient({ initialState }: { initialState: DashboardState }) {
   const [data, setData] = useState<AdminSubmission[]>(emptySubmissions);
   const [exportingKind, setExportingKind] = useState<ExportKind | null>(null);
+  const router = useRouter();
   const { submissionsOpen, allowResubmissions, toggleSubmissionsOpen, toggleAllowResubmissions } =
     usePortalSettings();
   const shellMetrics = useMemo(() => buildMetrics(data), [data]);
@@ -209,6 +211,15 @@ export default function DashboardClient({ initialState }: { initialState: Dashbo
     } finally {
       setExportingKind(null);
     }
+  }
+
+  async function handleEnterVotingKiosk() {
+    try {
+      await fetch("/api/auth/kiosk-session", { method: "POST" });
+    } catch {
+      // ignore
+    }
+    router.push("/admin/voting");
   }
 
   return (
@@ -264,6 +275,9 @@ export default function DashboardClient({ initialState }: { initialState: Dashbo
               disabled={exportingKind !== null}
             >
               {exportingKind === "projects" ? "[ GENERATING... ]" : "[ EXPORT PROJECTS LISTING ]"}
+            </button>
+            <button type="button" className={styles.quickLink} onClick={() => void handleEnterVotingKiosk()}>
+              [ OPEN COMMUNITY VOTING ]
             </button>
           </div>
         </section>

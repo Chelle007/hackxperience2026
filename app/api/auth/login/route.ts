@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
-import { buildSessionToken, PORTAL_SESSION_COOKIE, sessionCookieOptions, type PortalRole } from "@/lib/auth/session";
+import { buildSessionToken, PORTAL_SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth/session";
 import { verifyPassword } from "@/lib/auth/password";
 import { insertSubmissionLog } from "@/lib/server/activity-log";
 
@@ -10,17 +10,19 @@ type LoginRow = {
   password: string;
 };
 
-const roleToTable: Record<PortalRole, "admins" | "judges"> = {
+type LoginRole = "admin" | "judge";
+
+const roleToTable: Record<LoginRole, "admins" | "judges"> = {
   admin: "admins",
   judge: "judges",
 };
 
-const roleToDashboard: Record<PortalRole, string> = {
+const roleToDashboard: Record<LoginRole, string> = {
   admin: "/admin/dashboard",
   judge: "/judge/dashboard",
 };
 
-function isPortalRole(role: unknown): role is PortalRole {
+function isPortalRole(role: unknown): role is LoginRole {
   return role === "admin" || role === "judge";
 }
 

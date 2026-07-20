@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { IBM_Plex_Mono } from "next/font/google";
 import { useRouter, usePathname } from "next/navigation";
 import { REVEAL_TRACKS_AND_JUDGES } from "@/lib/event-reveal";
+import { isCommunityLeaderboardLive } from "@/lib/community-voting-release";
 
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
@@ -29,6 +30,7 @@ const NAV_ITEMS: NavItem[] = [
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [leaderboardLive, setLeaderboardLive] = useState(() => isCommunityLeaderboardLive());
   const router = useRouter();
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
@@ -38,6 +40,23 @@ export default function Navbar() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    if (leaderboardLive) return;
+
+    const id = window.setInterval(() => {
+      if (isCommunityLeaderboardLive()) {
+        setLeaderboardLive(true);
+        window.clearInterval(id);
+      }
+    }, 30000);
+
+    return () => window.clearInterval(id);
+  }, [leaderboardLive]);
+
+  const navItems = leaderboardLive
+    ? [...NAV_ITEMS, { label: "LEADERBOARD", href: "/community-favourites" } satisfies NavItem]
+    : NAV_ITEMS;
 
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
@@ -89,7 +108,7 @@ export default function Navbar() {
 
       {/* Center — Nav links */}
       <div className="hidden md:flex items-center gap-1">
-        {NAV_ITEMS.map((item) => (
+        {navItems.map((item) => (
           <motion.button
             key={item.label}
             onClick={() => handleNavClick(item)}
@@ -146,7 +165,7 @@ export default function Navbar() {
             className="md:hidden absolute top-11 left-0 right-0 flex flex-col border-t border-white/10 overflow-hidden"
             style={{ backgroundColor: "#1d1c17" }}
           >
-            {NAV_ITEMS.map((item, i) => (
+            {navItems.map((item, i) => (
               <motion.button
                 key={item.label}
                 initial={reduceMotion ? false : { opacity: 0, x: -12 }}
