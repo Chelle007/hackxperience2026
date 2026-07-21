@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 export const PORTAL_SESSION_COOKIE = "hx_portal_session";
 export const PORTAL_SESSION_TTL_SECONDS = 60 * 60 * 8; // 8 hours
 
-export type PortalRole = "admin" | "judge";
+export type PortalRole = "admin" | "judge" | "sponsor";
 export type PortalUserId = number | string;
 
 export type PortalSession = {
@@ -12,6 +12,18 @@ export type PortalSession = {
   role: PortalRole;
   iat: number;
   exp: number;
+};
+
+export const PORTAL_DASHBOARDS: Record<PortalRole, string> = {
+  admin: "/admin/dashboard",
+  judge: "/judge/dashboard",
+  sponsor: "/sponsor/dashboard",
+};
+
+export const PORTAL_LOGINS: Record<PortalRole, string> = {
+  admin: "/login?role=admin",
+  judge: "/login?role=judge",
+  sponsor: "/login?role=sponsor",
 };
 
 type CookieGetter = {
@@ -34,7 +46,7 @@ function safeCompare(a: string, b: string) {
 }
 
 function isPortalRole(role: unknown): role is PortalRole {
-  return role === "admin" || role === "judge";
+  return role === "admin" || role === "judge" || role === "sponsor";
 }
 
 function isPortalUserId(value: unknown): value is PortalUserId {

@@ -21,7 +21,7 @@ const C = {
 const FM = "var(--font-admin-mono, var(--font-ibm-plex-mono, 'IBM Plex Mono')), monospace";
 const FB = "var(--font-admin-display, var(--font-bebas-neue, 'Bebas Neue')), sans-serif";
 const SPRING = { type: "spring" as const, stiffness: 400, damping: 20 };
-type PortalRole = "judge" | "admin";
+type PortalRole = "judge" | "admin" | "sponsor";
 
 type UserRoleRow = {
   id: number | string;
@@ -31,9 +31,39 @@ type UserRoleRow = {
 function normalizeRole(value: unknown): PortalRole | null {
   if (typeof value !== "string") return null;
   const role = value.trim().toLowerCase();
-  if (role === "admin" || role === "judge") return role;
+  if (role === "admin" || role === "judge" || role === "sponsor") return role;
   return null;
 }
+
+const ROLE_COPY: Record<
+  PortalRole,
+  { title: string; idLabel: string; pwLabel: string; idPlaceholder: string; pwPlaceholder: string; dash: string }
+> = {
+  admin: {
+    title: "ADMIN ",
+    idLabel: "admin_id",
+    pwLabel: "admin_password",
+    idPlaceholder: "Enter admin username...",
+    pwPlaceholder: "Enter admin password...",
+    dash: "/admin/dashboard",
+  },
+  judge: {
+    title: "JUDGE ",
+    idLabel: "judge_id",
+    pwLabel: "judge_password",
+    idPlaceholder: "Enter judge username...",
+    pwPlaceholder: "Enter judge password...",
+    dash: "/judge/dashboard",
+  },
+  sponsor: {
+    title: "SPONSOR ",
+    idLabel: "sponsor_id",
+    pwLabel: "sponsor_password",
+    idPlaceholder: "Enter sponsor username...",
+    pwPlaceholder: "Enter sponsor password...",
+    dash: "/sponsor/dashboard",
+  },
+};
 
 function LoginPageContent() {
   const router = useRouter();
@@ -46,11 +76,11 @@ function LoginPageContent() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const isAdmin = activeRole === "admin";
-  const idLabel = isAdmin ? "admin_id" : "judge_id";
-  const pwLabel = isAdmin ? "admin_password" : "judge_password";
-  const idPlaceholder = isAdmin ? "Enter admin username..." : "Enter judge username...";
-  const dashRoute = isAdmin ? "/admin/dashboard" : "/judge/dashboard";
+  const copy = ROLE_COPY[activeRole];
+  const idLabel = copy.idLabel;
+  const pwLabel = copy.pwLabel;
+  const idPlaceholder = copy.idPlaceholder;
+  const dashRoute = copy.dash;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -289,7 +319,7 @@ function LoginPageContent() {
                 letterSpacing: "0.02em",
               }}
             >
-              {isAdmin ? "ADMIN " : "JUDGE "}
+              {copy.title}
               <span style={{ color: C.red }}>PORTAL</span>
             </h1>
             <p
@@ -307,31 +337,23 @@ function LoginPageContent() {
           </div>
 
           <div style={{ display: "flex", marginBottom: 22 }}>
-            <button
-              type="button"
-              onClick={() => setActiveRole("admin")}
-              className={`admin-role-btn flex-1 h-[34px] border border-[#cc0000] text-[11px] tracking-[0.08em] transition-colors duration-150 ${
-                activeRole === "admin"
-                  ? "bg-black text-white font-bold"
-                  : "bg-[#f5f0e8] text-[#1a1a1a] hover:bg-[#ede8e0]"
-              }`}
-              style={{ fontFamily: FM }}
-            >
-              ADMIN
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveRole("judge")}
-              className={`admin-role-btn flex-1 h-[34px] border border-l-0 border-[#cc0000] text-[11px] tracking-[0.08em] transition-colors duration-150 ${
-                activeRole === "judge"
-                  ? "bg-black text-white font-bold"
-                  : "bg-[#f5f0e8] text-[#1a1a1a] hover:bg-[#ede8e0]"
-              }`}
-              style={{ fontFamily: FM }}
-            >
-              JUDGE
-            </button>
+            {(["admin", "judge", "sponsor"] as const).map((role, index) => (
+              <button
+                key={role}
+                type="button"
+                onClick={() => setActiveRole(role)}
+                className={`admin-role-btn flex-1 h-[34px] border border-[#cc0000] text-[11px] tracking-[0.08em] transition-colors duration-150 ${
+                  index > 0 ? "border-l-0" : ""
+                } ${
+                  activeRole === role
+                    ? "bg-black text-white font-bold"
+                    : "bg-[#f5f0e8] text-[#1a1a1a] hover:bg-[#ede8e0]"
+                }`}
+                style={{ fontFamily: FM }}
+              >
+                {role.toUpperCase()}
+              </button>
+            ))}
           </div>
 
           <form onSubmit={handleSubmit} noValidate>
@@ -400,7 +422,7 @@ function LoginPageContent() {
                 className="portal-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={isAdmin ? "Enter admin password..." : "Enter judge password..."}
+                placeholder={copy.pwPlaceholder}
                 autoComplete="current-password"
                 style={{
                   display: "block",

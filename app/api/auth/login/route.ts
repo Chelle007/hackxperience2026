@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
-import { buildSessionToken, PORTAL_SESSION_COOKIE, sessionCookieOptions, type PortalRole } from "@/lib/auth/session";
+import {
+  buildSessionToken,
+  PORTAL_DASHBOARDS,
+  PORTAL_SESSION_COOKIE,
+  sessionCookieOptions,
+} from "@/lib/auth/session";
 import { verifyPassword } from "@/lib/auth/password";
 import { insertSubmissionLog } from "@/lib/server/activity-log";
 
@@ -10,17 +15,13 @@ type LoginRow = {
   password: string;
 };
 
-const roleToTable: Record<PortalRole, "admins" | "judges"> = {
+/** Legacy table-based login — admin/judge only. Sponsors use Supabase Auth via /login. */
+const roleToTable = {
   admin: "admins",
   judge: "judges",
-};
+} as const;
 
-const roleToDashboard: Record<PortalRole, string> = {
-  admin: "/admin/dashboard",
-  judge: "/judge/dashboard",
-};
-
-function isPortalRole(role: unknown): role is PortalRole {
+function isLegacyPortalRole(role: unknown): role is keyof typeof roleToTable {
   return role === "admin" || role === "judge";
 }
 
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
   const username = typeof body?.username === "string" ? body.username.trim() : "";
   const password = typeof body?.password === "string" ? body.password : "";
 
-  if (!isPortalRole(role) || !username || !password) {
+  if (!isLegacyPortalRole(role) || !username || !password) {
     return NextResponse.json({ error: "Invalid login payload." }, { status: 400 });
   }
 
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
   const response = NextResponse.json({
     role,
     username: data.username,
-    redirectTo: roleToDashboard[role],
+    redirectTo: PORTAL_DASHBOARDS[role],
   });
 
   response.cookies.set(PORTAL_SESSION_COOKIE, token, sessionCookieOptions());
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
   void insertSubmissionLog({
     submissionId: null,
     action: "LOGIN",
-    performedBy: role === "admin" ? `admin:${data.username}` : `judge:${data.username}`,
+    performedBy: `${role}:${data.username}`,
     note: `${role === "admin" ? "Admin" : "Judge"} "${data.username}" logged in`,
   }).catch(() => {});
 

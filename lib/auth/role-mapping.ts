@@ -10,7 +10,7 @@ type UserRoleRow = {
 function normalizeRole(value: unknown): PortalRole | null {
   if (typeof value !== "string") return null;
   const role = value.trim().toLowerCase();
-  if (role === "admin" || role === "judge") return role;
+  if (role === "admin" || role === "judge" || role === "sponsor") return role;
   return null;
 }
 
