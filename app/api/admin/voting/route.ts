@@ -42,6 +42,26 @@ function normalizeEmail(value: unknown) {
   return normalizeText(value).toLowerCase();
 }
 
+async function broadcastLeaderboardUpdate() {
+  const channel = supabaseServer.channel("community_leaderboard");
+
+  const status = await new Promise<string>((resolve) => {
+    channel.subscribe((value) => {
+      resolve(value);
+    });
+  });
+
+  if (status === "SUBSCRIBED") {
+    await channel.send({
+      type: "broadcast",
+      event: "leaderboard_updated",
+      payload: { updatedAt: new Date().toISOString() },
+    });
+  }
+
+  await supabaseServer.removeChannel(channel);
+}
+
 function getSubmissionMemberMap(submission: SubmissionRow) {
   const members = mapApprovedSubmissionToVotingTeam(submission).members;
   const memberByEmail = new Map<string, { name: string; email: string }>();
@@ -235,6 +255,8 @@ export async function POST(request: NextRequest) {
     performedBy: auth.session.username,
     note: `Community vote recorded for ${sourceSubmission.team_id} / ${voter.name}`,
   }).catch(() => {});
+
+  void broadcastLeaderboardUpdate().catch(() => {});
 
   return NextResponse.json({ ok: true });
 }
