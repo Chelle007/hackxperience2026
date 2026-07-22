@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Bebas_Neue, IBM_Plex_Mono, Montserrat } from "next/font/google";
 import Navbar from "../components/navbar";
 import { fetchCommunityVotingLeaderboard } from "@/lib/client/admin-api";
+import { supabaseBrowser } from "@/lib/supabase-browser";
 import type { CommunityVotingLeaderboardEntry } from "@/lib/types";
 
 const displayFont = Bebas_Neue({
@@ -23,7 +24,6 @@ const bodyFont = Montserrat({
 
 const RED = "#c00000";
 const WHITE = "#ffffff";
-const REFRESH_INTERVAL_MS = 12000;
 const COUNTDOWN_TARGET_MS = new Date("2026-07-25T16:00:00+08:00").getTime();
 
 function formatCountdown(milliseconds: number) {
@@ -40,39 +40,55 @@ export default function CommunityFavouritesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [timeUntilDeadline, setTimeUntilDeadline] = useState(() => Math.max(0, COUNTDOWN_TARGET_MS - Date.now()));
+  const hasLoadedOnceRef = useRef(false);
+  const refreshTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function load() {
-      if (!cancelled) setLoading(true);
+    async function load({ showLoading }: { showLoading: boolean }) {
+      if (!cancelled && showLoading) setLoading(true);
       try {
         const payload = await fetchCommunityVotingLeaderboard();
         if (!cancelled) {
           setLeaderboard(payload.leaderboard);
           setError("");
+          hasLoadedOnceRef.current = true;
         }
       } catch (loadError) {
         if (!cancelled) {
           setError(loadError instanceof Error ? loadError.message : "Unable to load leaderboard.");
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && showLoading) setLoading(false);
       }
     }
 
-    void load();
-    const refreshId = window.setInterval(() => {
-      void load();
-    }, REFRESH_INTERVAL_MS);
+    const scheduleRefresh = () => {
+      if (cancelled) return;
+      if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = window.setTimeout(() => {
+        void load({ showLoading: !hasLoadedOnceRef.current });
+      }, 250);
+    };
+
+    void load({ showLoading: true });
     const countdownId = window.setInterval(() => {
       setTimeUntilDeadline(Math.max(0, COUNTDOWN_TARGET_MS - Date.now()));
     }, 250);
 
+    const channel = supabaseBrowser
+      .channel("community_leaderboard")
+      .on("broadcast", { event: "leaderboard_updated" }, () => {
+        scheduleRefresh();
+      })
+      .subscribe();
+
     return () => {
       cancelled = true;
-      window.clearInterval(refreshId);
       window.clearInterval(countdownId);
+      if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current);
+      void supabaseBrowser.removeChannel(channel);
     };
   }, []);
 
