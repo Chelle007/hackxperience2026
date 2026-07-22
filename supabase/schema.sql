@@ -120,3 +120,37 @@ CREATE INDEX IF NOT EXISTS idx_community_vote_entries_submission_id
 
 ALTER TABLE community_ballots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE community_vote_entries ENABLE ROW LEVEL SECURITY;
+-- ───────────────────────────────────────────────────────────────────────────
+-- Sponsor portal (applied remotely as migration: sponsor_portal_schema)
+-- ───────────────────────────────────────────────────────────────────────────
+
+-- Allow SPONSOR in user_roles (DB stores uppercase ADMIN | JUDGE | SPONSOR)
+ALTER TABLE user_roles DROP CONSTRAINT IF EXISTS user_roles_role_check;
+ALTER TABLE user_roles ADD CONSTRAINT user_roles_role_check
+  CHECK (role = ANY (ARRAY['ADMIN'::text, 'JUDGE'::text, 'SPONSOR'::text]));
+
+ALTER TABLE submissions
+  ADD COLUMN IF NOT EXISTS uses_microsoft_foundry boolean NOT NULL DEFAULT false;
+
+ALTER TABLE judges_scores
+  ADD COLUMN IF NOT EXISTS entrepreneurship smallint;
+
+ALTER TABLE settings
+  ADD COLUMN IF NOT EXISTS entrepreneurship_value smallint NOT NULL DEFAULT 20;
+
+CREATE TABLE IF NOT EXISTS sponsor_scores (
+  sponsor_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  submission_id uuid NOT NULL REFERENCES submissions(id) ON DELETE CASCADE,
+  award text NOT NULL CHECK (award IN ('entrepreneurial', 'microsoft_foundry')),
+  score smallint NOT NULL CHECK (score >= 0 AND score <= 100),
+  private_comment text,
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (sponsor_id, submission_id, award)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sponsor_scores_award_score
+  ON sponsor_scores (award, score DESC);
+
+ALTER TABLE sponsor_scores ENABLE ROW LEVEL SECURITY;
+-- No anon/authenticated policies: access only via service-role API routes.
+

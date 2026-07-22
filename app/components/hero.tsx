@@ -57,7 +57,7 @@ const Hero: React.FC = () => {
 
   return (
     <div
-      className="relative min-h-screen flex items-center justify-center overflow-hidden p-6 md:p-12"
+      className="relative flex items-center justify-center overflow-hidden px-6 py-18 md:px-12 md:py-16"
       style={{ backgroundColor: CREAM_BG, fontFamily: "Montserrat, sans-serif" }}
     >
       <div
@@ -68,7 +68,7 @@ const Hero: React.FC = () => {
         }}
       />
 
-      <div className="relative w-full max-w-7xl flex flex-col lg:flex-row items-center gap-10 lg:gap-16 z-10 pt-10 lg:pt-0">
+      <div className="relative w-full max-w-7xl flex flex-col lg:flex-row items-center gap-8 lg:gap-12 z-10">
         <CrtBox
           className="relative w-full lg:w-1/2 aspect-video bg-[#1d1c17] border-4 p-2 overflow-hidden group shadow-[8px_8px_0px_#1d1c17]"
           style={{ borderColor: RED }}
@@ -100,7 +100,7 @@ const Hero: React.FC = () => {
         </CrtBox>
 
         <motion.div
-          className="w-full lg:w-1/2 space-y-6 md:space-y-8 flex flex-col items-start text-left"
+          className="w-full lg:w-1/2 space-y-4 md:space-y-5 flex flex-col items-start text-left"
           {...fadeUp(0.15)}
         >
           <motion.div
@@ -123,7 +123,7 @@ const Hero: React.FC = () => {
 
           <div className="pt-2 w-full">
             <p
-              className="text-base md:text-xl leading-relaxed opacity-80 font-medium mb-6"
+              className="text-base md:text-xl leading-relaxed opacity-80 font-medium mb-4"
               style={{ color: DARK_TEXT }}
             >
               {HACKATHON_THEME.tagline}

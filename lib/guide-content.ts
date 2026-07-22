@@ -69,26 +69,54 @@ export const GUIDE_JUDGING = {
     where: "A.1.20",
   },
   format: [
-    "3 minutes presentation",
+    "5 minutes pitch — use a live demo if possible",
     "2 minutes Q&A",
   ],
+  criteriaTitle: "How your solution will be evaluated",
   criteria: [
-    { label: "Criteria TBC", note: "Full rubric drops once locked." },
-    { label: "Criteria TBC", note: "Weights and categories to be confirmed." },
-    { label: "Criteria TBC", note: "Check back here before demo day." },
+    {
+      label: "Innovation & Creativity",
+      weight: 30,
+      note: "Originality of ideas, unique problem angle, and creative use of agentic AI.",
+    },
+    {
+      label: "Technical Execution",
+      weight: 20,
+      note: "Quality of engineering, sophistication of AI integration, and reliability of the build.",
+    },
+    {
+      label: "Problem-Solution Fit",
+      weight: 20,
+      note: "How well the solution addresses a real, specific problem within the chosen track.",
+    },
+    {
+      label: "Presentation Quality",
+      weight: 20,
+      note: "Clarity of live pitch, demo effectiveness, and Q&A performance.",
+    },
+    {
+      label: "Entrepreneurship",
+      weight: 10,
+      note: "Market awareness, business viability, and vision beyond the hackathon.",
+    },
   ],
 } as const;
 
 export const GUIDE_VOTING = {
-  schedule: {
-    when: "Sat 25 Jul · 1:00–4:00 PM",
-    where: "B.5.12/B.5.13 & B.2.07/B.2.08",
-  },
   points: [
-    { label: "Who votes", body: "TBA — participants / attendees (confirm before event)." },
-    { label: "How", body: "TBA — link / QR / on-site flow." },
-    { label: "What it affects", body: "TBA — e.g. Community Choice (see prizes on main site)." },
-    { label: "Window", body: "Same window as above — exact open/close TBA." },
+    {
+      label: "Who",
+      body: "Only participants who submitted a project can vote.",
+    },
+    {
+      label: "Prize",
+      body: "Most-voted projects win the Community Choice Award (S$50). Every voter also gets a chance to join the lucky draw.",
+    },
+  ],
+  how: [
+    "Each participant gets 1 chance to vote, and must pick exactly 3 projects (excluding their own).",
+    "After looking around your competitors' projects, approach our organiser and vote on our device.",
+    "On the voting page, indicate your team name and ID, then select your name.",
   ],
 } as const;
 
@@ -165,36 +193,70 @@ export const GUIDE_GAME = {
 } as const;
 
 /**
- * Mentoring — 2 venues, 1 mentor each. Slots assigned by crew;
- * replace placeholders once the roster / times are locked.
+ * Mentoring — 2 venues, 1 mentor each.
+ * Each group: 7 mins with mentor + 1 min buffer between slots.
+ * Track colours match the ops sheet: Care Forward = red, Friction To Flow = blue.
  */
+export type GuideMentorTrack = "Care Forward" | "Friction To Flow";
+
+export type GuideMentorSlot = {
+  time: string;
+  teamId: number;
+  teamName: string;
+  track: GuideMentorTrack;
+};
+
 export const GUIDE_MENTORING = {
   schedule: {
-    when: "Fri 24 Jul · 1:00–3:00 PM",
-    where: "SR B.4.08 & SR B.4.07",
+    when: "Fri 24 Jul · 1:00–2:52 PM",
+    where: "SR B.4.07 & SR B.4.08",
   },
+  note: "Each group gets 7 mins with your mentor + 1 min buffer in between.",
   venues: [
     {
-      id: "venue-a",
+      id: "venue-roger",
       label: "Venue A",
-      room: "SR B.4.08",
-      mentor: "Mentor TBA",
+      room: "SR B.4.07",
+      mentor: "Roger Yeo",
       slots: [
-        { time: "TBA", team: "Assigned on-site" },
-        { time: "TBA", team: "Assigned on-site" },
-        { time: "TBA", team: "Assigned on-site" },
-      ],
+        { time: "13:00 – 13:08", teamId: 14, teamName: "Team QuestForge", track: "Friction To Flow" },
+        { time: "13:08 – 13:16", teamId: 23, teamName: "HereForFood", track: "Care Forward" },
+        { time: "13:16 – 13:24", teamId: 7, teamName: "Debugged", track: "Friction To Flow" },
+        { time: "13:24 – 13:32", teamId: 19, teamName: "Among Us", track: "Care Forward" },
+        { time: "13:32 – 13:40", teamId: 2, teamName: "67 Duck Hunters", track: "Friction To Flow" },
+        { time: "13:40 – 13:48", teamId: 28, teamName: "IDONTKNOW", track: "Care Forward" },
+        { time: "13:48 – 13:56", teamId: 11, teamName: "Eleven", track: "Care Forward" },
+        { time: "13:56 – 14:04", teamId: 25, teamName: "Vedha", track: "Friction To Flow" },
+        { time: "14:04 – 14:12", teamId: 4, teamName: "JJK", track: "Care Forward" },
+        { time: "14:12 – 14:20", teamId: 16, teamName: "Ctrl+Alt+Hire+Us", track: "Friction To Flow" },
+        { time: "14:20 – 14:28", teamId: 21, teamName: "9+10", track: "Friction To Flow" },
+        { time: "14:28 – 14:36", teamId: 9, teamName: "KDP", track: "Friction To Flow" },
+        { time: "14:36 – 14:44", teamId: 27, teamName: "🤓", track: "Care Forward" },
+        { time: "14:44 – 14:52", teamId: 6, teamName: "Gut Genug", track: "Friction To Flow" },
+      ] satisfies GuideMentorSlot[],
     },
     {
-      id: "venue-b",
+      id: "venue-senthamil",
       label: "Venue B",
-      room: "SR B.4.07",
-      mentor: "Mentor TBA",
+      room: "SR B.4.08",
+      mentor: "Senthamil",
       slots: [
-        { time: "TBA", team: "Assigned on-site" },
-        { time: "TBA", team: "Assigned on-site" },
-        { time: "TBA", team: "Assigned on-site" },
-      ],
+        { time: "13:00 – 13:08", teamId: 18, teamName: "Copilot & Chaos", track: "Care Forward" },
+        { time: "13:08 – 13:16", teamId: 12, teamName: "Blue Nova", track: "Friction To Flow" },
+        { time: "13:16 – 13:24", teamId: 29, teamName: "SRS", track: "Friction To Flow" },
+        { time: "13:24 – 13:32", teamId: 3, teamName: "Group 3", track: "Care Forward" },
+        { time: "13:32 – 13:40", teamId: 24, teamName: "Agent Oreo", track: "Friction To Flow" },
+        { time: "13:40 – 13:48", teamId: 15, teamName: "谢谢", track: "Friction To Flow" },
+        { time: "13:48 – 13:56", teamId: 8, teamName: "BlankOut", track: "Friction To Flow" },
+        { time: "13:56 – 14:04", teamId: 26, teamName: "SOS", track: "Care Forward" },
+        { time: "14:04 – 14:12", teamId: 5, teamName: "WonderHut", track: "Care Forward" },
+        { time: "14:12 – 14:20", teamId: 20, teamName: "PanTechnology", track: "Care Forward" },
+        { time: "14:20 – 14:28", teamId: 10, teamName: "abcdefg", track: "Friction To Flow" },
+        { time: "14:28 – 14:36", teamId: 17, teamName: "Larping Lords", track: "Care Forward" },
+        { time: "14:36 – 14:44", teamId: 22, teamName: "Chief Of Staff", track: "Friction To Flow" },
+        { time: "14:44 – 14:52", teamId: 13, teamName: "Syntax Error", track: "Friction To Flow" },
+      ] satisfies GuideMentorSlot[],
     },
   ],
 } as const;
+

@@ -1,5 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { PORTAL_SESSION_COOKIE, readSessionFromCookies, sessionCookieOptions } from "@/lib/auth/session";
+import {
+  PORTAL_DASHBOARDS,
+  PORTAL_LOGINS,
+  PORTAL_SESSION_COOKIE,
+  readSessionFromCookies,
+  sessionCookieOptions,
+  type PortalRole,
+} from "@/lib/auth/session";
 
 function redirectTo(path: string, request: NextRequest, clearSession = false) {
   const response = NextResponse.redirect(new URL(path, request.url));
@@ -9,65 +16,59 @@ function redirectTo(path: string, request: NextRequest, clearSession = false) {
   return response;
 }
 
+function portalFromPath(pathname: string): PortalRole | null {
+  if (pathname.startsWith("/admin")) return "admin";
+  if (pathname.startsWith("/judge")) return "judge";
+  if (pathname.startsWith("/sponsor")) return "sponsor";
+  return null;
+}
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const session = readSessionFromCookies(request.cookies);
+  const portal = portalFromPath(pathname);
 
-  const isAdmin = pathname.startsWith("/admin");
-  const isJudge = pathname.startsWith("/judge");
-  const isAdminVoting = pathname.startsWith("/admin/voting");
-  const isAdminLogin = pathname === "/admin/login";
-  const isJudgeLogin = pathname === "/judge/login";
+  if (!portal) return NextResponse.next();
 
-  if (!isAdmin && !isJudge) return NextResponse.next();
+  const isLogin =
+    pathname === `/${portal}/login` ||
+    pathname === "/login";
 
-  if (pathname === "/admin") {
-    if (!session) return redirectTo("/admin/login", request);
-    if (session.role === "admin") return redirectTo("/admin/dashboard", request);
-    if (session.role === "kiosk") return redirectTo("/admin/voting", request);
-    return redirectTo("/judge/dashboard", request, true);
-  }
-
-  if (pathname === "/judge") {
-    if (!session) return redirectTo("/judge/login", request);
-    return session.role === "judge"
-      ? redirectTo("/judge/dashboard", request)
-      : redirectTo("/admin/dashboard", request, true);
-  }
-
-  if (isAdminLogin) {
-    if (!session) return NextResponse.next();
-    if (session.role === "admin") return redirectTo("/admin/dashboard", request);
-    if (session.role === "kiosk") return redirectTo("/admin/voting", request);
-    return redirectTo("/judge/dashboard", request);
-  }
-
-  if (isJudgeLogin) {
-    if (!session) return NextResponse.next();
-    return session.role === "judge"
-      ? redirectTo("/judge/dashboard", request)
-      : redirectTo("/admin/dashboard", request);
-  }
-
-  if (isAdmin) {
-    if (!session) return redirectTo("/admin/login", request);
-    if (session.role === "kiosk") {
-      return isAdminVoting ? NextResponse.next() : redirectTo("/admin/voting", request);
+  // /admin, /judge, /sponsor roots → login or dashboard
+  if (pathname === `/${portal}`) {
+    if (!session) return redirectTo(PORTAL_LOGINS[portal], request);
+    if (session.role !== portal) {
+      return redirectTo(PORTAL_DASHBOARDS[session.role], request, true);
     }
-    if (session.role !== "admin") return redirectTo("/judge/login", request, true);
-    if (isAdminVoting) return NextResponse.next();
-    return NextResponse.next();
+    return redirectTo(PORTAL_DASHBOARDS[portal], request);
   }
 
-  if (isJudge) {
-    if (!session) return redirectTo("/judge/login", request);
-    if (session.role !== "judge") return redirectTo("/admin/login", request, true);
-    return NextResponse.next();
+  // Dedicated /{role}/login pages
+  if (pathname === `/${portal}/login`) {
+    if (!session) return NextResponse.next();
+    if (session.role === portal) return redirectTo(PORTAL_DASHBOARDS[portal], request);
+    return redirectTo(PORTAL_DASHBOARDS[session.role], request);
+  }
+
+  // Shared /login is not matched by this proxy (matcher is portal prefixes only).
+  if (isLogin) return NextResponse.next();
+
+  // Protected portal pages
+  if (!session) return redirectTo(PORTAL_LOGINS[portal], request);
+
+  // Kiosk sessions are admin-issued and only valid on voting routes.
+  if (portal === "admin" && session.role === "kiosk") {
+    if (pathname.startsWith("/admin/voting")) return NextResponse.next();
+    return redirectTo("/admin/voting", request);
+  }
+
+  if (session.role !== portal) {
+    return redirectTo(PORTAL_LOGINS[session.role], request, true);
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/judge/:path*"],
+  matcher: ["/admin/:path*", "/judge/:path*", "/sponsor/:path*"],
 };

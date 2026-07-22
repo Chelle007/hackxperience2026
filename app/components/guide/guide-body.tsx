@@ -29,6 +29,11 @@ import {
   SHADOW_RED,
 } from "./guide-tokens";
 
+/** Soft track fills — match the mentoring ops sheet (red / blue). */
+const CARE_BG = "#f8d7da";
+const FRICTION_BG = "#cce5ff";
+const FRICTION_ACCENT = "#0b5cab";
+
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -246,6 +251,25 @@ export function GuideMentoring() {
         <GuideSectionLabel>MENTORING</GuideSectionLabel>
         <GuideSectionTitle>Mentor slots</GuideSectionTitle>
         <GuideScheduleMeta when={GUIDE_MENTORING.schedule.when} where={GUIDE_MENTORING.schedule.where} />
+        <p className={`${ibmPlexMono.className} mt-3 text-[11px] sm:text-xs font-medium tracking-wide`} style={{ color: MUTED }}>
+          {GUIDE_MENTORING.note}
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <span
+            className={`${ibmPlexMono.className} inline-flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase px-2.5 py-1.5 border`}
+            style={{ borderColor: DARK_BG, backgroundColor: CARE_BG, color: DARK_BG }}
+          >
+            <span className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: RED }} aria-hidden />
+            Care Forward
+          </span>
+          <span
+            className={`${ibmPlexMono.className} inline-flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase px-2.5 py-1.5 border`}
+            style={{ borderColor: DARK_BG, backgroundColor: FRICTION_BG, color: DARK_BG }}
+          >
+            <span className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: FRICTION_ACCENT }} aria-hidden />
+            Friction To Flow
+          </span>
+        </div>
       </GuideSectionIntro>
 
       <div className="grid md:grid-cols-2 gap-4 lg:gap-6">
@@ -269,25 +293,33 @@ export function GuideMentoring() {
               </p>
             </div>
 
-            <div className="border-t pt-4 space-y-3" style={{ borderColor: "#d8d2c5" }}>
-              {venue.slots.map((slot, i) => (
-                <div
-                  key={`${venue.id}-${i}`}
-                  className="flex items-center justify-between gap-3 text-sm"
-                >
-                  <span className={`${ibmPlexMono.className} text-[11px] font-bold tracking-widest`} style={{ color: RED }}>
-                    {slot.time}
-                  </span>
-                  <span className="text-right font-medium" style={{ color: MUTED }}>
-                    {slot.team}
-                  </span>
-                </div>
-              ))}
+            <div className="border-t pt-3 space-y-2" style={{ borderColor: "#d8d2c5" }}>
+              {venue.slots.map((slot) => {
+                const isCare = slot.track === "Care Forward";
+                return (
+                  <div
+                    key={`${venue.id}-${slot.teamId}-${slot.time}`}
+                    className="flex items-center justify-between gap-3 px-2.5 py-2 text-sm border"
+                    style={{
+                      borderColor: DARK_BG,
+                      backgroundColor: isCare ? CARE_BG : FRICTION_BG,
+                    }}
+                  >
+                    <span className={`${ibmPlexMono.className} text-[10px] sm:text-[11px] font-bold tracking-widest shrink-0`} style={{ color: DARK_BG }}>
+                      {slot.time}
+                    </span>
+                    <div className="text-right min-w-0">
+                      <p className={`${ibmPlexMono.className} text-[10px] font-bold tracking-widest uppercase`} style={{ color: isCare ? RED : FRICTION_ACCENT }}>
+                        {`#${slot.teamId}`}
+                      </p>
+                      <p className="text-sm font-bold truncate" style={{ color: DARK_BG }} title={slot.teamName}>
+                        {slot.teamName}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-
-            <p className={`${ibmPlexMono.className} mt-5 text-[10px] tracking-widest uppercase`} style={{ color: MUTED }}>
-              {"// Slot list updates once assignments are locked"}
-            </p>
           </div>
         ))}
       </div>
@@ -295,7 +327,7 @@ export function GuideMentoring() {
   );
 }
 
-/** Judging — timed pitch (not booth showcase); criteria placeholders until locked. */
+/** Judging — timed pitch + weighted rubric. */
 export function GuideJudging() {
   return (
     <GuideSectionShell id="judging">
@@ -305,38 +337,51 @@ export function GuideJudging() {
         <GuideScheduleMeta when={GUIDE_JUDGING.schedule.when} where={GUIDE_JUDGING.schedule.where} />
       </GuideSectionIntro>
 
-      <div className="grid lg:grid-cols-2 gap-4 lg:gap-6">
-        <div className="border-2 p-5 lg:p-6" style={{ borderColor: DARK_BG, backgroundColor: WHITE, boxShadow: SHADOW_SM }}>
-          <p className={`${ibmPlexMono.className} text-[10px] font-bold tracking-widest uppercase mb-3`} style={{ color: RED }}>
-            {"// Format"}
-          </p>
-          <ul className="space-y-3">
-            {GUIDE_JUDGING.format.map((line) => (
-              <li key={line} className="flex gap-2 text-sm font-medium" style={{ color: DARK_BG }}>
-                <span style={{ color: RED }} aria-hidden>
-                  ›
-                </span>
-                <span>{line}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+      <div className="border-2 p-5 lg:p-6 mb-4 lg:mb-6" style={{ borderColor: DARK_BG, backgroundColor: WHITE, boxShadow: SHADOW_SM }}>
+        <p className={`${ibmPlexMono.className} text-[10px] font-bold tracking-widest uppercase mb-3`} style={{ color: RED }}>
+          {"// Format"}
+        </p>
+        <ul className="space-y-3">
+          {GUIDE_JUDGING.format.map((line) => (
+            <li key={line} className="flex gap-2 text-sm font-medium" style={{ color: DARK_BG }}>
+              <span style={{ color: RED }} aria-hidden>
+                ›
+              </span>
+              <span>{line}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-        <div className="p-5 lg:p-6" style={{ backgroundColor: DARK_BG, color: WHITE, boxShadow: SHADOW_RED }}>
-          <p className={`${ibmPlexMono.className} text-[10px] font-bold tracking-widest uppercase mb-3`} style={{ color: RED }}>
-            {"// Criteria"}
-          </p>
-          <ul className="space-y-4">
-            {GUIDE_JUDGING.criteria.map((item, i) => (
-              <li key={`${item.label}-${i}`}>
-                <p className="text-sm font-black uppercase tracking-tight">{item.label}</p>
-                <p className="mt-1 text-sm" style={{ color: TEXT_DIM }}>
+      <div className="p-5 lg:p-6" style={{ backgroundColor: DARK_BG, color: WHITE, boxShadow: SHADOW_RED }}>
+        <p className={`${ibmPlexMono.className} text-[10px] font-bold tracking-widest uppercase mb-2`} style={{ color: RED }}>
+          {"// Criteria"}
+        </p>
+        <h3 className="text-lg sm:text-xl font-black uppercase tracking-tight mb-5">
+          {GUIDE_JUDGING.criteriaTitle}
+        </h3>
+        <ul className="space-y-3">
+          {GUIDE_JUDGING.criteria.map((item) => (
+            <li
+              key={item.label}
+              className="flex items-start justify-between gap-4 border px-4 py-3.5"
+              style={{ borderColor: "rgba(255,255,255,0.18)", backgroundColor: "rgba(255,255,255,0.04)" }}
+            >
+              <div className="min-w-0">
+                <p className="text-sm sm:text-base font-black uppercase tracking-tight">{item.label}</p>
+                <p className="mt-1 text-xs sm:text-sm leading-relaxed" style={{ color: TEXT_DIM }}>
                   {item.note}
                 </p>
-              </li>
-            ))}
-          </ul>
-        </div>
+              </div>
+              <span
+                className={`${ibmPlexMono.className} shrink-0 text-2xl sm:text-3xl font-bold leading-none`}
+                style={{ color: RED }}
+              >
+                {item.weight}%
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
     </GuideSectionShell>
   );
@@ -348,10 +393,9 @@ export function GuideVoting() {
       <GuideSectionIntro>
         <GuideSectionLabel>VOTING</GuideSectionLabel>
         <GuideSectionTitle>Community voting</GuideSectionTitle>
-        <GuideScheduleMeta when={GUIDE_VOTING.schedule.when} where={GUIDE_VOTING.schedule.where} />
       </GuideSectionIntro>
 
-      <div className="grid sm:grid-cols-2 gap-3 lg:gap-4">
+      <div className="grid sm:grid-cols-2 gap-3 lg:gap-4 mb-3 lg:mb-4">
         {GUIDE_VOTING.points.map((point) => (
           <div
             key={point.label}
@@ -361,11 +405,33 @@ export function GuideVoting() {
             <p className={`${ibmPlexMono.className} text-[10px] font-bold tracking-widest uppercase mb-2`} style={{ color: RED }}>
               {`// ${point.label}`}
             </p>
-            <p className="text-sm font-medium" style={{ color: DARK_BG }}>
+            <p className="text-sm font-medium leading-relaxed" style={{ color: DARK_BG }}>
               {point.body}
             </p>
           </div>
         ))}
+      </div>
+
+      <div
+        className="border-2 p-5 lg:p-6"
+        style={{ borderColor: DARK_BG, backgroundColor: WHITE, boxShadow: SHADOW_SM }}
+      >
+        <p className={`${ibmPlexMono.className} text-[10px] font-bold tracking-widest uppercase mb-4`} style={{ color: RED }}>
+          {"// How"}
+        </p>
+        <ol className="space-y-3">
+          {GUIDE_VOTING.how.map((step, i) => (
+            <li key={step} className="flex gap-3 text-sm font-medium leading-relaxed" style={{ color: DARK_BG }}>
+              <span
+                className={`${ibmPlexMono.className} shrink-0 w-6 h-6 flex items-center justify-center text-[11px] font-bold border`}
+                style={{ borderColor: DARK_BG, backgroundColor: CREAM_CARD, color: RED }}
+              >
+                {i + 1}
+              </span>
+              <span>{step}</span>
+            </li>
+          ))}
+        </ol>
       </div>
     </GuideSectionShell>
   );
