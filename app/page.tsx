@@ -3,6 +3,7 @@ import Navbar from "./components/navbar";
 import Hero from "./components/hero";
 import About from "./components/about";
 import Tracks from "./components/tracks";
+import TrackDistribution from "./components/trackDistribution";
 import Prizes from "./components/prizes";
 import PastEvents from "./components/pastEvents";
 import TimeLine from './timeline'
@@ -23,6 +24,7 @@ export default function Home() {
       <Hero/>
       <Reveal><About/></Reveal>
       <Reveal delay={0.05}><Tracks/></Reveal>
+      <Reveal delay={0.05}><TrackDistribution/></Reveal>
       <Reveal delay={0.05}><Prizes/></Reveal>
       <Reveal delay={0.05}><PastEvents/></Reveal>
       <Reveal delay={0.05}><PreEvent/></Reveal>
