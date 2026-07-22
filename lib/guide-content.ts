@@ -69,13 +69,36 @@ export const GUIDE_JUDGING = {
     where: "A.1.20",
   },
   format: [
-    "3 minutes presentation",
+    "5 minutes pitch — use a live demo if possible",
     "2 minutes Q&A",
   ],
+  criteriaTitle: "How your solution will be evaluated",
   criteria: [
-    { label: "Criteria TBC", note: "Full rubric drops once locked." },
-    { label: "Criteria TBC", note: "Weights and categories to be confirmed." },
-    { label: "Criteria TBC", note: "Check back here before demo day." },
+    {
+      label: "Innovation & Creativity",
+      weight: 30,
+      note: "Originality of ideas, unique problem angle, and creative use of agentic AI.",
+    },
+    {
+      label: "Technical Execution",
+      weight: 20,
+      note: "Quality of engineering, sophistication of AI integration, and reliability of the build.",
+    },
+    {
+      label: "Problem-Solution Fit",
+      weight: 20,
+      note: "How well the solution addresses a real, specific problem within the chosen track.",
+    },
+    {
+      label: "Presentation Quality",
+      weight: 20,
+      note: "Clarity of live pitch, demo effectiveness, and Q&A performance.",
+    },
+    {
+      label: "Entrepreneurship",
+      weight: 10,
+      note: "Market awareness, business viability, and vision beyond the hackathon.",
+    },
   ],
 } as const;
 

@@ -327,7 +327,7 @@ export function GuideMentoring() {
   );
 }
 
-/** Judging — timed pitch (not booth showcase); criteria placeholders until locked. */
+/** Judging — timed pitch + weighted rubric. */
 export function GuideJudging() {
   return (
     <GuideSectionShell id="judging">
@@ -337,38 +337,51 @@ export function GuideJudging() {
         <GuideScheduleMeta when={GUIDE_JUDGING.schedule.when} where={GUIDE_JUDGING.schedule.where} />
       </GuideSectionIntro>
 
-      <div className="grid lg:grid-cols-2 gap-4 lg:gap-6">
-        <div className="border-2 p-5 lg:p-6" style={{ borderColor: DARK_BG, backgroundColor: WHITE, boxShadow: SHADOW_SM }}>
-          <p className={`${ibmPlexMono.className} text-[10px] font-bold tracking-widest uppercase mb-3`} style={{ color: RED }}>
-            {"// Format"}
-          </p>
-          <ul className="space-y-3">
-            {GUIDE_JUDGING.format.map((line) => (
-              <li key={line} className="flex gap-2 text-sm font-medium" style={{ color: DARK_BG }}>
-                <span style={{ color: RED }} aria-hidden>
-                  ›
-                </span>
-                <span>{line}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+      <div className="border-2 p-5 lg:p-6 mb-4 lg:mb-6" style={{ borderColor: DARK_BG, backgroundColor: WHITE, boxShadow: SHADOW_SM }}>
+        <p className={`${ibmPlexMono.className} text-[10px] font-bold tracking-widest uppercase mb-3`} style={{ color: RED }}>
+          {"// Format"}
+        </p>
+        <ul className="space-y-3">
+          {GUIDE_JUDGING.format.map((line) => (
+            <li key={line} className="flex gap-2 text-sm font-medium" style={{ color: DARK_BG }}>
+              <span style={{ color: RED }} aria-hidden>
+                ›
+              </span>
+              <span>{line}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-        <div className="p-5 lg:p-6" style={{ backgroundColor: DARK_BG, color: WHITE, boxShadow: SHADOW_RED }}>
-          <p className={`${ibmPlexMono.className} text-[10px] font-bold tracking-widest uppercase mb-3`} style={{ color: RED }}>
-            {"// Criteria"}
-          </p>
-          <ul className="space-y-4">
-            {GUIDE_JUDGING.criteria.map((item, i) => (
-              <li key={`${item.label}-${i}`}>
-                <p className="text-sm font-black uppercase tracking-tight">{item.label}</p>
-                <p className="mt-1 text-sm" style={{ color: TEXT_DIM }}>
+      <div className="p-5 lg:p-6" style={{ backgroundColor: DARK_BG, color: WHITE, boxShadow: SHADOW_RED }}>
+        <p className={`${ibmPlexMono.className} text-[10px] font-bold tracking-widest uppercase mb-2`} style={{ color: RED }}>
+          {"// Criteria"}
+        </p>
+        <h3 className="text-lg sm:text-xl font-black uppercase tracking-tight mb-5">
+          {GUIDE_JUDGING.criteriaTitle}
+        </h3>
+        <ul className="space-y-3">
+          {GUIDE_JUDGING.criteria.map((item) => (
+            <li
+              key={item.label}
+              className="flex items-start justify-between gap-4 border px-4 py-3.5"
+              style={{ borderColor: "rgba(255,255,255,0.18)", backgroundColor: "rgba(255,255,255,0.04)" }}
+            >
+              <div className="min-w-0">
+                <p className="text-sm sm:text-base font-black uppercase tracking-tight">{item.label}</p>
+                <p className="mt-1 text-xs sm:text-sm leading-relaxed" style={{ color: TEXT_DIM }}>
                   {item.note}
                 </p>
-              </li>
-            ))}
-          </ul>
-        </div>
+              </div>
+              <span
+                className={`${ibmPlexMono.className} shrink-0 text-2xl sm:text-3xl font-bold leading-none`}
+                style={{ color: RED }}
+              >
+                {item.weight}%
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
     </GuideSectionShell>
   );
