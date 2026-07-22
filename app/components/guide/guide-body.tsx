@@ -380,10 +380,9 @@ export function GuideVoting() {
       <GuideSectionIntro>
         <GuideSectionLabel>VOTING</GuideSectionLabel>
         <GuideSectionTitle>Community voting</GuideSectionTitle>
-        <GuideScheduleMeta when={GUIDE_VOTING.schedule.when} where={GUIDE_VOTING.schedule.where} />
       </GuideSectionIntro>
 
-      <div className="grid sm:grid-cols-2 gap-3 lg:gap-4">
+      <div className="grid sm:grid-cols-2 gap-3 lg:gap-4 mb-3 lg:mb-4">
         {GUIDE_VOTING.points.map((point) => (
           <div
             key={point.label}
@@ -393,11 +392,33 @@ export function GuideVoting() {
             <p className={`${ibmPlexMono.className} text-[10px] font-bold tracking-widest uppercase mb-2`} style={{ color: RED }}>
               {`// ${point.label}`}
             </p>
-            <p className="text-sm font-medium" style={{ color: DARK_BG }}>
+            <p className="text-sm font-medium leading-relaxed" style={{ color: DARK_BG }}>
               {point.body}
             </p>
           </div>
         ))}
+      </div>
+
+      <div
+        className="border-2 p-5 lg:p-6"
+        style={{ borderColor: DARK_BG, backgroundColor: WHITE, boxShadow: SHADOW_SM }}
+      >
+        <p className={`${ibmPlexMono.className} text-[10px] font-bold tracking-widest uppercase mb-4`} style={{ color: RED }}>
+          {"// How"}
+        </p>
+        <ol className="space-y-3">
+          {GUIDE_VOTING.how.map((step, i) => (
+            <li key={step} className="flex gap-3 text-sm font-medium leading-relaxed" style={{ color: DARK_BG }}>
+              <span
+                className={`${ibmPlexMono.className} shrink-0 w-6 h-6 flex items-center justify-center text-[11px] font-bold border`}
+                style={{ borderColor: DARK_BG, backgroundColor: CREAM_CARD, color: RED }}
+              >
+                {i + 1}
+              </span>
+              <span>{step}</span>
+            </li>
+          ))}
+        </ol>
       </div>
     </GuideSectionShell>
   );

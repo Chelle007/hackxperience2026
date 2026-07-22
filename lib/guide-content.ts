@@ -80,15 +80,20 @@ export const GUIDE_JUDGING = {
 } as const;
 
 export const GUIDE_VOTING = {
-  schedule: {
-    when: "Sat 25 Jul · 1:00–4:00 PM",
-    where: "B.5.12/B.5.13 & B.2.07/B.2.08",
-  },
   points: [
-    { label: "Who votes", body: "TBA — participants / attendees (confirm before event)." },
-    { label: "How", body: "TBA — link / QR / on-site flow." },
-    { label: "What it affects", body: "TBA — e.g. Community Choice (see prizes on main site)." },
-    { label: "Window", body: "Same window as above — exact open/close TBA." },
+    {
+      label: "Who",
+      body: "Only participants who submitted a project can vote.",
+    },
+    {
+      label: "Prize",
+      body: "Most-voted projects win the Community Choice Award (S$50). Every voter also gets a chance to join the lucky draw.",
+    },
+  ],
+  how: [
+    "Each participant gets 1 chance to vote, and must pick exactly 3 projects (excluding their own).",
+    "After looking around your competitors' projects, approach our organiser and vote on our device.",
+    "On the voting page, indicate your team name and ID, then select your name.",
   ],
 } as const;
 
