@@ -29,6 +29,11 @@ import {
   SHADOW_RED,
 } from "./guide-tokens";
 
+/** Soft track fills — match the mentoring ops sheet (red / blue). */
+const CARE_BG = "#f8d7da";
+const FRICTION_BG = "#cce5ff";
+const FRICTION_ACCENT = "#0b5cab";
+
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -246,6 +251,25 @@ export function GuideMentoring() {
         <GuideSectionLabel>MENTORING</GuideSectionLabel>
         <GuideSectionTitle>Mentor slots</GuideSectionTitle>
         <GuideScheduleMeta when={GUIDE_MENTORING.schedule.when} where={GUIDE_MENTORING.schedule.where} />
+        <p className={`${ibmPlexMono.className} mt-3 text-[11px] sm:text-xs font-medium tracking-wide`} style={{ color: MUTED }}>
+          {GUIDE_MENTORING.note}
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <span
+            className={`${ibmPlexMono.className} inline-flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase px-2.5 py-1.5 border`}
+            style={{ borderColor: DARK_BG, backgroundColor: CARE_BG, color: DARK_BG }}
+          >
+            <span className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: RED }} aria-hidden />
+            Care Forward
+          </span>
+          <span
+            className={`${ibmPlexMono.className} inline-flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase px-2.5 py-1.5 border`}
+            style={{ borderColor: DARK_BG, backgroundColor: FRICTION_BG, color: DARK_BG }}
+          >
+            <span className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: FRICTION_ACCENT }} aria-hidden />
+            Friction To Flow
+          </span>
+        </div>
       </GuideSectionIntro>
 
       <div className="grid md:grid-cols-2 gap-4 lg:gap-6">
@@ -269,25 +293,33 @@ export function GuideMentoring() {
               </p>
             </div>
 
-            <div className="border-t pt-4 space-y-3" style={{ borderColor: "#d8d2c5" }}>
-              {venue.slots.map((slot, i) => (
-                <div
-                  key={`${venue.id}-${i}`}
-                  className="flex items-center justify-between gap-3 text-sm"
-                >
-                  <span className={`${ibmPlexMono.className} text-[11px] font-bold tracking-widest`} style={{ color: RED }}>
-                    {slot.time}
-                  </span>
-                  <span className="text-right font-medium" style={{ color: MUTED }}>
-                    {slot.team}
-                  </span>
-                </div>
-              ))}
+            <div className="border-t pt-3 space-y-2" style={{ borderColor: "#d8d2c5" }}>
+              {venue.slots.map((slot) => {
+                const isCare = slot.track === "Care Forward";
+                return (
+                  <div
+                    key={`${venue.id}-${slot.teamId}-${slot.time}`}
+                    className="flex items-center justify-between gap-3 px-2.5 py-2 text-sm border"
+                    style={{
+                      borderColor: DARK_BG,
+                      backgroundColor: isCare ? CARE_BG : FRICTION_BG,
+                    }}
+                  >
+                    <span className={`${ibmPlexMono.className} text-[10px] sm:text-[11px] font-bold tracking-widest shrink-0`} style={{ color: DARK_BG }}>
+                      {slot.time}
+                    </span>
+                    <div className="text-right min-w-0">
+                      <p className={`${ibmPlexMono.className} text-[10px] font-bold tracking-widest uppercase`} style={{ color: isCare ? RED : FRICTION_ACCENT }}>
+                        {`#${slot.teamId}`}
+                      </p>
+                      <p className="text-sm font-bold truncate" style={{ color: DARK_BG }} title={slot.teamName}>
+                        {slot.teamName}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-
-            <p className={`${ibmPlexMono.className} mt-5 text-[10px] tracking-widest uppercase`} style={{ color: MUTED }}>
-              {"// Slot list updates once assignments are locked"}
-            </p>
           </div>
         ))}
       </div>
