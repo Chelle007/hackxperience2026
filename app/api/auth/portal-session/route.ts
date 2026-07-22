@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
 import {
   buildSessionToken,
+  PORTAL_DASHBOARDS,
   PORTAL_SESSION_COOKIE,
   sessionCookieOptions,
   type PortalRole,
@@ -16,7 +17,7 @@ type UserRoleRow = {
 function normalizeRole(value: unknown): PortalRole | null {
   if (typeof value !== "string") return null;
   const role = value.trim().toLowerCase();
-  if (role === "admin" || role === "judge") return role;
+  if (role === "admin" || role === "judge" || role === "sponsor") return role;
   return null;
 }
 
@@ -55,8 +56,7 @@ export async function POST(request: NextRequest) {
   const portalUsername = requestedUsername || derivedFromEmail || authUser.user.id;
 
   const portalToken = buildSessionToken({
-    // `judge_id` in judges_scores references auth.users.id, so session identity
-    // must be the auth user UUID, not user_roles.id.
+    // Session identity must be auth.users.id (FK target for score tables).
     userId: authUser.user.id,
     username: portalUsername,
     role,
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
   const response = NextResponse.json({
     ok: true,
     role,
-    redirectTo: role === "admin" ? "/admin/dashboard" : "/judge/dashboard",
+    redirectTo: PORTAL_DASHBOARDS[role],
   });
 
   response.cookies.set(PORTAL_SESSION_COOKIE, portalToken, sessionCookieOptions());
